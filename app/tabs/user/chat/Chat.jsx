@@ -1,9 +1,9 @@
-import { ScrollView, View } from "react-native";
 import ChatListCard from "../../../../src/components/common/ChatListCard";
-import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { MyBookings } from "../../../../src/services/user";
 import CustomHeader from "../../../../src/components/common/CustomHeader";
+import { View, Text, StyleSheet /* etc... */ } from "react-native";
+import { useEffect, useState } from "react";
 
 export default function Chat() {
     const [userData, setUserData] = useState([]);

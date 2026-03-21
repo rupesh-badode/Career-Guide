@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -56,10 +56,11 @@ export const SkeletonCard = () => {
 export const BookingCard = ({ item, themeColor = "#3B82F6", onActionPress, onCardPress }) => {
   const consultant = item?.consultantId;
   const bookingDate = item?.date ? new Date(item.date).toLocaleDateString() : 'N/A';
-  
+
   const navigation = useNavigation();
 
-  
+
+
   // 👉 Check if booking is confirmed
   const isConfirmed = item?.status === 'confirmed';
 
@@ -114,7 +115,7 @@ export const BookingCard = ({ item, themeColor = "#3B82F6", onActionPress, onCar
 
         <View style={styles.bottomRow}>
           {isConfirmed && (
-          <TouchableOpacity
+            <TouchableOpacity
               style={[styles.actionButton, { backgroundColor: themeColor }]}
               activeOpacity={0.8}
               onPress={() => {
@@ -124,18 +125,18 @@ export const BookingCard = ({ item, themeColor = "#3B82F6", onActionPress, onCar
                 });
               }}
             >
-              <Ionicons style={{color:"#ffff"}} name="videocam" size={18} />
-              <Text style={{color:"#ffff"}}> Join</Text>
+              <Ionicons style={{ color: "#ffff" }} name="videocam" size={18} />
+              <Text style={{ color: "#ffff" }}> Join</Text>
             </TouchableOpacity>
-        )}
+          )}
 
           {/* Message Button - Update here 👇 */}
           <TouchableOpacity
             style={[
-              styles.actionButton, 
-              { 
+              styles.actionButton,
+              {
                 // Confirmed hai to theme color (Blue defaults), warna gray
-                backgroundColor: isConfirmed ? themeColor : '#E5E7EB', 
+                backgroundColor: isConfirmed ? themeColor : '#E5E7EB',
                 // Thoda border dete hain disabled state me
                 borderColor: isConfirmed ? themeColor : '#D1D5DB',
                 borderWidth: isConfirmed ? 0 : 1,
@@ -145,14 +146,14 @@ export const BookingCard = ({ item, themeColor = "#3B82F6", onActionPress, onCar
             activeOpacity={isConfirmed ? 0.8 : 1}
             disabled={!isConfirmed} // Disable button if not confirmed
           >
-            <Ionicons 
-              name="chatbubbles" 
-              size={18} 
+            <Ionicons
+              name="chatbubbles"
+              size={18}
               color={isConfirmed ? "#FFFFFF" : "#9CA3AF"} // Icon gray ho jayega
             />
-            <Text 
+            <Text
               style={[
-                styles.actionButtonText, 
+                styles.actionButtonText,
                 { color: isConfirmed ? "#ffffff" : "#9CA3AF" } // Text gray ho jayega
               ]}
             >
@@ -176,7 +177,23 @@ export default function ChatListCard({
   customThemeColor
 }) {
 
+
+  useEffect(() => {
+    if (!searchText) {
+      setFilteredData(data);
+    } else {
+      const filtered = data.filter((item) =>
+        item?.consultantId?.name
+          ?.toLowerCase()
+          .includes(searchText.toLowerCase())
+      );
+      setFilteredData(filtered);
+    }
+  }, [searchText, data]);
+
   const role = useSelector((state) => state.auth?.role);
+  const [searchText, setSearchText] = useState('');
+  const [filteredData, setFilteredData] = useState(data);
   // Theme color dynamically set kiya hai
   const primaryColor = customThemeColor || (role === 'Consultant' ? '#10B981' : '#3B82F6');
 

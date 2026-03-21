@@ -5,6 +5,15 @@ buildscript {
     google()
     mavenCentral()
   }
+  ext {
+        buildToolsVersion = "36.0.0"
+        minSdkVersion = 26               // 👉 Isko 24 se 26 kar do
+        compileSdkVersion = 35
+        targetSdkVersion = 35
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.0.21"
+        gradlePluginVersion = "8.7.3"    // 👉 Yeh line nayi add karni hai
+    }
   dependencies {
     classpath('com.android.tools.build:gradle')
     classpath('com.facebook.react:react-native-gradle-plugin')
