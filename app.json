@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "Career-Guide",
+    "slug": "Career-Guide",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.amanpandey1346.CareerGuide",
+      "newArchEnabled": false,
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "ndkVersion": "26.1.10909125",
+            "kotlinVersion": "2.0.21"
+          }
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Career Guide to access your camera for video consultations."
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow Career Guide to access your microphone for audio calls."
+        }
+      ],
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "cameraPermission": "Allow Career Guide to access your camera for video calls.",
+          "microphonePermission": "Allow Career Guide to access your microphone for voice calls."
+        }
+      ]
+    ]
+  }
+}
