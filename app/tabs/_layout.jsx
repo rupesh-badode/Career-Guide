@@ -1,4 +1,3 @@
-
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSelector } from "react-redux";
@@ -12,20 +11,15 @@ import CounselorChat from "./counsellor/chat/CounselorChat";
 import ManageAppointments from "./counsellor/manageappoinment/ManageAppointments";
 import ProfileScreen from "../../src/components/common/ProfileScreen";
 import { Platform, StyleSheet, View } from "react-native";
-import CustomHeader from "../../src/components/common/CustomHeader";
+// CustomHeader import ab yahan zarurat nahi hai agar aap screens ke andar laga rahe hain
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-
-// ==============================
-export default  function TabNavigatorGroup() {
+export default function TabNavigatorGroup() {
     const Tab = createBottomTabNavigator();
     const { role, userData } = useSelector((state) => state.auth);
-    const currentName = userData?.name || "name";
-    const currentEmail = userData?.email || "";
     const insets = useSafeAreaInsets();
-
 
     return (
         <Tab.Navigator
@@ -37,16 +31,10 @@ export default  function TabNavigatorGroup() {
                 }
             }}
             screenOptions={({ route, navigation }) => ({
-                header: () => (
-                    <CustomHeader
-                        role={role}
-                        userName={currentName}
-                        notificationCount={3}
-                        routeName={route.name}
-                        onBackPress={() => navigation.goBack()}
-                        onProfilePress={() => navigation.navigate('Profile')}
-                    />
-                ),
+                
+                // 👉 YAHAN SE HEADER HATEGA 
+                headerShown: false, 
+
                 tabBarIcon: ({ color, size, focused }) => {
                     let iconName;
                     const routeName = route.name;
@@ -57,15 +45,14 @@ export default  function TabNavigatorGroup() {
                         iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
                     } else if (routeName === "News") {
                         iconName = focused ? 'newspaper' : 'newspaper-outline';
-                    } else if (routeName === "Blogs") {
-                        iconName = focused ? 'reader' : 'reader-outline';
+                    // } else if (routeName === "Blogs") {
+                    //     iconName = focused ? 'reader' : 'reader-outline';
                     } else if (routeName === 'Appointments' || routeName === 'Requests') {
                         iconName = focused ? 'calendar' : 'calendar-outline';
                     } else if (routeName === 'Profile') {
                         iconName = focused ? 'person' : 'person-outline';
                     }
 
-                    // Size adjustment for a "pop" effect on focused icon
                     return <Ionicons name={iconName || "ellipse"} size={focused ? size + 2 : size} color={color} />;
                 },
                 tabBarActiveTintColor: role === 'Consultant' ? '#10B981' : '#4F46E5',
@@ -81,7 +68,7 @@ export default  function TabNavigatorGroup() {
                         <BlurView
                             tint="light"
                             intensity={80}
-                            style={[StyleSheet.absoluteFill, { backgroundColor: "white" }]}
+                            style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(255, 255, 255, 0.8)" }]} // Thoda transparent white
                         />
                     </View>
                 ),
@@ -90,10 +77,9 @@ export default  function TabNavigatorGroup() {
             {role === 'User' ? (
                 <>
                     <Tab.Screen name="Home" component={Index} />
+                    <Tab.Screen name="Appointments" component={AppointmentSreen} />
                     <Tab.Screen name="Chat" component={Chat} />
                     <Tab.Screen name='News' component={NewsScreen} />
-                    <Tab.Screen name='Blogs' component={BlogScreen} />
-                    <Tab.Screen name="Appointments" component={AppointmentSreen} />
                 </>
             ) : (
                 <>
@@ -106,5 +92,3 @@ export default  function TabNavigatorGroup() {
         </Tab.Navigator>
     );
 }
-
-

@@ -139,6 +139,7 @@ const ConsultantList = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop:100,
     backgroundColor: '#ffffff', // Changed to white for a cleaner list look
   },
   center: {

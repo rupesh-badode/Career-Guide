@@ -162,15 +162,6 @@ export default function ChatListScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-
-      {/* HEADER */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Bookings</Text>
-        <TouchableOpacity>
-          <Ionicons name="search-outline" size={24} color="#1F2937" />
-        </TouchableOpacity>
-      </View>
-
       {loading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#10B981" />
@@ -233,6 +224,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F9FAFB', 
+    paddingTop:100,
   },
   loaderContainer: {
     flex: 1,

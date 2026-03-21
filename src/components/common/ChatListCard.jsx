@@ -235,7 +235,7 @@ export default function ChatListCard({
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 20, marginTop: 5 },
+  container: { paddingHorizontal: 20, marginTop: 100},
   emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 50 },
   emptyText: { color: '#6B7280', fontSize: 16, marginTop: 10 },
   card: {

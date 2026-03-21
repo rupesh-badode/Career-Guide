@@ -3,12 +3,16 @@ import { useNavigation } from "@react-navigation/native";
 import { MyBookings } from "../../../../src/services/user";
 import CustomHeader from "../../../../src/components/common/CustomHeader";
 import { View, Text, StyleSheet /* etc... */ } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import FilterBottomSheet from "./FilterBottomSheet";
 
 export default function Chat() {
     const [userData, setUserData] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigation = useNavigation();
+    const [searchQuery, setSearchQuery] = useState("");
+    const [isFilterVisible, setIsFilterVisible] = useState(false);
+    const [activeFilters, setActiveFilters] = useState(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -25,17 +29,38 @@ export default function Chat() {
             setLoading(false);
         }
     }
-
     useEffect(() => {
         fetchData();
     }, []);
 
+
+    const filteredData = useMemo(() => {
+        let result = userData;
+
+        // Search text ke hisaab se filter
+        if (searchQuery) {
+            result = result.filter((item) => {
+                const name = item?.consultantId?.name || item?.userId?.name || ""; 
+                return name.toLowerCase().includes(searchQuery.toLowerCase());
+            });
+        }
+
+        // 👉 Yahan par aap apne API ya Data ke parameters ke hisaab se Advanced Filter logic laga sakte hain
+        if (activeFilters) {
+           if (activeFilters.instituteType.length > 0) {
+               result = result.filter(item => activeFilters.instituteType.includes(item.instituteType))
+           }
+        }
+
+        return result;
+    }, [userData, searchQuery, activeFilters]);
+
     return (
         <>
-            {/* <CustomHeader/> */}
-
+            <CustomHeader routeName="Chat" onFilterPress={() => setIsFilterVisible(true)}  onSearchChange={(text)=>setSearchQuery(text)} />
+            {/* <FilterBottomSheet/> */}
             <ChatListCard
-                data={userData}
+                data={filteredData}
                 isLoading={loading}
                 onCardPress={(item) => {
                     navigation.navigate('CounselorProfile', {
@@ -60,6 +85,16 @@ export default function Chat() {
                         consultationId: item?._id // 👉 Added Avatar
                     });
                 }}
+            />
+
+            {/* 👉 2. Bottom Sheet Modal render karein */}
+            <FilterBottomSheet 
+              visible={isFilterVisible} 
+              onClose={() => setIsFilterVisible(false)}
+              onApply={(selectedFilters) => {
+                 console.log("Applied Filters:", selectedFilters);
+                 setActiveFilters(selectedFilters); // Applied filters ko state mein daal do
+              }}
             />
         </>
     )

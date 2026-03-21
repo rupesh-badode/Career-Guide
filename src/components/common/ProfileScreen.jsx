@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { getUserProfile } from '../../services/authAPI';
 import { changeRole, logout } from '../../redux/authSlice';
 import { getConsultantProfile } from '../../services/consultantAPI';
+import CustomHeader from './CustomHeader';
 
 
 // ==========================================
@@ -129,6 +130,10 @@ export default function ProfileScreen() {
   };
 
   return (
+
+    <>
+    <CustomHeader routeName="Profile" />
+
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
@@ -139,8 +144,8 @@ export default function ProfileScreen() {
               <Image
                 source={{
                   uri:
-                    userData?.profilePicture ||
-                    "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+                  userData?.profilePicture ||
+                  "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
                 }}
                 style={styles.profileImage}
               />
@@ -185,11 +190,11 @@ export default function ProfileScreen() {
               title="Home"
               color={theme.primary}
               onPress={() => console.log('Home pressed')}
-            /> */}
+              /> */}
 
             {/* <Text style={styles.sectionTitle}>
               {role === 'counselor' ? 'Professional Tools' : 'Services'}
-            </Text> */}
+              </Text> */}
             {role === 'Consultant' ? (
               <>
                 <MenuItem
@@ -197,7 +202,7 @@ export default function ProfileScreen() {
                   title="Profile Details"
                   color={theme.primary}
                   onPress={() => navigation.navigate("ConsultProfileDetails")}
-                />
+                  />
 
                 <MenuItem
                   icon="people-outline"
@@ -205,7 +210,7 @@ export default function ProfileScreen() {
                   subtitle="View and manage kyc"
                   color={theme.primary}
                   onPress={() => navigation.navigate('KycScreen')}
-                />
+                  />
                 <MenuItem
                   icon="wallet-outline"
                   title="KYC Details"
@@ -228,7 +233,7 @@ export default function ProfileScreen() {
                   subtitle="Start a private session"
                   color={theme.primary}
                   onPress={() => console.log('Chat pressed')}
-                />
+                  />
                 <MenuItem
                   icon="cart-outline"
                   title="Cart itmes"
@@ -260,6 +265,7 @@ export default function ProfileScreen() {
         </ScrollView>
       </View>
     </SafeAreaView>
+</>
   );
 }
 
@@ -270,7 +276,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FAFAFA',
-    paddingTop: Platform.OS === 'android' ? 30 : 0,
+    paddingTop: Platform.OS === 'android' ? 100 : 0,
   },
   container: {
     flex: 1,
