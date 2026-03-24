@@ -20,16 +20,28 @@ export const Axios = axios.create({
   withCredentials: true,
 });
 
+
+
 Axios.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem("userToken");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // ✅ cache disable
+    config.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+    config.headers["Pragma"] = "no-cache";
+    config.headers["Expires"] = "0";
+
     return config;
   },
   (error) => Promise.reject(error)
 );
+
+
+
 
 Axios.interceptors.response.use(
   (response) => response,

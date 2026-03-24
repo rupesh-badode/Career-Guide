@@ -61,7 +61,7 @@ const WhyLoveAastroneet = () => {
     <View style={styles.cardContainer}>
       <View style={styles.card}>
         <View style={styles.quoteIcon}>
-          <Ionicons name="quote" size={30} color="rgba(16, 185, 129, 0.2)" />
+          {/* <Ionicons name="quote" size={30} color="rgba(16, 185, 129, 0.2)" /> */}
         </View>
         
         <Text style={styles.message}>"{item.msg}"</Text>

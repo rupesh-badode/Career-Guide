@@ -55,7 +55,7 @@ export const getMentorBookings = async () =>{
         return {success:true,data:res.data}
     }catch(err){
         console.log("API ERR",err);
-        const errorMsg = err.response?.data?.message || err.message || "update profile pic failed";
+        const errorMsg = err.response?.data?.message || err.message || "failed";
         return { success: false, message: errorMsg};
 
     }
@@ -67,7 +67,33 @@ export const getBanner = async () =>{
         return {success:true,data:res.data}
     }catch(err){
         console.log("API ERR",err);
-        const errorMsg = err.response?.data?.message || err.message || "update profile pic failed";
+        const errorMsg = err.response?.data?.message || err.message || "failed to load banners";
+        return { success: false, message: errorMsg};
+
+    }
+}
+
+export const getBlogs = async () =>{
+    try{
+        const res  = await Axios.get("/mentor/get-blogs");
+        return {success:true,data:res.data}
+    }catch(err){
+        console.log("API ERR",err);
+        const errorMsg = err.response?.data?.message || err.message || "failed to load Blogs";
+        return { success: false, message: errorMsg};
+
+    }
+}
+
+
+
+export const getMentorLegal = async () =>{
+    try{
+        const res  = await Axios.get("/mentor/active-legals");
+        return {success:true,data:res.data}
+    }catch(err){
+        console.log("API ERR",err);
+        const errorMsg = err.response?.data?.message || err.message || "failed to load Legals";
         return { success: false, message: errorMsg};
 
     }

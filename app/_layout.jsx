@@ -15,7 +15,7 @@ import CustomHeader from '../src/components/common/CustomHeader';
 import Index from './tabs/user/home/Home';
 import Chat from './tabs/user/chat/Chat';
 import CounselorProfile from '../src/components/common/CounselorProfile';
-import AppointmentSreen  from './tabs/user/appointment/AppointmentScreen';
+import AppointmentSreen from './tabs/user/appointment/AppointmentScreen';
 
 import CounselorDashboard from './tabs/counsellor/dashboard/CounselorDashboard';
 import ManageAppointments from './tabs/counsellor/manageappoinment/ManageAppointments';
@@ -51,6 +51,7 @@ import CartScreen from './tabs/user/profile.jsx/CartScreen';
 import TabNavigatorGroup from './tabs/_layout';
 import AddAddress from './tabs/user/profile.jsx/AddAddress';
 import AllMentorsScreen from './tabs/user/mentor/AllMentorsScreen';
+import MentorChatList from './tabs/user/mentor/MentorsChatList';
 
 // 👉 YAHAN APNI REGISTER/LOGIN SCREEN IMPORT KAREIN
 
@@ -138,6 +139,7 @@ function AppNavigator() {
                                 <Stack.Screen name='CartScreen' component={CartScreen} />
                                 <Stack.Screen name='AddAddress' component={AddAddress} />
                                 <Stack.Screen name='AllMentor' component={AllMentorsScreen} />
+                                <Stack.Screen name='MentorChatList' component={MentorChatList} />
                             </>
                         )}
 
@@ -152,7 +154,14 @@ function AppNavigator() {
 export default function MainLayout() {
     return (
         <Provider store={store}>
-            <PersistGate loading={null} persistor={persistor} >
+            <PersistGate
+                loading={
+                    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                        <Text>Loading...</Text>
+                    </View>
+                }
+                persistor={persistor}
+            >
                 <AppNavigator />
             </PersistGate>
         </Provider>

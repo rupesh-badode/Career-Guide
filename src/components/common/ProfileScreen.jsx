@@ -247,10 +247,10 @@ export default function ProfileScreen() {
                   />
                   <MenuItem
                     icon="chatbubbles-outline"
-                    title="Chat with Counselor"
+                    title="Chat with Mentor"
                     subtitle="Start a private session"
                     color={theme.primary}
-                    onPress={() => console.log('Chat pressed')}
+                    onPress={() => navigation.navigate('MentorChatList')}
                   />
                   <MenuItem
                     icon="cart-outline"
@@ -260,8 +260,6 @@ export default function ProfileScreen() {
                   />
                 </>
               )}
-
-
               <Text style={styles.sectionTitle}>Company</Text>
 
               <MenuItem

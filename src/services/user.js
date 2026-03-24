@@ -193,6 +193,19 @@ export const verifyMentorbooking = async (payload) =>{
 }
 
 
+export const getMentorBooking = async () =>{
+  try{
+    // 👉 Add 'await' right before Axios.get
+    const response = await Axios.get("/user/get-mentor-bookings");
+    // Now 'response' is the actual data, not a pending Promise!
+    return response.data; 
+  } catch(error){
+    throw error.response?.data || error.message || "failed to load";
+  }
+}
+
+
+
 
 
 

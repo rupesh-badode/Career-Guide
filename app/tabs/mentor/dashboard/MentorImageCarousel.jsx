@@ -64,7 +64,6 @@ export default function MentorImageCarousel() {
   const scrollX = useRef(new Animated.Value(0)).current;
 
   // --- Fetch API Data ---
-  // --- Fetch API Data ---
   useEffect(() => {
     const fetchBannersData = async () => {
       try {

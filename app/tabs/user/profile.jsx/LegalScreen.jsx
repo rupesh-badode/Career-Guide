@@ -1,20 +1,25 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { 
-  View, 
-  Text, 
-  Linking, 
-  Alert, 
-  ActivityIndicator, 
-  StyleSheet, 
-  TouchableOpacity, 
-  SafeAreaView, 
-  Animated 
+  View, Text, Linking, Alert, ActivityIndicator, 
+  StyleSheet, TouchableOpacity, Animated, Platform 
 } from 'react-native';
-import { getLegal } from '../../../../src/services/user';
 import { Ionicons } from '@expo/vector-icons';
+import { useSelector } from 'react-redux';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'; // 👉 SafeArea fixed
 
-// Note: If using React Navigation, pass { navigation } as a prop
+
+// 👉 API IMPORTS (Ensure these exist in your service files)
+import {getMentorLegal} from "../../../../src/services/mentorAPI"
+
 const LegalScreen = ({ navigation }) => {
+  // 👉 1. ROLE & THEME SETUP
+  const role = useSelector((state) => state.auth.role) || 'User';
+  const insets = useSafeAreaInsets();
+
+  let themeColor = '#3B82F6'; // Default User (Blue)
+  if (role === 'Consultant') themeColor = '#10B981'; // Green
+  if (role === 'Mentor') themeColor = '#8B5CF6'; // Purple
+
   const [legalDoc, setLegalDoc] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,14 +29,27 @@ const LegalScreen = ({ navigation }) => {
 
   useEffect(() => {
     fetchLegalData();
-  }, []);
+  }, [role]);
 
   const fetchLegalData = async () => {
+    setLoading(true);
     try {
-      const response = await getLegal();
-      setLegalDoc(response.data); 
+      let response;
+      
+      // 👉 2. ROLE-BASED API CALL
+      if (role === 'Consultant') {
+        response = await getConsultantLegal();
+      } else if (role === 'Mentor') {
+        response = await getMentorLegal();
+      } else {
+        response = await getLegal();
+      }
+
+      // Adjust extraction based on your actual API response structure
+      setLegalDoc(response?.data?.data || response); 
     } catch (error) {
-      Alert.alert("Error", error.toString());
+      console.log("Legal Fetch Error:", error);
+      Alert.alert("Error", "Failed to fetch legal documents.");
     } finally {
       setLoading(false);
       triggerAnimation();
@@ -55,29 +73,29 @@ const LegalScreen = ({ navigation }) => {
   };
 
   const openPDF = () => {
-    if (legalDoc?.pdf) {
-      Linking.openURL(legalDoc.pdf).catch(() => {
+    if (legalDoc?.pdf || legalDoc?.url) { // Handle cases where key might be 'url'
+      const pdfUrl = legalDoc.pdf || legalDoc.url;
+      Linking.openURL(pdfUrl).catch(() => {
         Alert.alert("Error", "Could not open the PDF document.");
       });
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       {/* Header - Keeps back button accessible even while loading */}
-      <View style={styles.header}>
+      <View style={[styles.header]}>
         <TouchableOpacity 
           style={styles.backButton} 
-          onPress={() => navigation?.goBack()} // Assuming React Navigation
-        >
-           <Ionicons style={styles.backIcon} name="arrow-back-outline"></Ionicons> 
+          onPress={() => navigation?.goBack()} >
+           <Ionicons style={styles.backIcon} name="chevron-back" /> 
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Legal Information</Text>
       </View>
 
       {loading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#007bff" />
+          <ActivityIndicator size="large" color={themeColor} />
           <Text style={styles.loadingText}>Fetching documents...</Text>
         </View>
       ) : (
@@ -91,17 +109,25 @@ const LegalScreen = ({ navigation }) => {
           ]}
         >
           <View style={styles.card}>
+            <View style={[styles.iconWrapper, { backgroundColor: `${themeColor}15` }]}>
+              <Ionicons name="document-text" size={32} color={themeColor} />
+            </View>
+
             <Text style={styles.docTitle}>
               {legalDoc?.title || 'Terms & Conditions'}
             </Text>
             <Text style={styles.docSubtitle}>
-              Please review our latest legal documentation.
+              Please review our latest legal documentation and policies to understand your rights and responsibilities as a {role}.
             </Text>
             
             <TouchableOpacity 
-              style={[styles.customButton, !legalDoc?.pdf && styles.disabledButton]} 
+              style={[
+                styles.customButton, 
+                { backgroundColor: themeColor, shadowColor: themeColor },
+                !(legalDoc?.pdf || legalDoc?.url) && styles.disabledButton
+              ]} 
               onPress={openPDF} 
-              disabled={!legalDoc?.pdf}
+              disabled={!(legalDoc?.pdf || legalDoc?.url)}
               activeOpacity={0.8}
             >
               <Text style={styles.buttonText}>View PDF Document</Text>
@@ -126,19 +152,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   backButton: {
     paddingRight: 15,
   },
   backIcon: {
-    fontSize: 28,
+    fontSize: 26,
     color: '#333333',
-    lineHeight: 30,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '700',
-    color: '#212529',
+    color: '#111827',
   },
   centerContainer: {
     flex: 1,
@@ -148,48 +178,68 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#6C757D',
+    color: '#6B7280',
+    fontWeight: '500',
   },
   contentContainer: {
     flex: 1,
     padding: 20,
+    justifyContent: 'center', // Center the card vertically
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 24,
+    alignItems: 'center', // Center align text and icons
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3, // For Android shadow
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  iconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   docTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#212529',
+    color: '#1F2937',
     marginBottom: 8,
+    textAlign: 'center',
   },
   docSubtitle: {
-    fontSize: 15,
-    color: '#6C757D',
+    fontSize: 14,
+    color: '#6B7280',
     marginBottom: 24,
     lineHeight: 22,
+    textAlign: 'center',
   },
   customButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 14,
-    borderRadius: 8,
+    width: '100%',
+    paddingVertical: 15,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 4,
   },
   disabledButton: {
-    backgroundColor: '#A5C8F2',
+    backgroundColor: '#D1D5DB',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });
 

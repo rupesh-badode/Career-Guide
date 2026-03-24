@@ -13,14 +13,14 @@ export const LoginConsultant = async (payload) => {
 }
 
 export const getConsultantProfile = async () => {
-  try {
-    const response = await Axios.get("/consultant/profile");
-    return response.data;
-  } catch (error) {
-    throw (
-      error.response?.data || error.message || "Failed to fetch user profile"
-    );
-  }
+    try {
+        const response = await Axios.get("/consultant/profile");
+        return response.data;
+    } catch (error) {
+        throw (
+            error.response?.data || error.message || "Failed to fetch user profile"
+        );
+    }
 };
 
 export const UpdateConsultantProfile = async (payload) => {
@@ -52,25 +52,25 @@ export const myBooking = async (payload) => {
         return { success: true, data: res.data };
     } catch (err) {
         // ✅ Fix 2: Changed 'console' to 'console.error'
-        console.error("API err", err); 
+        console.error("API err", err);
         const errmsg = err.response?.data?.message || err.message || "Failed to Load";
-        
+
         // ✅ Fix 3: Returned the error object so the UI knows it failed
-        return { success: false, message: errmsg }; 
+        return { success: false, message: errmsg };
     }
 }
 
-export const ConsultantchatHistory = async(consultationId) => {
-  try{
-    // ✅ Backticks (`) aur ${} ka use karein
-    const res = await Axios.get(`/consultant/chat/${consultationId}`); 
-    return res.data;
-  }catch(err){
-    throw err.res?.data|| err.message||"Failed to Load";
-  }
+export const ConsultantchatHistory = async (consultationId) => {
+    try {
+        // ✅ Backticks (`) aur ${} ka use karein
+        const res = await Axios.get(`/consultant/chat/${consultationId}`);
+        return res.data;
+    } catch (err) {
+        throw err.res?.data || err.message || "Failed to Load";
+    }
 }
 
-export const CreateKYC = async(payload) => {
+export const CreateKYC = async (payload) => {
     try {
         const res = await Axios.post("/consultant/create-kyc", payload);
         return { success: true, data: res.data };
@@ -81,7 +81,7 @@ export const CreateKYC = async(payload) => {
     }
 }
 
-export const UpdatedKYC = async(payload) => {
+export const UpdatedKYC = async (payload) => {
     try {
         const res = await Axios.put("/consultant/update-kyc", payload);
         return { success: true, data: res.data };
@@ -105,3 +105,13 @@ export const getMyKYC = async () => {
 
 
 
+export const getConsultantLegal = async () => {
+    try {
+        const res = await Axios.get("/consultant/active-legals");
+        return { success: true, data: res.data };
+    } catch (err) {
+        console.error("API ERR", err);
+        const errorMsg = err.response?.data?.message || err.message || "Failed to fetch T&C";
+        return { success: false, message: errorMsg };
+    }
+}
