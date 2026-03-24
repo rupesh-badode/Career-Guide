@@ -58,6 +58,7 @@ const APPOINTMENTS = [
 ];
 
 // Tabs setup
+
 const TABS = [
   { id: 'pending', label: 'Requests' },
   { id: 'upcoming', label: 'Upcoming' },

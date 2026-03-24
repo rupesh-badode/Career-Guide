@@ -122,7 +122,7 @@ const FeaturedBooks = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.sectionTitle}>Our Bestsellers</Text>
+          <Text style={styles.sectionTitle}>Book Bajar</Text>
           <Text style={styles.sectionSubtitle}>Top picks for you</Text>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('AllBooks')}>

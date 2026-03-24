@@ -1,5 +1,5 @@
 
- import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Animated,
     StyleSheet,
@@ -10,7 +10,7 @@ import {
     Dimensions,
     Easing
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; 
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import land from "../../../../assets/user/Hospital_doctor.webp";
@@ -66,8 +66,8 @@ export default function OnboardingScreen() {
             Animated.loop(
                 Animated.timing(rotateAnim, {
                     toValue: 1,
-                    duration: 20000, 
-                    easing: Easing.linear, 
+                    duration: 20000,
+                    easing: Easing.linear,
                     useNativeDriver: true,
                 })
             ).start();
@@ -124,19 +124,25 @@ export default function OnboardingScreen() {
 
             {/* Marquee Banner Section (FADE EFFECT APPLIED) */}
             <Animated.View style={[styles.marqueeWrapper, { opacity: fadeAnim }]}>
-                
+
                 {/* Scrolling Text Layer */}
                 <Animated.View style={{
                     flexDirection: 'row',
+                    width: 9999, // 👉 FIX 1: Infinite space taaki text dab kar niche na aaye
                     transform: [{ translateX: marqueeScroll }]
                 }}>
                     <Text
+                        numberOfLines={1} // 👉 FIX 2: Text ko ek hi line mein force karega
                         onLayout={(e) => setTextWidth(e.nativeEvent.layout.width)}
-                        style={styles.marqueeText}
+                        style={[styles.marqueeText, { paddingRight: 50 }]} // Thoda gap pehle aur dusre text ke beech
                     >
                         {MARQUEE_TEXT}
                     </Text>
-                    <Text style={styles.marqueeText}>
+
+                    <Text
+                        numberOfLines={1}
+                        style={[styles.marqueeText, { paddingRight: 50 }]}
+                    >
                         {MARQUEE_TEXT}
                     </Text>
                 </Animated.View>
@@ -173,11 +179,11 @@ export default function OnboardingScreen() {
 
             {/* Bottom Controls (Pagination & Button) */}
             <Animated.View style={[styles.bottomContainer, { opacity: fadeAnim }]}>
-             
-                
-                <TouchableOpacity style={styles.button} activeOpacity={0.8}>
+
+
+                {/* <TouchableOpacity style={styles.button} activeOpacity={0.8}>
                     <Text style={styles.buttonText}>GET STARTED</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </Animated.View>
 
         </View>
@@ -207,7 +213,7 @@ const styles = StyleSheet.create({
         height: width * 0.85,
         justifyContent: 'center',
         alignItems: 'center',
-        position: 'relative', 
+        position: 'relative',
     },
     revolvingIconsContainer: {
         position: 'absolute',
@@ -222,9 +228,9 @@ const styles = StyleSheet.create({
     graphicImage: {
         width: '100%',
         height: '100%',
-        zIndex: 10, 
+        zIndex: 10,
     },
-    
+
     // 🔥 UPDATED MARQUEE STYLES 
     marqueeWrapper: {
         width: '100%',
@@ -288,7 +294,7 @@ const styles = StyleSheet.create({
     },
     pagination: {
         flexDirection: 'row',
-        marginBottom: 0, 
+        marginBottom: 0,
     },
     dot: {
         width: 8,

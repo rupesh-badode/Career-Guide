@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
   Image,
-  FlatList,
   StyleSheet,
   Animated,
   TouchableOpacity,
@@ -14,9 +13,10 @@ import { AllConsultant } from '../../../../src/services/user';
 import { useNavigation } from '@react-navigation/native';
 
 // --- Animated List Item Component ---
+// ⚠️ Unnecessary props hata diye hain item se
 const ConsultantListItem = ({ item, index }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const translateX = useRef(new Animated.Value(50)).current; // Slide in from the right
+  const translateX = useRef(new Animated.Value(50)).current; 
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const ConsultantListItem = ({ item, index }) => {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 350,
-        delay: index * 100, // Slightly faster stagger for lists
+        delay: index * 100, 
         useNativeDriver: true,
       }),
       Animated.timing(translateX, {
@@ -43,21 +43,20 @@ const ConsultantListItem = ({ item, index }) => {
         transform: [{ translateX }]
       }}
     >
-      <TouchableOpacity style={styles.listItemContainer} activeOpacity={0.7} onPress={() => navigation.navigate("CounselorProfile", {
-        counselorId:item._id,
-        counselorName: item.name,
-        counselorAvatar: item.profilePicture,
-        counselorRole: item.role,
-        counselorExperience: item.experience,
-        counselorSpecialization: item.specialization
-      })} >
-        {/* Left: Avatar */}
-        <Image
-          source={{ uri: item.profilePicture }}
-          style={styles.avatar}
-        />
+      <TouchableOpacity 
+        style={styles.listItemContainer} 
+        activeOpacity={0.7} 
+        onPress={() => navigation.navigate("CounselorProfile", {
+          counselorId: item._id,
+          counselorName: item.name,
+          counselorAvatar: item.profilePicture,
+          counselorRole: item.role,
+          counselorExperience: item.experience,
+          counselorSpecialization: item.specialization
+        })} 
+      >
+        <Image source={{ uri: item.profilePicture }} style={styles.avatar} />
 
-        {/* Middle: Details */}
         <View style={styles.infoContainer}>
           <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
           <Text style={styles.specialization} numberOfLines={1}>
@@ -76,7 +75,6 @@ const ConsultantListItem = ({ item, index }) => {
           </View>
         </View>
 
-        {/* Right: Action Icon */}
         <View style={styles.actionContainer}>
           <MaterialCommunityIcons name="chevron-right" size={24} color="#d1d5db" />
         </View>
@@ -86,14 +84,14 @@ const ConsultantListItem = ({ item, index }) => {
 };
 
 // --- Main Component ---
-const ConsultantList = () => {
+// 👇 Yahan par ab searchQuery aur activeFilters bhi le rahe hain
+const ConsultantList = ({ contentPaddingTop, onScroll, searchQuery, activeFilters }) => {
   const [consultants, setConsultants] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Uncomment below to use your API
         const data = await AllConsultant();
         if (data.success) setConsultants(data.consultants);
       } catch (error) {
@@ -102,9 +100,31 @@ const ConsultantList = () => {
         setLoading(false);
       }
     };
-
     loadData();
   }, []);
+
+  // 🔥 SEARCH AUR FILTER LOGIC YAHAN ADD KIYA HAI
+  const filteredData = useMemo(() => {
+    let result = consultants;
+
+    // 1. Search Query Logic (Name se filter)
+    if (searchQuery) {
+      result = result.filter(item => 
+        item?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // 2. Advanced Filters Logic (Maan lijiye specialization pe hai, isko apne hisaab se adjust karein)
+    if (activeFilters) {
+      // Example: Agar filter me role pass hua hai
+      // if (activeFilters.role) {
+      //   result = result.filter(item => item.role === activeFilters.role);
+      // }
+    }
+
+    return result;
+  }, [consultants, searchQuery, activeFilters]);
+
 
   if (loading) {
     return (
@@ -116,20 +136,21 @@ const ConsultantList = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={consultants}
+      <Animated.FlatList
+        data={filteredData} // 👈 Ab yahan filtered data pass ho raha hai
         keyExtractor={(item) => item._id}
         renderItem={({ item, index }) => <ConsultantListItem item={item} index={index} />}
-        contentContainerStyle={styles.listPadding}
+        
+        // ✅ FIX: paddingTop ko StyleSheet se nikalkar yahan inline pass kar diya
+        contentContainerStyle={{ 
+            paddingTop: contentPaddingTop, 
+            paddingBottom: 80 
+        }}
+        
         showsVerticalScrollIndicator={false}
-        // This adds a subtle line between items
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-      // ListHeaderComponent={
-      //   <View style={styles.header}>
-      //     <Text style={styles.headerTitle}>Consultants</Text>
-      //     <Text style={styles.headerSubtitle}>Tap on a profile to view details</Text>
-      //   </View>
-      // }
       />
     </View>
   );
@@ -139,32 +160,11 @@ const ConsultantList = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop:100,
-    backgroundColor: '#ffffff', // Changed to white for a cleaner list look
+    paddingTop: 20, // ❌ Ise hata diya warna padding double ho jayegi!
+    backgroundColor: '#ffffff', 
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    backgroundColor: '#ffffff',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 4,
-  },
-  listPadding: {
-    paddingBottom: 24,
-  },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  // ... baaki sab same hai ...
   listItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -173,49 +173,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30, // Makes the image a perfect circle
-    backgroundColor: '#e5e7eb',
+    width: 60, height: 60, borderRadius: 30, backgroundColor: '#e5e7eb',
   },
   infoContainer: {
-    flex: 1,
-    marginLeft: 16,
-    justifyContent: 'center',
+    flex: 1, marginLeft: 16, justifyContent: 'center',
   },
   name: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 2,
+    fontSize: 18, fontWeight: '600', color: '#1f2937', marginBottom: 2,
   },
   specialization: {
-    fontSize: 14,
-    color: '#4b5563',
-    marginBottom: 6,
+    fontSize: 14, color: '#4b5563', marginBottom: 6,
   },
   bottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
   },
   iconTextRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
   },
   subText: {
-    fontSize: 13,
-    color: '#6b7280',
-    marginLeft: 4,
+    fontSize: 13, color: '#6b7280', marginLeft: 4,
   },
   actionContainer: {
-    paddingLeft: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingLeft: 12, justifyContent: 'center', alignItems: 'center',
   },
   separator: {
-    height: 1,
-    backgroundColor: '#f3f4f6',
-    marginLeft: 92, // Aligns the separator with the text, not the avatar
+    height: 1, backgroundColor: '#f3f4f6', marginLeft: 92, 
   }
 });
 

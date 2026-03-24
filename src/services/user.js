@@ -98,4 +98,101 @@ export const AddtoCart = async (payload) => {
   }
 }
 
+export const UpdateCart = async (payload) => {
+  try {
+    const res = await Axios.put(`/user/update-cart/update`, payload);
+    return res.data;
+  } catch (err) {
+    // FIX: err.res ki jagah err.response hoga
+    throw err.response?.data || err.message || "Failed to Update";
+  }
+}
+
+// ✅ Corrected Service
+export const DeleteCart = async (bookId, type) => {
+  try {
+    // URL: /user/remove-cart/remove/12345
+    // Body: { type: "hardcover" }
+    const res = await Axios.delete(`/user/remove-cart/remove/${bookId}`, {
+      data: { type } 
+    });
+    return res.data;
+  } catch (err) {
+    throw err.response?.data || err.message || "Failed to Delete";
+  }
+}
+
+
+
+export const addAdress = async (payload) => {
+  try {
+    const res = await Axios.post(`/user/add-address/add`, payload);
+    return res.data;
+  } catch (err) {
+    // FIX: err.res ki jagah err.response hoga
+    throw err.response?.data || err.message || "Failed to add adress";
+  }
+}
+
+export const getAddress = async () => {
+  try {
+    const res = await Axios.get(`/user/get-address`);
+    return res.data;
+  } catch (err) {
+    // FIX: err.res ki jagah err.response hoga
+    throw err.response?.data || err.message || "Failed to get Address";
+  }
+}
+
+
+export const defaultAddress = async (id) => {
+  try {
+    const res = await Axios.put(`/user/address/default/${id}`);
+    return res.data;
+  } catch (err) {
+    // FIX: err.res ki jagah err.response hoga
+    throw err.response?.data || err.message || "Failed to load";
+  }
+}
+
+
+
+export const allMentor = async () =>{
+  try{
+    // 👉 Add 'await' right before Axios.get
+    const response = await Axios.get("/user/all-mentors");
+    // Now 'response' is the actual data, not a pending Promise!
+    return response.data; 
+  } catch(error){
+    throw error.response?.data || error.message || "failed to load";
+  }
+}
+
+
+export const BookMentor = async (payload) =>{
+  try{
+    // 👉 Add 'await' right before Axios.get
+    const response = await Axios.post("/user/book-mentor",payload);
+    // Now 'response' is the actual data, not a pending Promise!
+    return response.data; 
+  } catch(error){
+    throw error.response?.data || error.message || "failed to load";
+  }
+}
+
+
+export const verifyMentorbooking = async (payload) =>{
+  try{
+    // 👉 Add 'await' right before Axios.get
+    const response = await Axios.post("/user/verify-mentor-booking",payload);
+    // Now 'response' is the actual data, not a pending Promise!
+    return response.data; 
+  } catch(error){
+    throw error.response?.data || error.message || "failed to load";
+  }
+}
+
+
+
+
 

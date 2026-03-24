@@ -9,10 +9,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
-// 👉 DONO API IMPORT KAREIN
+// 👉 TEENO API IMPORT KAREIN
 import { getUserProfile } from '../../services/authAPI';
-import { changeRole, logout } from '../../redux/authSlice';
 import { getConsultantProfile } from '../../services/consultantAPI';
+import { getMentorProfile } from '../../services/mentorAPI'; // Make sure this function exists in your mentorAPI file
+import { changeRole, logout } from '../../redux/authSlice';
 import CustomHeader from './CustomHeader';
 
 
@@ -51,52 +52,50 @@ export default function ProfileScreen() {
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
-  // 👉 Redux setup se role nikalna (Data fetch hone se pehle role pata hona chahiye)
-  const role = useSelector((state) => state.auth.role);
+  // 👉 Redux setup se role nikalna
+  const role = useSelector((state) => state.auth.role) || 'User';
 
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 👉 2. Fetch data on component mount ya role change hone par
+  // 👉 2. Fetch data based on specific Role
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setIsLoading(true);
         let response;
 
-        // Role ke according alag-alag API call hogi
+        // API call based on Role
         if (role === 'Consultant') {
           response = await getConsultantProfile();
+        } else if (role === 'Mentor') {
+          response = await getMentorProfile(); // Mentor Data Fetch
         } else {
           response = await getUserProfile();
         }
 
-        // Backend response format ke hisaab se data nikalna
-        // (Ye safe approach hai agar backend user/consultant/data kisi me bhi bheje)
-        const profileInfo = response?.user || response?.consultant || response?.data || response;
+        // Safe extraction approach
+        const profileInfo = response?.user || response?.consultant || response?.mentor || response?.data || response;
 
         if (profileInfo) {
           setUserData(profileInfo);
         }
       } catch (error) {
-        console.error("Error fetching profile:", error);
+        console.error(`Error fetching ${role} profile:`, error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchUserData();
-  }, [role]); // Array me role pass kiya, taaki agar role switch ho to naya data aaye
+  }, [role]); 
 
   function onLogout() {
     Alert.alert(
       "Confirm Logout",
       "Are You Sure?",
       [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: "Yes, Logout",
           style: "destructive",
@@ -105,9 +104,7 @@ export default function ProfileScreen() {
               await AsyncStorage.removeItem('userToken');
               await AsyncStorage.removeItem('userData');
               dispatch(logout());
-
               console.log("Logout Successfully! Redirecting...");
-
             } catch (error) {
               console.error("Failed to LogOut:", error);
             }
@@ -117,155 +114,177 @@ export default function ProfileScreen() {
     );
   }
 
-  // Role badalne ka function (Testing ke liye)
-  const handleSwitchRole = () => {
-    const newRole = role === "User" ? "Consultant" : "User";
-    dispatch(changeRole(newRole));
-  };
+  // 👉 3. Dynamic Theme Setup (3 Roles)
+  let primaryColor = '#3B82F6'; // User: Blue
+  let bgColor = '#EFF6FF';
 
-  // Theme Setup (Redux role ke hisaab se)
+  if (role === 'Consultant') {
+    primaryColor = '#10B981'; // Consultant: Green
+    bgColor = '#ECFDF5';
+  } else if (role === 'Mentor') {
+    primaryColor = '#8B5CF6'; // Mentor: Purple
+    bgColor = '#EDE9FE';
+  }
+
   const theme = {
-    primary: role === 'Consultant' ? '#10B981' : '#3B82F6',
-    background: role === 'Consultant' ? '#ECFDF5' : '#EFF6FF',
+    primary: primaryColor,
+    background: bgColor,
   };
 
   return (
-
     <>
-    <CustomHeader routeName="Profile" />
+      <CustomHeader routeName="Profile" />
 
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
 
-          {/* --- 1. PROFILE AVATAR SECTION (API Integrated) --- */}
-          <View style={styles.profileSection}>
-            <View style={styles.imageContainer}>
-              <Image
-                source={{
-                  uri:
-                  userData?.profilePicture ||
-                  "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-                }}
-                style={styles.profileImage}
+            {/* --- 1. PROFILE AVATAR SECTION --- */}
+            <View style={styles.profileSection}>
+              <View style={styles.imageContainer}>
+                <Image
+                  source={{
+                    uri:
+                      userData?.profilePicture ||
+                      "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+                  }}
+                  style={styles.profileImage}
+                />
+              </View>
+
+              <View style={styles.infoContainer}>
+                <Text style={styles.userName} numberOfLines={1}>
+                  {isLoading ? "Loading..." : userData?.name || "No Name"}
+                </Text>
+                <Text style={styles.userEmail} numberOfLines={1}>
+                  {isLoading ? "Please wait" : userData?.email || "No Email"}
+                </Text>
+
+                {userData?.phone && (
+                  <Text style={[styles.userEmail, { marginTop: -5, fontSize: 12 }]}>
+                    📞 +91 {userData.phone}
+                  </Text>
+                )}
+
+                <Pressable
+                  onPress={() => navigation.navigate("EditProfile")}
+                  style={({ pressed }) => [
+                    styles.roleTag,
+                    { backgroundColor: theme.background, transform: [{ scale: pressed ? 0.95 : 1 }] }
+                  ]}
+                >
+                  <Text style={[styles.roleText, { color: theme.primary }]}>
+                    Edit {role} Profile
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* --- 2. MENU SECTION --- */}
+            <View style={styles.menuSection}>
+              <Text style={styles.sectionTitle}>General</Text>
+
+              {/* 👉 DYNAMIC MENU BASED ON ROLE */}
+
+              {/* CONSULTANT MENU */}
+              {role === 'Consultant' && (
+                <>
+                  <MenuItem
+                    icon="person-outline"
+                    title="Profile Details"
+                    color={theme.primary}
+                    onPress={() => navigation.navigate("ConsultProfileDetails")}
+                  />
+                  <MenuItem
+                    icon="people-outline"
+                    title="Create KYC"
+                    subtitle="View and manage KYC"
+                    color={theme.primary}
+                    onPress={() => navigation.navigate('KycScreen')}
+                  />
+                  <MenuItem
+                    icon="wallet-outline"
+                    title="KYC Details"
+                    color={theme.primary}
+                    onPress={() => navigation.navigate("KycDetails")}
+                  />
+                </>
+              )}
+
+              {/* MENTOR MENU */}
+              {role === 'Mentor' && (
+                <>
+                  <MenuItem
+                    icon="person-outline"
+                    title="Mentor Profile Details"
+                    color={theme.primary}
+                    onPress={() => navigation.navigate("MentorProfileDetails")} // Replace with actual route
+                  />
+                  <MenuItem
+                    icon="calendar-outline"
+                    title="Manage Sessions"
+                    subtitle="View your upcoming classes/sessions"
+                    color={theme.primary}
+                    onPress={() => navigation.navigate("MentorSessions")} // Replace with actual route
+                  />
+                  <MenuItem
+                    icon="wallet-outline"
+                    title="Earnings & Wallet"
+                    color={theme.primary}
+                    onPress={() => navigation.navigate("MentorWallet")} // Replace with actual route
+                  />
+                </>
+              )}
+
+              {/* USER / STUDENT MENU */}
+              {role === 'User' && (
+                <>
+                  <MenuItem
+                    icon="person-outline"
+                    title="Profile Details"
+                    color={theme.primary}
+                    onPress={() => navigation.navigate("ProfileDetail")}
+                  />
+                  <MenuItem
+                    icon="chatbubbles-outline"
+                    title="Chat with Counselor"
+                    subtitle="Start a private session"
+                    color={theme.primary}
+                    onPress={() => console.log('Chat pressed')}
+                  />
+                  <MenuItem
+                    icon="cart-outline"
+                    title="Cart Items"
+                    color={theme.primary}
+                    onPress={() => navigation.navigate("CartScreen")}
+                  />
+                </>
+              )}
+
+
+              <Text style={styles.sectionTitle}>Company</Text>
+
+              <MenuItem
+                icon="document-text"
+                title="Legal Documents"
+                color={theme.primary}
+                onPress={() => navigation.navigate("LegalScreen")}
+              />
+
+              <Text style={styles.sectionTitle}>Account</Text>
+
+              <MenuItem
+                icon="log-out-outline"
+                title="Logout"
+                isDanger={true}
+                onPress={onLogout}
               />
             </View>
 
-            <View style={styles.infoContainer}>
-              {/* Name & Email mapping */}
-              <Text style={styles.userName} numberOfLines={1}>
-                {isLoading ? "Loading..." : userData?.name || "No Name"}
-              </Text>
-              <Text style={styles.userEmail} numberOfLines={1}>
-                {isLoading ? "Please wait" : userData?.email || "No Email"}
-              </Text>
-
-              {userData?.phone && (
-                <Text style={[styles.userEmail, { marginTop: -5, fontSize: 12 }]}>
-                  📞 +91 {userData.phone}
-                </Text>
-              )}
-
-              <Pressable
-                onPress={() => navigation.navigate("EditProfile")}
-                style={({ pressed }) => [
-                  styles.roleTag,
-                  { backgroundColor: theme.background, transform: [{ scale: pressed ? 0.95 : 1 }] }
-                ]}
-              >
-                <Text style={[styles.roleText, { color: theme.primary }]}>
-                  Edit Profile
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-
-          {/* --- 2. MENU SECTION --- */}
-          <View style={styles.menuSection}>
-            <Text style={styles.sectionTitle}>General</Text>
-
-
-            {/* <MenuItem
-              icon="home-outline"
-              title="Home"
-              color={theme.primary}
-              onPress={() => console.log('Home pressed')}
-              /> */}
-
-            {/* <Text style={styles.sectionTitle}>
-              {role === 'counselor' ? 'Professional Tools' : 'Services'}
-              </Text> */}
-            {role === 'Consultant' ? (
-              <>
-                <MenuItem
-                  icon="person-outline"
-                  title="Profile Details"
-                  color={theme.primary}
-                  onPress={() => navigation.navigate("ConsultProfileDetails")}
-                  />
-
-                <MenuItem
-                  icon="people-outline"
-                  title="Create Kyc"
-                  subtitle="View and manage kyc"
-                  color={theme.primary}
-                  onPress={() => navigation.navigate('KycScreen')}
-                  />
-                <MenuItem
-                  icon="wallet-outline"
-                  title="KYC Details"
-                  color={theme.primary}
-                  onPress={() =>navigation.navigate("KycDetails")}
-                />
-              </>
-            ) : (
-              <>
-                <MenuItem
-                  icon="person-outline"
-                  title="Profile Details"
-                  color={theme.primary}
-                  onPress={() => navigation.navigate("ProfileDetail")}
-                />
-
-                <MenuItem
-                  icon="chatbubbles-outline"
-                  title="Chat with Counselor"
-                  subtitle="Start a private session"
-                  color={theme.primary}
-                  onPress={() => console.log('Chat pressed')}
-                  />
-                <MenuItem
-                  icon="cart-outline"
-                  title="Cart itmes"
-                  color={theme.primary}
-                  onPress={() => navigation.navigate("CartScreen")}
-                />
-              </>
-            )}
-
-            <Text style={styles.sectionTitle}>Company</Text>
-
-            <MenuItem
-              icon="document-text"
-              title="Legal Documents"
-              color={theme.primary}
-              onPress={()=>navigation.navigate("LegalScreen")}
-            />
-
-            <Text style={styles.sectionTitle}>Account</Text>
-
-            <MenuItem
-              icon="log-out-outline"
-              title="Logout"
-              isDanger={true}
-              onPress={onLogout}
-            />
-          </View>
-
-        </ScrollView>
-      </View>
-    </SafeAreaView>
-</>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </>
   );
 }
 
@@ -276,7 +295,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FAFAFA',
-    paddingTop: Platform.OS === 'android' ? 100 : 0,
+    paddingTop: 20,
   },
   container: {
     flex: 1,
@@ -286,7 +305,7 @@ const styles = StyleSheet.create({
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop:Platform.OS==="android"?0:20,
+    marginTop: Platform.OS === "android" ? 0 : 20,
     marginBottom: 0,
     paddingHorizontal: 5,
   },

@@ -183,7 +183,7 @@ export default function ChatListScreen() {
                   receiverId: selectedItem?.studentId?._id,
                   receiverName: selectedItem?.studentId?.name,
                   receiverAvatar: selectedItem?.studentId?.profilePicture,
-                  consultationId: item?._id
+                  consultationId: selectedItem?._id
                 });
               }}
               
@@ -224,7 +224,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F9FAFB', 
-    paddingTop:100,
   },
   loaderContainer: {
     flex: 1,
@@ -236,7 +235,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 40 : 10,
     paddingBottom: 15,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,

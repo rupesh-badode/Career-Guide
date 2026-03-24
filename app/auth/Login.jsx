@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
- KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform,
   Animated, ActivityIndicator, Alert, ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 // 👉 REDUX IMPORTS
 import { useDispatch, useSelector } from 'react-redux';
 import { login, changeRole } from '../../src/redux/authSlice';
@@ -14,16 +15,15 @@ import { login, changeRole } from '../../src/redux/authSlice';
 // 👉 API IMPORTS
 import { LoginConsultant } from '../../src/services/consultantAPI';
 import { loginApi } from '../../src/services/authAPI';
+import { loginMentor } from '../../src/services/mentorAPI'; // Make sure this path is correct based on your project structure
 
-// 👉 InputField me ab hum 'themeColor' pass kar rahe hain
-// 👉 Removed elevation and shadow from the dynamic focus style so Android doesn't redraw and drop focus!
-const InputField = ({ icon, placeholder, value, onChangeText, secureTextEntry, keyboardType = 'default', themeColor }) => {
+const InputField = React.memo(({ icon, placeholder, value, onChangeText, secureTextEntry, keyboardType = 'default', themeColor }) => {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
     <View style={[
       styles.inputContainer,
-      isFocused && { borderColor: themeColor, backgroundColor: '#FFFFFF', borderWidth: 1.5 } // Replaced elevation with a slightly thicker border for the active effect
+      isFocused && { borderColor: themeColor, backgroundColor: '#FFFFFF', borderWidth: 1.5 }
     ]}>
       <Ionicons name={icon} size={20} color={isFocused ? themeColor : '#9CA3AF'} style={styles.inputIcon} />
       <TextInput
@@ -40,17 +40,34 @@ const InputField = ({ icon, placeholder, value, onChangeText, secureTextEntry, k
       />
     </View>
   );
-};
+});
 
 export default function LoginScreen({ navigation }) {
   const dispatch = useDispatch();
 
   // 👉 1. REDUX se current role uthana
-  const role = useSelector((state) => state.auth.role);
+  const role = useSelector((state) => state.auth.role) || 'User'; // Added fallback
+  const isUser = role === 'User';
   const isCounselor = role === 'Consultant';
+  const isMentor = role === 'Mentor';
 
-  // 👉 2. DYNAMIC THEME COLOR (Counselor = Green, User = Blue)
-  const themeColor = isCounselor ? '#10B981' : '#3B82F6';
+  // 👉 2. DYNAMIC THEME COLOR (User = Blue, Counselor = Green, Mentor = Purple)
+  let themeColor = '#3B82F6'; // Default User
+  let bgLightColor = '#EFF6FF';
+  let iconName = 'person';
+  let displayRole = 'User';
+
+  if (isCounselor) {
+    themeColor = '#10B981';
+    bgLightColor = '#D1FAE5';
+    iconName = 'medical';
+    displayRole = 'Consultant';
+  } else if (isMentor) {
+    themeColor = '#8B5CF6'; // Premium Purple for Mentors
+    bgLightColor = '#EDE9FE';
+    iconName = 'school'; // Education/Mentor icon
+    displayRole = 'Mentor';
+  }
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -75,46 +92,47 @@ export default function LoginScreen({ navigation }) {
     setIsLoading(true);
     try {
       const credentials = { email, password };
-      let response;
-
-      // API Call
-      if (isCounselor) {
-        response = await LoginConsultant(credentials);
-      } else {
-        response = await loginApi(credentials);
-      }
-
-      const token = response?.token || response?.data?.token;
+      let token = null;
       let userDataToSave = {};
 
-      // 👉 Yahan humne dono API responses ko alag-alag handle kiya hai
+      // 👉 API Call based on Role
       if (isCounselor) {
-        // Consultant wale response me koi 'user' object nahi hai, direct role hai
-        userDataToSave = {
-          role: response?.role || 'Consultant',
-          // Agar aage chalkar API me name ya id aaye, toh yahan add kar sakte ho
-        };
+        const response = await LoginConsultant(credentials);
+        token = response?.token || response?.data?.token;
+        userDataToSave = { role: response?.role || 'Consultant' };
+
+      } else if (isMentor) {
+        // 👉 New Mentor API Handle
+        const mentorResponse = await loginMentor(credentials);
+        
+        if (!mentorResponse.success) {
+           throw new Error(mentorResponse.message || "Invalid mentor credentials");
+        }
+        
+        token = mentorResponse.token;
+        // Adjust based on your API's exact response shape
+        userDataToSave = mentorResponse.data?.user || mentorResponse.data || {}; 
+        userDataToSave.role = 'Mentor';
+
       } else {
-        // User wale response me poora 'user' object aata hai
+        const response = await loginApi(credentials);
+        token = response?.token || response?.data?.token;
         userDataToSave = response?.user || response?.data?.user || {};
-        // Ensure role is exactly 'User'
         userDataToSave.role = 'User'; 
       }
 
+      // 👉 Save & Dispatch
       if (token) {
-        // 1. Storage me Token aur UserData dono save karo
         await AsyncStorage.setItem('userToken', token);
         await AsyncStorage.setItem('userData', JSON.stringify(userDataToSave));
         
-        console.log("Saved User Data:", userDataToSave);
-
-        // 2. Redux state me dispatch karo (isse app turant login state me jayegi)
+        console.log(`Saved ${displayRole} Data:`, userDataToSave);
         dispatch(login(userDataToSave));
       } else {
         Alert.alert("Login Failed", "Invalid email or password");
       }
     } catch (error) {
-      Alert.alert("Login Failed", error.message || "Invalid credentials");
+      Alert.alert("Login Failed", error.message || "Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -124,48 +142,48 @@ export default function LoginScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        // 👉 FIX 2: Set Android behavior to undefined
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
-          // 👉 FIX 3: Changed 'always' to 'handled' so the keyboard only dismisses when clicking OUTSIDE the inputs
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          {/* Your Animated.View and everything else stays exactly the same inside here */}
           <Animated.View style={{ opacity: fadeAnim, flex: 1, justifyContent: 'center' }}>
 
             <View style={styles.headerContainer}>
-              <View style={[styles.logoCircle, { backgroundColor: isCounselor ? '#D1FAE5' : '#EFF6FF' }]}>
-                <Ionicons
-                  name={isCounselor ? "medical" : "person"}
-                  size={40}
-                  color={themeColor} // Dynamic Icon Color
-                />
+              <View style={[styles.logoCircle, { backgroundColor: bgLightColor }]}>
+                <Ionicons name={iconName} size={40} color={themeColor} />
               </View>
               <Text style={styles.title}>Welcome Back</Text>
               <Text style={styles.subtitle}>
-                Sign in to access your {isCounselor ? "dashboard" : "sessions"}
+                Sign in to access your {displayRole.toLowerCase()} dashboard
               </Text>
             </View>
 
-            {/* 👉 REDUX CONTROLLED TOGGLE */}
+            {/* 👉 3-WAY REDUX CONTROLLED TOGGLE */}
             <View style={styles.toggleContainer}>
               <TouchableOpacity
-                style={[styles.toggleBtn, !isCounselor && styles.toggleActive]}
-                onPress={() => dispatch(changeRole('User'))} // Redux Action
+                style={[styles.toggleBtn, isUser && styles.toggleActive]}
+                onPress={() => dispatch(changeRole('User'))}
               >
-                <Text style={[styles.toggleText, !isCounselor && { color: themeColor }]}>USER</Text>
+                <Text style={[styles.toggleText, isUser && { color: themeColor }]}>STUDENT</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.toggleBtn, isCounselor && styles.toggleActive]}
-                onPress={() => dispatch(changeRole('Consultant'))} // Redux Action
+                onPress={() => dispatch(changeRole('Consultant'))}
               >
                 <Text style={[styles.toggleText, isCounselor && { color: themeColor }]}>CONSULTANT</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.toggleBtn, isMentor && styles.toggleActive]}
+                onPress={() => dispatch(changeRole('Mentor'))}
+              >
+                <Text style={[styles.toggleText, isMentor && { color: themeColor }]}>MENTOR</Text>
               </TouchableOpacity>
             </View>
 
@@ -176,7 +194,7 @@ export default function LoginScreen({ navigation }) {
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
-                themeColor={themeColor} // Pass theme color here
+                themeColor={themeColor}
               />
               <InputField
                 icon="lock-closed-outline"
@@ -184,7 +202,7 @@ export default function LoginScreen({ navigation }) {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={true}
-                themeColor={themeColor} // Pass theme color here
+                themeColor={themeColor}
               />
 
               <TouchableOpacity style={styles.forgotPassContainer} onPress={() => navigation?.navigate('ForgetPassword')}>
@@ -192,7 +210,6 @@ export default function LoginScreen({ navigation }) {
               </TouchableOpacity>
 
               <TouchableOpacity
-                // Dynamic Button Color and Shadow
                 style={[
                   styles.loginBtn,
                   { backgroundColor: themeColor, shadowColor: themeColor },
@@ -205,7 +222,7 @@ export default function LoginScreen({ navigation }) {
                 {isLoading ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.loginBtnText}>Log In as {isCounselor ? 'Consultant' : 'User'}</Text>
+                  <Text style={styles.loginBtnText}>Log In as {displayRole}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -232,11 +249,11 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: 'bold', color: '#111827', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#6B7280', textAlign: 'center', paddingHorizontal: 20 },
 
-  // Toggle Styles (A bit cleaned up since colors are dynamic now)
+  // 👉 Updated Toggle Styles to fit 3 items
   toggleContainer: { flexDirection: 'row', backgroundColor: '#F3F4F6', borderRadius: 12, padding: 4, marginBottom: 25 },
   toggleBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   toggleActive: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 2 },
-  toggleText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
+  toggleText: { fontSize: 12, fontWeight: '700', color: '#6B7280' }, // Decreased fontSize slightly to fit 3 words cleanly
 
   formContainer: { marginBottom: 20 },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, marginBottom: 16, paddingHorizontal: 15, height: 55 },

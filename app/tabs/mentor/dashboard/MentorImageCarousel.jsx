@@ -8,20 +8,21 @@ import {
   Animated, 
   Platform 
 } from 'react-native';
+import { getBanner } from '../../../../src/services/mentorAPI';
 
 // ⚠️ UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
-import { getBanners } from '../../../../src/services/user'; 
 
 const { width } = Dimensions.get('window');
 
-// Responsive & Full Width settings
 const CONTAINER_WIDTH = width;
-const ITEM_WIDTH = width; // 🔥 Full width kar diya hai
-const CAROUSEL_HEIGHT = Platform.OS === 'web' ? 400 : 250; // Thodi height badhayi hai premium look ke liye
+const ITEM_WIDTH = width; 
+const CAROUSEL_HEIGHT = Platform.OS === 'web' ? 400 : 250; 
 
-const BG_COLORS = ['#EEF2FF', '#ECFDF5', '#FFFBEB', '#FDF2F8'];
+// 🔥 Mentor Theme Colors (Soft Purples & Indigo tints)
+const MENTOR_PRIMARY = '#8B5CF6';
+const BG_COLORS = ['#F5F3FF', '#EDE9FE', '#F3E8FF', '#FAF5FF'];
 
-// --- Premium Skeleton Loader Component ---
+// --- Premium Mentor Skeleton Loader ---
 const SkeletonLoader = () => {
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
 
@@ -53,7 +54,7 @@ const SkeletonLoader = () => {
   );
 };
 
-export default function ImageCarousel() {
+export default function MentorImageCarousel() {
   const flatListRef = useRef(null);
   
   const [banners, setBanners] = useState([]);
@@ -63,16 +64,36 @@ export default function ImageCarousel() {
   const scrollX = useRef(new Animated.Value(0)).current;
 
   // --- Fetch API Data ---
+  // --- Fetch API Data ---
   useEffect(() => {
     const fetchBannersData = async () => {
       try {
         setLoading(true);
-        const res = await getBanners();
+        const res = await getBanner(); 
+        
+        // 👉 THE FIX IS HERE
+        // Safely extract the array, no matter how the backend wraps it.
+        let bannersArray = [];
+        
         if (res && res.data) {
-          setBanners(res.data);
+          if (Array.isArray(res.data)) {
+            // Direct array: res.data = [...]
+            bannersArray = res.data;
+          } else if (res.data.banners && Array.isArray(res.data.banners)) {
+            // Wrapped in object: res.data = { banners: [...] }
+            bannersArray = res.data.banners;
+          } else if (res.data.data && Array.isArray(res.data.data)) {
+            // Double wrapped: res.data = { data: [...] }
+            bannersArray = res.data.data;
+          }
         }
+        
+        // Ensure we only ever set an array to state
+        setBanners(bannersArray || []);
+        
       } catch (error) {
         console.error("Banner fetch error:", error);
+        setBanners([]); // Fallback to empty array on error
       } finally {
         setLoading(false);
       }
@@ -114,7 +135,6 @@ export default function ImageCarousel() {
   const renderItem = ({ item, index }) => {
     const itemBgColor = BG_COLORS[index % BG_COLORS.length];
 
-    // 🔥 ANIMATION: Sirf fade effect rakha hai kyunki full width par scale ajeeb lagta hai
     const inputRange = [
       (index - 1) * ITEM_WIDTH,
       index * ITEM_WIDTH,
@@ -135,11 +155,13 @@ export default function ImageCarousel() {
             <Image 
               source={{ uri: item.image }} 
               style={styles.image}
-              resizeMode="cover" // Cover zyada premium edge-to-edge feel deta hai
+              resizeMode="cover" 
             />
           </View>
           
           <View style={styles.textWrapper}>
+            {/* Adding a subtle mentor accent line */}
+            <View style={styles.accentLine} />
             <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
           </View>
           
@@ -162,13 +184,14 @@ export default function ImageCarousel() {
 
           const dotWidth = scrollX.interpolate({
             inputRange,
-            outputRange: [6, 20, 6], 
+            outputRange: [6, 22, 6], 
             extrapolate: 'clamp',
           });
 
           const backgroundColor = scrollX.interpolate({
             inputRange,
-            outputRange: ['rgba(255, 255, 255, 0.5)', '#FFFFFF', 'rgba(255, 255, 255, 0.5)'], 
+            // 🔥 Unselected dots: Light purple, Selected dot: Solid Mentor Purple
+            outputRange: ['rgba(139, 92, 246, 0.3)', MENTOR_PRIMARY, 'rgba(139, 92, 246, 0.3)'], 
             extrapolate: 'clamp',
           });
 
@@ -217,7 +240,6 @@ export default function ImageCarousel() {
         viewabilityConfig={viewabilityConfig}
         onScrollToIndexFailed={() => {}} 
       />
-      {/* Dots ko list ke upar absolute position kiya hai */}
       <View style={styles.paginationOverlay}>
         <PaginationDots />
       </View>
@@ -238,10 +260,9 @@ const styles = StyleSheet.create({
     width: ITEM_WIDTH,
     height: CAROUSEL_HEIGHT,
     backgroundColor: '#FFFFFF',
-    // Border radius hata diya hai full width (edge-to-edge) ke liye
   },
   imageWrapper: {
-    flex: 4, // Image ko zyada space diya hai
+    flex: 4, 
     width: '100%',
   },
   image: {
@@ -253,37 +274,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: 'center',
     backgroundColor: '#FFFFFF', 
+    flexDirection: 'row',
+    alignItems: 'center',
     ...Platform.select({
       ios: { 
-        shadowColor: '#000', 
+        shadowColor: '#8B5CF6', // Purple shadow for iOS
         shadowOffset: { width: 0, height: -3 }, 
-        shadowOpacity: 0.05, 
+        shadowOpacity: 0.08, 
         shadowRadius: 5 
       },
-      android: { elevation: 4 }, // Text container ko halka shadow diya upar ki taraf
-      web: { boxShadow: '0px -4px 10px rgba(0, 0, 0, 0.03)' },
+      android: { elevation: 5 }, 
+      web: { boxShadow: '0px -4px 10px rgba(139, 92, 246, 0.05)' },
     }),
   },
+  accentLine: {
+    width: 4,
+    height: '60%',
+    backgroundColor: MENTOR_PRIMARY,
+    borderRadius: 2,
+    marginRight: 12,
+  },
   title: {
+    flex: 1,
     fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: '700',
+    color: '#1F2937', // Dark slate for premium readability
     letterSpacing: 0.5, 
   },
   paginationOverlay: {
     position: 'absolute',
-    bottom: 60, // Text box ke theek upar image par dots aayenge
+    bottom: CAROUSEL_HEIGHT * (1.2 / 5.2) + 15, // Dynamically placed just above the text box
     left: 0,
     right: 0,
     alignItems: 'center',
   },
   paginationContainer: {
     flexDirection: 'row',
-    height: 10,
-    backgroundColor: 'rgba(0,0,0,0.2)', // Halka dark background dots ke peeche visibility ke liye
+    height: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // White frosted glass background for purple dots
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   dot: {
     height: 6,
@@ -291,7 +327,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   
-  // Skeleton Styles
+  // Skeleton Styles updated to Mentor theme
   skeletonContainer: {
     width: ITEM_WIDTH,
     height: CAROUSEL_HEIGHT,
@@ -299,7 +335,7 @@ const styles = StyleSheet.create({
   },
   skeletonImage: {
     flex: 4,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#EDE9FE', // Light purple skeleton
   },
   skeletonTextWrapper: {
     flex: 1.2,
@@ -309,7 +345,7 @@ const styles = StyleSheet.create({
   },
   skeletonText: {
     height: 14,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#F3E8FF',
     borderRadius: 4,
   }
 });

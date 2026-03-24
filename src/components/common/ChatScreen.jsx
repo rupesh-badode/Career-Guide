@@ -36,6 +36,17 @@ const AnimatedIcon = ({ name, size = 24, color = '#333', onPress, style }) => (
 export default function ChatScreen({ navigation, route }) {
   const { receiverId, receiverName, receiverAvatar, consultationId } = route?.params || {};
 
+  const auth = useSelector((state) => state.auth);
+
+  console.log("Auth",auth);
+
+
+  console.log("ROOM:", consultationId);
+console.log("RECEIVER:", receiverId);
+
+
+
+
   // Redux se User aur Role nikalna
   const { userData } = useSelector((state) => state.auth);
   const myUserRole = userData?.role;
@@ -75,63 +86,29 @@ export default function ChatScreen({ navigation, route }) {
 
 
   useEffect(() => {
-    // 1. Wait for ID and Room ID
-    if (!consultationId || !myUserId) {
-      // Data abhi nahi aaya hai
-      return;
-    }
 
-    // 2. IDs mil gayi, toh Loading hatao
-    setIsLoading(false);
+  if (!socketRef.current) {
+    socketRef.current = io(SOCKET_URL, {
+      transports: ['websocket'],
+    });
+  }
 
-    // 3. Socket Initialize
-    if (!socketRef.current) {
-      socketRef.current = io(SOCKET_URL, {
-        transports: ['websocket'],
-        forceNew: true,
-      });
-    }
+  const socket = socketRef.current;
 
-    const socket = socketRef.current;
+  socket.emit('joinRoom', {
+    consultationId,
+    userId: myUserId
+  });
 
-    // Remove old listeners to prevent duplication
-    socket.off('connect');
-    socket.off('disconnect');
+  socket.on('receiveMessage', (incomingMessage) => {
+    setMessages(prev => [...prev, incomingMessage]);
+  });
+
+  return () => {
     socket.off('receiveMessage');
+  };
 
-    // Register new listeners
-    socket.on('connect', () => {
-      console.log('Connected:', socket.id);
-      setIsConnected(true);
-      socket.emit('joinRoom', { consultationId });
-    });
-
-    socket.on('disconnect', () => {
-      setIsConnected(false);
-    });
-
-    socket.on('receiveMessage', (incomingMessage) => {
-      setMessages((prevMessages) => {
-        // Prevent adding my own messages
-        if (incomingMessage.senderId === myUserId) return prevMessages;
-
-        // Prevent duplicates
-        const isDuplicate = prevMessages.some(msg => msg._id === incomingMessage._id);
-        if (isDuplicate) return prevMessages;
-
-        return [...prevMessages, incomingMessage];
-      });
-      scrollToBottom();
-    });
-
-    return () => {
-      if (socket) {
-        socket.off('receiveMessage');
-        socket.off('connect');
-        socket.off('disconnect');
-      }
-    };
-  }, [consultationId, myUserId]);
+}, [consultationId]);   // ❗ myUserId hata diya
   // ==============================
   // SCROLL TO BOTTOM
   // ==============================
@@ -143,6 +120,7 @@ export default function ChatScreen({ navigation, route }) {
     }, 150);
   };
 
+
   // ==============================
   // SEND MESSAGE
   // ==============================
@@ -151,7 +129,7 @@ export default function ChatScreen({ navigation, route }) {
     if (inputText.trim() === '' || !myUserId) return;
 
     // 👉 FIX 2: senderType ko .toLowerCase() karna zaroori hai (e.g. "Consultant" -> "consultant")
-    const safeSenderType = myUserRole ? myUserRole.toLowerCase() : "user";
+    const safeSenderType = myUserRole ? myUserRole.toLowerCase() : "User";
 
     const messageData = {
       consultationId: consultationId,
@@ -206,15 +184,7 @@ export default function ChatScreen({ navigation, route }) {
   // UI RENDERING
   // ==============================
 
-  // 👉 Jab tak User/Consultant ki ID backend se set nahi ho jati, loader dikhao
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#3B82F6" />
-        <Text style={{ marginTop: 10, color: '#888' }}>Loading Chat...</Text>
-      </SafeAreaView>
-    );
-  }
+  
 
   return (
     <SafeAreaView style={styles.safeArea}>

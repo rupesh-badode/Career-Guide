@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, Image, Pressable, Platform,
-  Modal, TouchableOpacity, TextInput, LayoutAnimation, UIManager
-} from 'react-native';
+  Modal, TouchableOpacity, TextInput, LayoutAnimation, UIManager,
+  Animated
+} from 'react-native'; // 👈 SafeAreaView removed from here to fix warning
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
 import { BlurView } from 'expo-blur';
@@ -10,6 +11,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getUserProfile } from '../../services/authAPI';
 import { getConsultantProfile } from '../../services/consultantAPI';
+import { getMentorProfile } from '../../services/mentorAPI'; // Added Mentor API
+import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { getCart } from '../../services/user';
 
 // Enable Android LayoutAnimations
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -35,8 +39,10 @@ const HeaderIconButton = ({ icon, onPress, color, badgeCount }) => {
   );
 };
 
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
+
 export default function CustomHeader({
-  userName = "rahul",
+  userName = "Guest",
   profilePic = 'https://i.pravatar.cc/150?img=11',
   notificationCount = 2,
   routeName,
@@ -47,40 +53,98 @@ export default function CustomHeader({
   onActionPress,
   onSearchChange,
   onFilterPress,
-  onSortSelect
+  onSortSelect,
+  translateY,
+  headerOpacity
 }) {
 
   const insets = useSafeAreaInsets();
-  const role = useSelector((state) => state.auth.role);
   
+  // 👉 1. STRICT ROLE CHECK
+  const role = useSelector((state) => state.auth.role) || 'User';
+  const isConsultant = role === 'Consultant';
+  const isMentor = role === 'Mentor';
+  const isUser = role === 'User';
+
   const [isFilterDropdownVisible, setFilterDropdownVisible] = useState(false);
   const [isProfileDropdownVisible, setProfileDropdownVisible] = useState(false);
+
+  const [cartCount, setCartCount] = useState(0);
+  const isFocused = useIsFocused();
   
   const [searchText, setSearchText] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [userData, setUserData] = useState(null);
 
-  const isCounselor = role === 'Consultant';
+  const navigation = useNavigation();
+
+  // 👉 2. DYNAMIC THEME FOR 3 ROLES
+  let primaryColor = '#4F46E5'; // Default User (Blue/Indigo)
+  let greetingText = 'Hi, ';
+  let subTextMsg = 'How are you feeling?';
+  let actionIcn = 'search-outline';
+
+  if (isConsultant) {
+    primaryColor = '#10B981'; // Green
+    greetingText = 'Hello, Expert ';
+    subTextMsg = 'Ready for sessions?';
+    actionIcn = 'calendar-outline';
+  } else if (isMentor) {
+    primaryColor = '#8B5CF6'; // Purple
+    greetingText = 'Welcome, Mentor ';
+    subTextMsg = 'Check your upcoming classes';
+    actionIcn = 'calendar-outline';
+  }
+
   const theme = {
-    primary: isCounselor ? '#10B981' : '#4F46E5',
-    greeting: isCounselor ? 'Hello, Dr. ' : 'Hi, ',
-    subText: isCounselor ? 'Ready for sessions?' : 'How are you feeling?',
-    actionIcon: isCounselor ? 'calendar-outline' : 'search-outline',
+    primary: primaryColor,
+    greeting: greetingText,
+    subText: subTextMsg,
+    actionIcon: actionIcn,
   };
 
   useEffect(() => {
-    fetchProfile();
-  }, [role]);
-
-  async function fetchProfile() {
-    try {
-      let res = isCounselor ? await getConsultantProfile() : await getUserProfile();
-      const profileInfo = res?.data || res?.user || res?.consultant || res;
-      if (profileInfo) setUserData(profileInfo);
-    } catch (err) {
-      console.log("Header Fetch Error:", err);
+    // 👉 3. STRICT FIX: Cart API sirf tab hit hogi jab strictly role 'User' hoga
+    if (isFocused && isUser) {
+      fetchCartCount();
     }
-  }
+  }, [isFocused, isUser]); // Dependency updated
+
+
+  const fetchCartCount = async () => {
+    try {
+      const res = await getCart();
+      if (res?.data?.items) {
+        setCartCount(res.data.items.length);
+      }
+    } catch (err) {
+      console.log("Header cart fetch error", err);
+    }
+  };
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        let res;
+        // API call based on role
+        if (isConsultant) {
+          res = await getConsultantProfile();
+        } else if (isMentor) {
+          res = await getMentorProfile(); // Fetch Mentor Data
+        } else {
+          res = await getUserProfile();
+        }
+        
+        const profileInfo = res?.data || res?.user || res?.consultant || res?.mentor || res;
+        if (profileInfo) setUserData(profileInfo);
+      } catch (err) {
+        console.log("Header Fetch Error:", err);
+      }
+    }
+    if (isFocused) {
+      fetchProfile();
+    }
+  }, [isFocused, role]);
 
   const toggleSearch = (state) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -117,7 +181,9 @@ export default function CustomHeader({
       );
     }
 
-    if (routeName === 'Chat') {
+    if (routeName === 'Chat'|| routeName === 'Appointment' || routeName === 'Sessions') {
+      const headerTitle = routeName === 'Chat' ? 'Messages' : (routeName === 'Sessions' ? 'Sessions' : 'Appointments');
+      
       return (
         <View style={[styles.contentContainer, { justifyContent: 'space-between' }]}>
           {isSearching ? (
@@ -144,7 +210,7 @@ export default function CustomHeader({
                 <Pressable onPress={() => setProfileDropdownVisible(true)}>
                   <Image source={{ uri: displayAvatar }} style={[styles.avatar, { borderColor: theme.primary }]} />
                 </Pressable>
-                <Text style={styles.chatHeaderTitle}>Messages</Text>
+                <Text style={styles.chatHeaderTitle}>{headerTitle}</Text>
               </View>
 
               <View style={styles.rightIconsContainer}>
@@ -153,8 +219,7 @@ export default function CustomHeader({
                 <HeaderIconButton 
                   icon="filter-outline" 
                   color="#333" 
-                  // badgeCount={notificationCount} 
-                  onPress={onFilterPress} 
+                  onPress={() => setFilterDropdownVisible(true)} 
                 />
               </View>
             </>
@@ -163,7 +228,6 @@ export default function CustomHeader({
       );
     }
 
-    // 👉 NAYA: Specially for 'Home' route - bina search/action icon ke
     if (routeName === 'Home') {
       return (
         <View style={styles.contentContainer}>
@@ -182,14 +246,21 @@ export default function CustomHeader({
           </Pressable>
 
           <View style={styles.rightIconsContainer}>
-            {/* Search/Action Icon Hata Diya Gaya Hai */}
-            <HeaderIconButton icon="cart-outline" color="#333" badgeCount={notificationCount} onPress={onNotificationPress} />
+            {/* Show Cart ONLY for Users */}
+            {isUser && (
+              <HeaderIconButton icon="cart-outline" color="#333" badgeCount={cartCount} onPress={()=>navigation.navigate("CartScreen")} />
+            )}
+            
+            {/* Show Notification/Action icon for Mentors/Consultants */}
+            {(isConsultant || isMentor) && (
+               <HeaderIconButton icon="notifications-outline" color="#333" badgeCount={0} onPress={() => console.log("Notif pressed")} />
+            )}
           </View>
         </View>
       );
     }
 
-    // Default Fallback (Baaki kisi screen ke liye jahan icon chahiye)
+    // Default Fallback
     return (
       <View style={styles.contentContainer}>
         <Pressable
@@ -209,7 +280,6 @@ export default function CustomHeader({
         <View style={styles.rightIconsContainer}>
           <HeaderIconButton icon={theme.actionIcon} color="#333" onPress={onActionPress} />
           <View style={{ width: 10 }} />
-          <HeaderIconButton icon="cart-outline" color="#333" badgeCount={notificationCount} onPress={onNotificationPress} />
         </View>
       </View>
     );
@@ -217,17 +287,33 @@ export default function CustomHeader({
 
   return (
     <>
-      <BlurView intensity={85} tint="light" style={[styles.blurWrapper, { paddingTop: insets.top + 10 }]}>
-        {renderHeaderContent()}
-      </BlurView>
+      <BlurView 
+        intensity={90} 
+        tint="light" 
+        style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0,
+          height: insets.top,
+          zIndex: 1001,
+        }} 
+      />
 
-      {/* RIGHT SIDE: Filter Dropdown */}
-      <Modal
-        transparent={true}
-        visible={isFilterDropdownVisible}
-        animationType="fade"
-        onRequestClose={() => setFilterDropdownVisible(false)}
+      <AnimatedBlurView 
+        intensity={85} 
+        tint="light" 
+        style={[
+          styles.blurWrapper, 
+          { 
+            paddingTop: (insets?.top || 40) + 10,
+            transform: [{ translateY: translateY || 0 }] 
+          }
+        ]}
       >
+        {renderHeaderContent()}
+      </AnimatedBlurView>
+
+      {/* Filter Modal */}
+      <Modal transparent={true} visible={isFilterDropdownVisible} animationType="fade" onRequestClose={() => setFilterDropdownVisible(false)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setFilterDropdownVisible(false)}>
           <View style={[styles.dropdownContainerRight, { top: insets.top + 60 }]}>
             <TouchableOpacity style={styles.dropdownItem} onPress={() => handleFilterSelect('asc')}>
@@ -240,35 +326,26 @@ export default function CustomHeader({
             </TouchableOpacity>
             <View style={styles.divider} />
             <TouchableOpacity style={styles.dropdownItem} onPress={() => handleFilterSelect('unread')}>
-              <Ionicons name="mail-unread-outline" size={20} color="#4F46E5" />
-              <Text style={[styles.dropdownText, { color: '#4F46E5', fontWeight: '600' }]}>Unread Messages</Text>
+              <Ionicons name="mail-unread-outline" size={20} color={theme.primary} />
+              <Text style={[styles.dropdownText, { color: theme.primary, fontWeight: '600' }]}>Unread Messages</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
 
-      {/* LEFT SIDE: Profile Dropdown */}
-      <Modal
-        transparent={true}
-        visible={isProfileDropdownVisible}
-        animationType="fade"
-        onRequestClose={() => setProfileDropdownVisible(false)}
-      >
+      {/* Profile Modal */}
+      <Modal transparent={true} visible={isProfileDropdownVisible} animationType="fade" onRequestClose={() => setProfileDropdownVisible(false)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setProfileDropdownVisible(false)}>
           <View style={[styles.dropdownContainerLeft, { top: insets.top + 60 }]}>
-            
             <TouchableOpacity style={styles.dropdownItem} onPress={() => handleProfileMenuSelect('profile')}>
               <Ionicons name="person-circle-outline" size={22} color="#4B5563" />
               <Text style={styles.dropdownText}>My Profile</Text>
             </TouchableOpacity>
-            
             <View style={styles.divider} />
-
             <TouchableOpacity style={styles.dropdownItem} onPress={() => handleProfileMenuSelect('logout')}>
               <Ionicons name="log-out-outline" size={22} color="#EF4444" />
               <Text style={[styles.dropdownText, { color: '#EF4444', fontWeight: '600' }]}>Log Out</Text>
             </TouchableOpacity>
-
           </View>
         </TouchableOpacity>
       </Modal>
@@ -278,7 +355,6 @@ export default function CustomHeader({
 
 const styles = StyleSheet.create({
   blurWrapper: {
-    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   contentContainer: {

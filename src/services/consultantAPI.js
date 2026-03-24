@@ -45,7 +45,6 @@ export const updateConsultantProfilePicture = async (payload) => {
     }
 }
 
-
 export const myBooking = async (payload) => {
     try {
         // ✅ Fix 1: Added 'const' and used '{ params: payload }' for GET requests
@@ -70,8 +69,6 @@ export const ConsultantchatHistory = async(consultationId) => {
     throw err.res?.data|| err.message||"Failed to Load";
   }
 }
-
-
 
 export const CreateKYC = async(payload) => {
     try {

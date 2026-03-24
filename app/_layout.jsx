@@ -49,6 +49,8 @@ import MyBooksList from './tabs/user/home/MyBooksList';
 import SingleBookScreen from './tabs/user/home/SingleBookScreen';
 import CartScreen from './tabs/user/profile.jsx/CartScreen';
 import TabNavigatorGroup from './tabs/_layout';
+import AddAddress from './tabs/user/profile.jsx/AddAddress';
+import AllMentorsScreen from './tabs/user/mentor/AllMentorsScreen';
 
 // 👉 YAHAN APNI REGISTER/LOGIN SCREEN IMPORT KAREIN
 
@@ -134,6 +136,8 @@ function AppNavigator() {
                                 <Stack.Screen name='AllBooks' component={MyBooksList} />
                                 <Stack.Screen name='SingleBook' component={SingleBookScreen} />
                                 <Stack.Screen name='CartScreen' component={CartScreen} />
+                                <Stack.Screen name='AddAddress' component={AddAddress} />
+                                <Stack.Screen name='AllMentor' component={AllMentorsScreen} />
                             </>
                         )}
 

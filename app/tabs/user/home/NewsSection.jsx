@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -6,45 +6,58 @@ import {
   Image, 
   TouchableOpacity, 
   Platform,
-  ActivityIndicator
+  Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getWHONews } from '../../../../src/services/user'; // Update path if needed
+import { getWHONews } from '../../../../src/services/user'; 
 import { useNavigation } from '@react-navigation/native';
 
 const PRIMARY_COLOR = '#4F46E5';
+const DEFAULT_NEWS_IMAGE = 'https://images.unsplash.com/photo-1504443914801-b544321b14e5?q=80&w=200&auto=format&fit=crop'; // Ek default health/news image kyunki API image nahi bhej rahi
 
-// Helper function to assign a relevant placeholder image based on the News Type
-const getPlaceholderImage = (type) => {
-  switch (type?.toLowerCase()) {
-    case 'news release':
-      return 'https://images.unsplash.com/photo-1584483760252-c1367f8ebce4?auto=format&fit=crop&w=200&q=80'; // Hospital/Health
-    case 'departmental update':
-      return 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=200&q=80'; // Medical tech
-    case 'statement':
-      return 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=200&q=80'; // Microphones/Press
-    case 'medical product alert':
-      return 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=200&q=80'; // Medicine/Pills
-    default:
-      return 'https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?auto=format&fit=crop&w=200&q=80'; // Generic health
-  }
+// 🔥 NAYA: Premium Skeleton Loader Component
+const SkeletonNewsCard = () => {
+  const pulseAnim = useRef(new Animated.Value(0.4)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.4, duration: 800, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [pulseAnim]);
+
+  return (
+    <View style={styles.newsCard}>
+      <Animated.View style={[styles.thumbnail, { opacity: pulseAnim, backgroundColor: '#E5E7EB' }]} />
+      <View style={styles.contentContainer}>
+        <Animated.View style={{ height: 12, width: '40%', backgroundColor: '#E5E7EB', borderRadius: 4, opacity: pulseAnim, marginBottom: 8 }} />
+        <Animated.View style={{ height: 16, width: '90%', backgroundColor: '#E5E7EB', borderRadius: 4, opacity: pulseAnim, marginBottom: 6 }} />
+        <Animated.View style={{ height: 16, width: '70%', backgroundColor: '#E5E7EB', borderRadius: 4, opacity: pulseAnim, marginBottom: 12 }} />
+        <Animated.View style={{ height: 12, width: '30%', backgroundColor: '#E5E7EB', borderRadius: 4, opacity: pulseAnim }} />
+      </View>
+    </View>
+  );
 };
 
 export default function NewsSection() {
-  // 1. Corrected useState syntax
   const [newsData, setNewsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
-  // 2. Corrected async fetch function
   const fetchData = async () => {
     try {
       setLoading(true);
       const res = await getWHONews();
-      // Check if response has data array
-      if (res && res.data) {
-        // Sirf top 3 news dikhani hai homepage par toh .slice(0, 3) use kar rahe hain
-        setNewsData(res.data.slice(0, 3)); 
+      
+      // 🔥 FIX: Aapki API 'res.data' ke andar array bhej rahi hai
+      // Log ke hisaab se res = { data: [...], success: true, total: 50 } hai.
+      // Toh actual list 'res.data' me hai (ya axios ke hisaab se res.data.data me ho sakti hai)
+      const newsArray = res?.data?.data || res?.data || [];
+      
+      if (newsArray && newsArray.length > 0) {
+        setNewsData(newsArray.slice(0, 3)); 
       }
     } catch (error) {
       console.error("Failed to fetch news:", error);
@@ -53,7 +66,6 @@ export default function NewsSection() {
     }
   };
 
-  // 3. Added Empty Dependency Array [] so it only runs once
   useEffect(() => {
     fetchData();
   }, []);
@@ -64,52 +76,57 @@ export default function NewsSection() {
       {/* Header Section */}
       <View style={styles.headerRow}>
         <Text style={styles.sectionTitle}>Latest Insights</Text>
-        <TouchableOpacity onPress={()=>navigation.navigate("News") }  >
+        <TouchableOpacity onPress={() => navigation.navigate("News")}>
           <Text style={styles.viewAllText}>View All</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Loading State */}
-      {loading ? (
-        <View style={styles.loaderContainer}>
-           <ActivityIndicator size="small" color={PRIMARY_COLOR} />
-        </View>
-      ) : (
-        /* News List */
-        <View style={styles.listContainer}>
-          {newsData.map((item) => (
-            <TouchableOpacity key={item.Id} style={styles.newsCard} activeOpacity={0.7}>
-              
-              {/* Left Side: Thumbnail */}
-              <Image 
-                source={{ uri: getPlaceholderImage(item.NewsType) }} 
-                style={styles.thumbnail} 
-              />
-              
-              {/* Right Side: Content */}
-              <View style={styles.contentContainer}>
-                <View style={styles.metaRow}>
-                  <Text style={styles.categoryText} numberOfLines={1}>
-                    {item.NewsType || 'Update'}
+      {/* List Section */}
+      <View style={styles.listContainer}>
+        {loading ? (
+          // Skeleton Loader (3 cards dikhayenge loading ke time)
+          <>
+            <SkeletonNewsCard />
+            <SkeletonNewsCard />
+            <SkeletonNewsCard />
+          </>
+        ) : (
+          newsData.map((item) => {
+            // 🔥 FIX: Exact API keys use ki hain jo aapke console.log mein thin
+            return (
+              <TouchableOpacity key={item.Id} style={styles.newsCard} activeOpacity={0.7}>
+                
+                {/* Thumbnail: API image nahi bhej rahi toh default image use ki hai */}
+                <Image 
+                  source={{ uri: DEFAULT_NEWS_IMAGE }} 
+                  style={styles.thumbnail} 
+                />
+                
+                <View style={styles.contentContainer}>
+                  <View style={styles.metaRow}>
+                    <Text style={styles.categoryText} numberOfLines={1}>
+                      {item.NewsType || 'Update'}
+                    </Text>
+                    <View style={styles.dot} />
+                    {/* Read time API me nahi hai, toh static ya hide kar sakte hain */}
+                    <Text style={styles.readTimeText}>3 min read</Text>
+                  </View>
+                  
+                  <Text style={styles.newsTitle} numberOfLines={2}>
+                    {item.Title}
                   </Text>
-                  <View style={styles.dot} />
-                  <Text style={styles.readTimeText}>3 min read</Text>
+                  
+                  <View style={styles.bottomRow}>
+                    <Ionicons name="time-outline" size={14} color="#9CA3AF" />
+                    <Text style={styles.dateText}>{item.FormatedDate}</Text>
+                  </View>
                 </View>
-                
-                <Text style={styles.newsTitle} numberOfLines={2}>
-                  {item.Title}
-                </Text>
-                
-                <View style={styles.bottomRow}>
-                  <Ionicons name="time-outline" size={14} color="#9CA3AF" />
-                  <Text style={styles.dateText}>{item.FormatedDate}</Text>
-                </View>
-              </View>
 
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+              </TouchableOpacity>
+            )
+          })
+        )}
+      </View>
 
     </View>
   );
@@ -120,12 +137,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 10,
   },
-  loaderContainer: {
-    paddingVertical: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // --- Header Styles ---
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -140,10 +151,9 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: 14,
-    color: PRIMARY_COLOR, // Matched with your Emerald theme
+    color: PRIMARY_COLOR, 
     fontWeight: '600',
   },
-  // --- List & Card Styles ---
   listContainer: {
     paddingHorizontal: 20,
   },
@@ -160,14 +170,12 @@ const styles = StyleSheet.create({
       android: { elevation: 2 },
     }),
   },
-  // --- Image Styles ---
   thumbnail: {
     width: 80,
     height: 80,
     borderRadius: 12,
     backgroundColor: '#E5E7EB',
   },
-  // --- Content Styles ---
   contentContainer: {
     flex: 1,
     marginLeft: 15,
@@ -183,7 +191,7 @@ const styles = StyleSheet.create({
     color: PRIMARY_COLOR, 
     fontWeight: '700',
     textTransform: 'uppercase',
-    maxWidth: '65%', // Prevents long categories from pushing out the read time
+    maxWidth: '65%', 
   },
   dot: {
     width: 4,

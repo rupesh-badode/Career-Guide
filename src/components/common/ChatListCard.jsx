@@ -174,7 +174,8 @@ export default function ChatListCard({
   isLoading = false,
   onCardPress,
   onActionPress,
-  customThemeColor
+  customThemeColor,
+  contentPaddingTop, onScroll
 }) {
 
 
@@ -216,11 +217,16 @@ export default function ChatListCard({
 
   return (
     <View style={styles.container}>
-      <FlatList
+      <Animated.FlatList
         data={data}
         keyExtractor={(item) => item?._id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        onScroll={onScroll}
+            scrollEventThrottle={16}
+            contentContainerStyle={{ 
+                paddingTop: contentPaddingTop, 
+                paddingBottom: 100 
+            }}
         renderItem={({ item }) => (
           <BookingCard
             item={item}
@@ -235,7 +241,7 @@ export default function ChatListCard({
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 20, marginTop: 100},
+  container: { paddingHorizontal: 20, marginTop:20},
   emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 50 },
   emptyText: { color: '#6B7280', fontSize: 16, marginTop: 10 },
   card: {
