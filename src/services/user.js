@@ -17,6 +17,20 @@ export const AllConsultant = async () =>{
 
 
 
+export const SingleConsultant = async (id) =>{
+  try{
+    // 👉 Add 'await' right before Axios.get
+    const response = await Axios.get(`/user/get-consultant/${id}`);
+    
+    // Now 'response' is the actual data, not a pending Promise!
+    return response.data; 
+  } catch(error){
+    throw error.response?.data || error.message || "failed to load";
+  }
+}
+
+
+
 export const MyBookings = async () =>{
   try{
     // 👉 Add 'await' right before Axios.get
@@ -66,6 +80,18 @@ export const getBlogs = async()=>{
     throw err.res?.data|| err.message||"Failed to Load";
   }
 }
+
+
+export const getSingleBlog = async(id)=>{
+  try{
+    const res  = await Axios.get(`/user/get-blog/${id}`);
+    return res.data;
+  }catch(err){
+    throw err.res?.data|| err.message||"Failed to Load";
+  }
+}
+
+
 
 
 export const getLegal = async()=>{

@@ -55,7 +55,7 @@ const ConsultantListItem = ({ item, index }) => {
           counselorSpecialization: item.specialization
         })} 
       >
-        <Image source={{ uri: item.profilePicture }} style={styles.avatar} />
+        <Image source={{ uri: item.profilePicture ||`https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=0D8ABC&color=fff` }} style={styles.avatar} />
 
         <View style={styles.infoContainer}>
           <Text style={styles.name} numberOfLines={1}>{item.name}</Text>

@@ -205,9 +205,11 @@ export default function LoginScreen({ navigation }) {
                 themeColor={themeColor}
               />
 
-              <TouchableOpacity style={styles.forgotPassContainer} onPress={() => navigation?.navigate('ForgetPassword')}>
-                <Text style={[styles.forgotPassText, { color: themeColor }]}>Forgot Password?</Text>
-              </TouchableOpacity>
+              {isUser && (
+                <TouchableOpacity style={styles.forgotPassContainer} onPress={() => navigation?.navigate('ForgetPassword')}>
+                  <Text style={[styles.forgotPassText, { color: themeColor }]}>Forgot Password?</Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={[
@@ -227,12 +229,16 @@ export default function LoginScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => navigation?.navigate('Register')}>
-                <Text style={[styles.registerLink, { color: themeColor }]}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
+            
+
+            {isUser && (
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Don't have an account? </Text>
+                <TouchableOpacity onPress={() => navigation?.navigate('Register')}>
+                  <Text style={[styles.registerLink, { color: themeColor }]}>Sign Up</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
           </Animated.View>
         </ScrollView>

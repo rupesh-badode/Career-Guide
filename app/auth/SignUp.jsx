@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { registerUser } from '../../src/services/user'; 
 import { useNavigation } from '@react-navigation/native';
 
+
 const InputField = ({ icon, placeholder, value, onChangeText, secureTextEntry, keyboardType = 'default' }) => {
   const [isFocused, setIsFocused] = useState(false);
 

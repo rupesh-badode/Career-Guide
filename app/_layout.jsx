@@ -1,13 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, Animated, ImageComponent } from 'react-native';
+import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-
 // --- REDUX IMPORTS ---
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store, persistor } from '../src/redux/store';
+import { login } from '../src/redux/authSlice';
+import { PersistGate } from 'redux-persist/integration/react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// --- NOTIFICATION & SOCKET IMPORTS ---
+import * as Notifications from 'expo-notifications';
+import io from 'socket.io-client';
+import { backendConfig } from '../src/constants/MainContent';
 
 // --- SCREEN IMPORTS ---
 import ProfileScreen from '../src/components/common/ProfileScreen';
@@ -24,15 +31,12 @@ import RegisterScreen from './auth/SignUp';
 import SplashScreen from './SplashScreen';
 import OtpVerification from './auth/OtpVerification';
 import LoginScreen from './auth/Login';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { login } from '../src/redux/authSlice';
 import ForgotPassword from './auth/ForgotPassword';
 import ResetPassword from './auth/ResetPassword';
 import ProfileDetailsList from './tabs/user/profile.jsx/ProfileDetailsList';
 import EditProfileScreen from '../src/components/common/EditProfileScreen';
 import { getConsultantProfile } from '../src/services/consultantAPI';
 import ConsultProfileDetails from './tabs/counsellor/profile/ContsultProfileDetails';
-import { PersistGate } from 'redux-persist/integration/react';
 import BookingScreen from './tabs/user/razor pay/BookingScreen';
 import BookingSuccess from './tabs/user/razor pay/BookingSuccess';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,151 +56,175 @@ import TabNavigatorGroup from './tabs/_layout';
 import AddAddress from './tabs/user/profile.jsx/AddAddress';
 import AllMentorsScreen from './tabs/user/mentor/AllMentorsScreen';
 import MentorChatList from './tabs/user/mentor/MentorsChatList';
-
-// 👉 YAHAN APNI REGISTER/LOGIN SCREEN IMPORT KAREIN
+import BlogDetails from './tabs/user/blog/BlogDetails';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-
-
+const SOCKET_URL = backendConfig.origin;
+let globalSocket; // Bahar declare kiya taaki reference maintained rahe
 
 // ==============================
-// 3. MAIN APP NAVIGATOR (With Splash & Auth Guard)
+// 3. MAIN APP NAVIGATOR (With Auth Guard & Global Sockets)
 // ==============================
 function AppNavigator() {
-    // REDUX STATES
-    const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const dispatch = useDispatch();
+  
+  // REDUX STATES
+  const authState = useSelector((state) => state.auth);
+  const isAuthenticated = authState.isAuthenticated;
+  const myUserId = authState?.userData?._id || authState?.consultantData?._id || authState?._id; 
 
-    // LOCAL SPLASH STATE
-    const [isSplashReady, setIsSplashReady] = useState(true);
-    const dispatch = useDispatch();
-    // AppNavigator ke andar ka useEffect
-    useEffect(() => {
-        const checkLoginStatus = async () => {
-            try {
-                const token = await AsyncStorage.getItem('userToken');
-                const userDataString = await AsyncStorage.getItem("userData"); // Yahan await lagana mat bhulna!
+  // LOCAL SPLASH STATE
+  const [isSplashReady, setIsSplashReady] = useState(true);
 
-                if (token && userDataString) {
-                    const parsedUserData = JSON.parse(userDataString); // String ko wapas Object banaya
+  // ⚡ 1. CHECK LOGIN SESSION
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        const userDataString = await AsyncStorage.getItem("userData");
 
-                    // Yeh parsedUserData me role = "User" ya "Consultant" exact aayega
-                    dispatch(login(parsedUserData));
-                }
-            } catch (error) {
-                console.log("Error restoring session:", error);
-            } finally {
-                setTimeout(() => {
-                    setIsSplashReady(false);
-                }, 2000);
-            }
-        };
+        if (token && userDataString) {
+          const parsedUserData = JSON.parse(userDataString);
+          dispatch(login(parsedUserData));
+        }
+      } catch (error) {
+        console.log("Error restoring session:", error);
+      } finally {
+        setTimeout(() => setIsSplashReady(false), 2000);
+      }
+    };
+    checkLoginStatus();
+  }, [dispatch]);
 
-        checkLoginStatus();
-    }, [dispatch]);
+  // ⚡ 2. GLOBAL SOCKET CONNECTION FOR NOTIFICATIONS
+  useEffect(() => {
+    if (!myUserId) return; // Bina login connect mat karo
 
+    // Init Socket
+    globalSocket = io(SOCKET_URL, { transports: ['websocket'] });
 
-    return (
-        <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
+    globalSocket.on('connect', () => {
+      console.log("🌍 Global Socket Connected for Push Notifications!");
+      // Apne global room me join ho jao notification receive karne ke liye
+      globalSocket.emit('joinUserRoom', myUserId); 
+    });
 
-                {/* Condition 1: Agar splash screen ka time chal raha hai */}
-                {isSplashReady ? (
-                    <Stack.Screen name="Splash" component={SplashScreen} />
-                ) :
+    // 🛎️ Listener: New Booking Received
+    globalSocket.on('new_booking_received', (bookingData) => {
+      console.log("🔔 Socket Alert: New Booking!", bookingData);
+      
+      // Confirm aane pe hi bajao
+      if (bookingData.status === 'confirmed') {
+        const studentName = bookingData?.studentId?.name || "A Student";
+        const time = bookingData?.time || "TBA";
 
-                    /* Condition 2: Agar user Login NAHI hai */
-                    !isAuthenticated ? (
-                        <>
-                            <Stack.Screen name='Login' component={LoginScreen} />
-                            <Stack.Screen name="Register" component={RegisterScreen} />
-                            <Stack.Screen name='OtpVerification' component={OtpVerification} />
-                            <Stack.Screen name='ForgetPassword' component={ForgotPassword} />
-                            <Stack.Screen name='ResetPassword' component={ResetPassword} />
+        Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Session Confirmed! ✅",
+            body: `${studentName} is scheduled for ${time}.`,
+            sound: true,
+            data: { route: 'Appointments' } 
+          },
+          trigger: null,
+        });
+      }
+    });
 
-                            {/* Aap yahan Login screen bhi add kar sakte hain */}
-                        </>
-                    ) :
-                        /* Condition 3: Agar user Login HAI */
-                        (
-                            <>
-                                <Stack.Screen name="MainTabs" component={TabNavigatorGroup} />
-                                <Stack.Screen name="CounselorProfile" component={CounselorProfile} />
-                                <Stack.Screen name='ChatScreen' component={ChatScreen} />
-                                <Stack.Screen name='EditProfile' component={EditProfileScreen} />
-                                <Stack.Screen name="ProfileDetail" component={ProfileDetailsList} />
-                                <Stack.Screen name='ConsultProfileDetails' component={ConsultProfileDetails} />
-                                <Stack.Screen name='StudentProfile' component={StudentProfile} />
-                                <Stack.Screen name='BookingScreen' component={BookingScreen} />
-                                <Stack.Screen name="BookingSuccess" component={BookingSuccess} header={{ headerShown: false }} />
-                                <Stack.Screen name='VideoCall' component={VideoCallScreen} />
-                                <Stack.Screen name='KycScreen' component={KycScreen} />
-                                <Stack.Screen name='KycDetails' component={KycDetailsScreen} />
-                                <Stack.Screen name='LegalScreen' component={LegalScreen} />
-                                <Stack.Screen name='AllBooks' component={MyBooksList} />
-                                <Stack.Screen name='SingleBook' component={SingleBookScreen} />
-                                <Stack.Screen name='CartScreen' component={CartScreen} />
-                                <Stack.Screen name='AddAddress' component={AddAddress} />
-                                <Stack.Screen name='AllMentor' component={AllMentorsScreen} />
-                                <Stack.Screen name='MentorChatList' component={MentorChatList} />
-                            </>
-                        )}
+    // 💬 Listener: New Chat Message Received (Global alert)
+    globalSocket.on('new_message_received', (messageData) => {
+      console.log("💬 Socket Alert: New Chat Message!");
+      
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: "New Message 📩",
+          body: messageData?.message || "You received a new message.",
+          sound: true,
+        },
+        trigger: null,
+      });
+    });
 
-            </Stack.Navigator>
-        </NavigationContainer>
-    );
+    // Cleanup: Jab user logout hoga
+    return () => {
+      if (globalSocket) {
+        globalSocket.disconnect();
+      }
+    };
+  }, [myUserId]);
+
+  // ==============================
+  // UI RENDER
+  // ==============================
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+
+        {/* Condition 1: Splash Screen */}
+        {isSplashReady ? (
+          <Stack.Screen name="Splash" component={SplashScreen} />
+        ) :
+
+        /* Condition 2: Not Logged In */
+        !isAuthenticated ? (
+          <>
+            <Stack.Screen name='Login' component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name='OtpVerification' component={OtpVerification} />
+            <Stack.Screen name='ForgetPassword' component={ForgotPassword} />
+            <Stack.Screen name='ResetPassword' component={ResetPassword} />
+          </>
+        ) :
+        
+        /* Condition 3: Logged In */
+        (
+          <>
+            <Stack.Screen name="MainTabs" component={TabNavigatorGroup} />
+            <Stack.Screen name="CounselorProfile" component={CounselorProfile} />
+            <Stack.Screen name='ChatScreen' component={ChatScreen} />
+            <Stack.Screen name='EditProfile' component={EditProfileScreen} />
+            <Stack.Screen name="ProfileDetail" component={ProfileDetailsList} />
+            <Stack.Screen name='ConsultProfileDetails' component={ConsultProfileDetails} />
+            <Stack.Screen name='StudentProfile' component={StudentProfile} />
+            <Stack.Screen name='BookingScreen' component={BookingScreen} />
+            <Stack.Screen name="BookingSuccess" component={BookingSuccess} header={{ headerShown: false }} />
+            <Stack.Screen name='VideoCall' component={VideoCallScreen} />
+            <Stack.Screen name='KycScreen' component={KycScreen} />
+            <Stack.Screen name='KycDetails' component={KycDetailsScreen} />
+            <Stack.Screen name='LegalScreen' component={LegalScreen} />
+            <Stack.Screen name='AllBooks' component={MyBooksList} />
+            <Stack.Screen name='SingleBook' component={SingleBookScreen} />
+            <Stack.Screen name='CartScreen' component={CartScreen} />
+            <Stack.Screen name='AddAddress' component={AddAddress} />
+            <Stack.Screen name='AllMentor' component={AllMentorsScreen} />
+            <Stack.Screen name='MentorChatList' component={MentorChatList} />
+            <Stack.Screen name="Blogs" component={BlogScreen} />
+            <Stack.Screen name='BlogDetails' component={BlogDetails} />
+          </>
+        )}
+
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 }
 
 // ==============================
-// 4. WRAP WITH REDUX PROVIDER
+// 4. MAIN LAYOUT WRAPPER
 // ==============================
 export default function MainLayout() {
-    return (
-        <Provider store={store}>
-            <PersistGate
-                loading={
-                    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                        <Text>Loading...</Text>
-                    </View>
-                }
-                persistor={persistor}
-            >
-                <AppNavigator />
-            </PersistGate>
-        </Provider>
-    );
+  return (
+    <Provider store={store}>
+      <PersistGate
+        loading={
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <Text>Loading App...</Text>
+          </View>
+        }
+        persistor={persistor}
+      >
+        <AppNavigator />
+      </PersistGate>
+    </Provider>
+  );
 }
-
-// ==============================
-// STYLES FOR SPLASH SCREEN
-// ==============================
-const styles = StyleSheet.create({
-    splashContainer: {
-        flex: 1,
-        backgroundColor: '#3B82F6', // Blue background
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    logoCircle: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    splashTitle: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-        letterSpacing: 1,
-    },
-    splashSubtitle: {
-        fontSize: 14,
-        color: '#E0E7FF',
-        marginTop: 8,
-        fontWeight: '500',
-    }
-});

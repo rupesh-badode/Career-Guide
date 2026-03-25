@@ -1,76 +1,48 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, Image, Pressable,
-  TextInput, FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator
+  TextInput, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import io from 'socket.io-client';
 import { useSelector } from 'react-redux';
 
-// API Services (Dhyan rakhein ki ye paths aapke project ke hisaab se sahi hon)
 import { chatHistory } from '../../services/user';
-import { ConsultantchatHistory, getConsultantProfile } from '../../services/consultantAPI';
+import { ConsultantchatHistory } from '../../services/consultantAPI';
 import { backendConfig } from '../../constants/MainContent';
 
-const SOCKET_URL = backendConfig.origin; // Apni IP / Backend URL
+const SOCKET_URL = backendConfig.origin; 
 
-// ==========================================
-// Reusable Icon Button
-// ==========================================
 const AnimatedIcon = ({ name, size = 24, color = '#333', onPress, style }) => (
   <Pressable
     onPress={onPress}
-    style={({ pressed }) => [
-      { transform: [{ scale: pressed ? 0.8 : 1 }], opacity: pressed ? 0.7 : 1 },
-      style
-    ]}
+    style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.8 : 1 }], opacity: pressed ? 0.7 : 1 }, style]}
   >
     <Ionicons name={name} size={size} color={color} />
   </Pressable>
 );
 
 export default function ChatScreen({ navigation, route }) {
-  const { receiverId, receiverName, receiverAvatar, consultationId } = route?.params || {};
-
-  const auth = useSelector((state) => state.auth);
-
-  console.log("Auth",auth);
-
-
-  console.log("ROOM:", consultationId);
-console.log("RECEIVER:", receiverId);
-
-
-
-
-  // Redux se User aur Role nikalna
-  const { userData } = useSelector((state) => state.auth);
-  const myUserRole = userData?.role;
-  console.log("UserRole", myUserRole);
+  const { receiverId, receiverName, receiverAvatar, consultationId, senderId } = route?.params || {};
+  
+  // 👉 Redux state
+  const authState = useSelector((state) => state.auth);
 
   // States
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  const [consultantProfile, setConsultantProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Data aane tak loader dikhayenge
+  const [isLoading, setIsLoading] = useState(true);
 
   const socketRef = useRef(null);
   const flatListRef = useRef(null);
 
-  // 👉 Sahi ID set karna: Agar Consultant hai toh profile se ID lo, warna User ki ID lo
-  // Dono roles ke liye Redux wali ID hi use karo
-  const myUserId =
-    myUserRole === "Consultant"
-      ? consultantProfile?._id
-      : userData?._id;
+  // 👉 Sahi ID Mapping (Konsi ID mil rahi hai, ab console me dikhega)
+  const myUserRole = authState?.userData?.role || authState?.role; 
 
+const myUserId = authState?.userData?._id || authState?.consultantData?._id || authState?._id || senderId;
   const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(receiverName || 'User')}&background=0D8ABC&color=fff`;
-
   const chatUser = {
     name: receiverName || "User",
     status: isConnected ? "Online" : "Connecting...",
@@ -78,94 +50,176 @@ console.log("RECEIVER:", receiverId);
   };
 
   // ==============================
-  // FETCH HISTORY & SOCKET CONNECT
-  console.log("Role:", myUserRole);
-  console.log("UserData ID:", userData?._id);
-  console.log("Consultant ID:", consultantProfile?._id);
-  console.log("Final ID:", myUserId);
-
-
+  // 🐛 1. INITIAL MOUNT LOGS
+  // ==============================
   useEffect(() => {
+    console.log("🛠️ --- CHAT SCREEN MOUNTED ---");
+    console.log("🟡 DEBUG: authState Object Keys ->", Object.keys(authState || {}));
+    console.log("🟡 DEBUG: myUserRole extracted ->", myUserRole);
+    console.log("🕵️ FULL USER DATA:", JSON.stringify(authState.userData, null, 2));
+    console.log("🟡 DEBUG: myUserId extracted ->", myUserId);
+    console.log("🟡 DEBUG: Room ID (consultationId) ->", consultationId);
+    console.log("🟡 DEBUG: Receiver ID ->", receiverId);
+    console.log("-------------------------------");
+  }, []);
 
-  if (!socketRef.current) {
-    socketRef.current = io(SOCKET_URL, {
-      transports: ['websocket'],
-    });
-  }
-
-  const socket = socketRef.current;
-
-  socket.emit('joinRoom', {
-    consultationId,
-    userId: myUserId
-  });
-
-  socket.on('receiveMessage', (incomingMessage) => {
-    setMessages(prev => [...prev, incomingMessage]);
-  });
-
-  return () => {
-    socket.off('receiveMessage');
-  };
-
-}, [consultationId]);   // ❗ myUserId hata diya
   // ==============================
-  // SCROLL TO BOTTOM
+  // 2. FETCH CHAT HISTORY
   // ==============================
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      if (flatListRef.current) {
-        flatListRef.current.scrollToEnd({ animated: true });
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!consultationId) return;
+      setIsLoading(true);
+      try {
+        let res;
+        if (myUserRole === "Consultant" || myUserRole === "consultant") {
+          res = await ConsultantchatHistory(consultationId);
+        } else {
+          res = await chatHistory(consultationId);
+        }
+
+        const historyData = res?.data?.chats || res?.chats || res?.data || [];
+        console.log("✅ DEBUG: History Fetched. Total Messages:", historyData.length);
+        
+        if (historyData.length > 0) {
+          setMessages(historyData);
+          scrollToBottom();
+        }
+      } catch (error) {
+        console.log("❌ DEBUG: Error fetching history:", error);
+      } finally {
+        setIsLoading(false);
       }
-    }, 150);
-  };
+    };
 
+    fetchHistory();
+  }, [consultationId, myUserRole]);
 
   // ==============================
-  // SEND MESSAGE
+  // 3. SOCKET CONNECTION
+  // ==============================
+  useEffect(() => {
+    console.log("🔌 DEBUG: Socket setup initiated.");
+    if (!myUserId || !consultationId) {
+       console.log("🔴 DEBUG: Socket aborted! Missing myUserId or consultationId.");
+       return;
+    }
+
+    if (!socketRef.current) {
+      socketRef.current = io(SOCKET_URL, { transports: ['websocket'] });
+    }
+
+    const socket = socketRef.current;
+
+    // Agar pehle se connect ho chuka hai fast render me
+    if (socket.connected) {
+        console.log("🟢 DEBUG: Socket was already connected!");
+        setIsConnected(true);
+    }
+
+    socket.on('connect', () => {
+        console.log("🟢 DEBUG: Socket Officially Connected! ID:", socket.id);
+        setIsConnected(true);
+    });
+
+    socket.on('disconnect', () => {
+        console.log("🔴 DEBUG: Socket Disconnected!");
+        setIsConnected(false);
+    });
+
+    console.log(`🔗 DEBUG: Emitting joinRoom for ID: ${consultationId} by user: ${myUserId}`);
+    socket.emit('joinRoom', { consultationId, userId: myUserId });
+
+    // Room me join hone ke baad wala code...
+    socket.on('receiveMessage', (incomingMessage) => {
+      console.log("📩 DEBUG: New Message Received via Socket:", incomingMessage);
+
+      // 🔥 THE FIX: Agar sender ki ID meri ID se match karti hai, toh list me dobara add mat karo
+      if (String(incomingMessage.senderId) === String(myUserId)) {
+          console.log("🛑 DEBUG: Ignored my own message (Echo stopped)");
+          return; // Yahan se wapas laut jao, message add mat karo
+      }
+
+      setMessages(prev => [...prev, incomingMessage]);
+      scrollToBottom();
+    });
+
+    return () => {
+      socket.off('receiveMessage');
+      socket.off('connect');
+      socket.off('disconnect');
+    };
+  }, [consultationId, myUserId]);
+
+  // ==============================
+  // 4. SEND MESSAGE
   // ==============================
   const handleSendMessage = () => {
-    // Agar input khaali hai, ya asali MongoDB ID load nahi hui, toh send mat karo (BSON Error bachane ke liye)
-    if (inputText.trim() === '' || !myUserId) return;
+    console.log("🔵 DEBUG: Send Button Pressed!");
+    console.log("🔵 DEBUG: Input Text ->", inputText);
+    console.log("🔵 DEBUG: myUserId ->", myUserId);
 
-    // 👉 FIX 2: senderType ko .toLowerCase() karna zaroori hai (e.g. "Consultant" -> "consultant")
-    const safeSenderType = myUserRole ? myUserRole.toLowerCase() : "User";
+    if (inputText.trim() === '') {
+        console.log("🔴 DEBUG: Send Blocked! Message is empty.");
+        return;
+    }
+
+    if (!myUserId) {
+        console.log("🔴 DEBUG: Send Blocked! myUserId is NULL or UNDEFINED.");
+        return;
+    }
+
+    const safeSenderType = myUserRole ? myUserRole.toLowerCase() : "user";
 
     const messageData = {
       consultationId: consultationId,
       message: inputText,
       senderId: myUserId,
+      receiverId: receiverId, 
       senderType: safeSenderType,
     };
+
+    console.log("📤 DEBUG: Final Message Payload:", messageData);
 
     const localMessage = {
       ...messageData,
       _id: Date.now().toString(),
       createdAt: new Date().toISOString()
     };
-
-    setMessages(prev => [...(prev || []), localMessage]);
+    
+    setMessages(prev => {
+        const newArray = [...(prev || []), localMessage];
+        console.log("🟢 DEBUG: State Updated! New message count:", newArray.length);
+        return newArray;
+    });
 
     if (socketRef.current) {
       socketRef.current.emit('sendMessage', messageData);
+      console.log("🟢 DEBUG: Message emitted to socket!");
+    } else {
+      console.log("🔴 DEBUG: Socket reference is null!");
     }
 
     setInputText('');
     scrollToBottom();
   };
 
-  // ==============================
-  // RENDER MESSAGE BUBBLE
-  // ==============================
-  const renderMessage = ({ item }) => {
-    const isMe = item.senderId === myUserId;
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      if (flatListRef.current && messages.length > 0) {
+        flatListRef.current.scrollToEnd({ animated: true });
+      }
+    }, 200);
+  };
 
+  const renderMessage = ({ item }) => {
+    // String matching just in case object IDs act weird
+    const isMe = String(item.senderId) === String(myUserId);
+    
     let displayTime = '';
     if (item.createdAt) {
       const dateObj = new Date(item.createdAt);
       displayTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else {
-      displayTime = item.time || '';
     }
 
     return (
@@ -180,19 +234,10 @@ console.log("RECEIVER:", receiverId);
     );
   };
 
-  // ==============================
-  // UI RENDERING
-  // ==============================
-
-  
-
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        
         {/* --- 1. CHAT HEADER --- */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -216,17 +261,24 @@ console.log("RECEIVER:", receiverId);
             <AnimatedIcon name="videocam-outline" size={24} color="#3B82F6" />
           </View>
         </View>
-
+        
         {/* --- 2. MESSAGE LIST --- */}
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item, index) => item._id || item.id || index.toString()}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.messageList}
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={scrollToBottom}
-        />
+        {isLoading ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#3B82F6" />
+                <Text style={{ marginTop: 10, color: '#6B7280' }}>Loading chat...</Text>
+            </View>
+        ) : (
+            <FlatList
+              ref={flatListRef}
+              data={messages}
+              keyExtractor={(item, index) => item._id || index.toString()}
+              renderItem={renderMessage}
+              contentContainerStyle={styles.messageList}
+              showsVerticalScrollIndicator={false}
+              onContentSizeChange={scrollToBottom}
+            />
+        )}
 
         {/* --- 3. INPUT AREA --- */}
         <View style={styles.inputContainer}>

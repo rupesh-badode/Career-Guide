@@ -8,7 +8,8 @@ import {
   TouchableOpacity, 
   Animated,
   RefreshControl,
-  Platform
+  Platform,
+  TextInput // 👈 Added TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -51,14 +52,16 @@ export default function MentorChatList() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // 👉 NEW: Search States
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const navigation = useNavigation();
 
   // --- Fetch API Data ---
   const fetchBookedMentors = async () => {
     try {
       const res = await getMentorBooking();
-      
-      // Safely extract data array (handling different backend response structures)
       let bookingsArray = [];
       if (Array.isArray(res)) {
         bookingsArray = res;
@@ -67,7 +70,6 @@ export default function MentorChatList() {
       } else if (res && res.bookings && Array.isArray(res.bookings)) {
         bookingsArray = res.bookings;
       }
-
       setChatList(bookingsArray);
     } catch (error) {
       console.error("Chat list fetch error:", error);
@@ -86,13 +88,17 @@ export default function MentorChatList() {
     fetchBookedMentors();
   };
 
+  // 👉 NEW: Filtered Data Logic
+  const filteredChatList = chatList.filter((item) => {
+    const mentor = item.mentor || item.mentorId || item;
+    const mentorName = mentor.name || '';
+    // Case-insensitive search
+    return mentorName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   // --- UI Components ---
   const renderChatItem = ({ item }) => {
-    // Booking API usually returns data nested like item.mentor.name
-    // We safely extract the mentor object here
     const mentor = item.mentor || item.mentorId || item; 
-
-    // Formatting date or status to show as the "subtitle" of the chat
     const sessionDate = item.date ? new Date(item.date).toLocaleDateString() : 'Upcoming Session';
 
     return (
@@ -100,7 +106,6 @@ export default function MentorChatList() {
         style={styles.chatItemContainer}
         activeOpacity={0.7}
         onPress={() => {
-          // 👉 Navigate to actual Chat Messaging Screen and pass Mentor ID/Name
           navigation.navigate('ChatRoom', { 
             mentorId: mentor._id, 
             mentorName: mentor.name,
@@ -113,7 +118,6 @@ export default function MentorChatList() {
             source={{ uri: mentor.profilePicture || mentor.image || 'https://via.placeholder.com/150' }} 
             style={styles.avatar} 
           />
-          {/* Online indicator dot (Optional: Green dot if online) */}
           <View style={styles.onlineIndicator} />
         </View>
 
@@ -131,8 +135,6 @@ export default function MentorChatList() {
             <Text style={styles.lastMessage} numberOfLines={1}>
               Tap to start chatting regarding your session on {sessionDate}...
             </Text>
-            
-            {/* Unread Message Badge (Optional: Hardcoded to 1 for UI showcase) */}
             <View style={styles.unreadBadge}>
               <Text style={styles.unreadText}>1</Text>
             </View>
@@ -145,17 +147,54 @@ export default function MentorChatList() {
   return (
     <SafeAreaView style={styles.mainContainer}>
 
+      {/* 👉 UPDATED: Dynamic Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="chevron-back" size={24} color="#111827" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Messages</Text>
-        <TouchableOpacity style={styles.headerIcon}>
-          <Ionicons name="search-outline" size={24} color="#111827" />
-        </TouchableOpacity>
+        {isSearching ? (
+          // Search Mode Active
+          <View style={styles.searchContainer}>
+            <TouchableOpacity 
+              onPress={() => {
+                setIsSearching(false);
+                setSearchQuery(''); // Clear search when closing
+              }}
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={24} color="#111827" />
+            </TouchableOpacity>
+            
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search mentor by name..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus={true} // Keyboard apne aap khul jayega
+            />
+            
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={{ padding: 5 }}>
+                <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          // Normal Default Header
+          <>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="chevron-back" size={24} color="#111827" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Messages</Text>
+            <TouchableOpacity 
+              style={styles.headerIcon}
+              onPress={() => setIsSearching(true)} // Search bar kholne ke liye
+            >
+              <Ionicons name="search-outline" size={24} color="#111827" />
+            </TouchableOpacity>
+          </>
+        )}
       </View>
 
       {/* List Area */}
@@ -169,7 +208,7 @@ export default function MentorChatList() {
         </View>
       ) : (
         <FlatList
-          data={chatList}
+          data={filteredChatList} // 👉 UPDATED: Normal chatList ki jagah filteredChatList use kiya hai
           keyExtractor={(item, index) => item._id || index.toString()}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -178,25 +217,31 @@ export default function MentorChatList() {
             <RefreshControl 
               refreshing={refreshing} 
               onRefresh={onRefresh} 
-              colors={[THEME_COLOR]} // Android
-              tintColor={THEME_COLOR} // iOS
+              colors={[THEME_COLOR]} 
+              tintColor={THEME_COLOR} 
             />
           }
           ListEmptyComponent={
             <View style={styles.emptyBox}>
                 <View style={styles.emptyIconCircle}>
-                  <Ionicons name="chatbubbles-outline" size={40} color={THEME_COLOR} />
+                  <Ionicons name={searchQuery ? "search-outline" : "chatbubbles-outline"} size={40} color={THEME_COLOR} />
                 </View>
-                <Text style={styles.emptyTitle}>No Messages Yet</Text>
-                <Text style={styles.emptyText}>
-                  When you book a session with a mentor, you can chat with them here.
+                <Text style={styles.emptyTitle}>
+                  {searchQuery ? 'No Results Found' : 'No Messages Yet'}
                 </Text>
-                <TouchableOpacity 
-                  style={styles.findMentorBtn}
-                  onPress={() => navigation.navigate('AllMentor')}
-                >
-                  <Text style={styles.findMentorBtnText}>Find a Mentor</Text>
-                </TouchableOpacity>
+                <Text style={styles.emptyText}>
+                  {searchQuery 
+                    ? `No mentor found matching "${searchQuery}"` 
+                    : 'When you book a session with a mentor, you can chat with them here.'}
+                </Text>
+                {!searchQuery && (
+                  <TouchableOpacity 
+                    style={styles.findMentorBtn}
+                    onPress={() => navigation.navigate('AllMentor')}
+                  >
+                    <Text style={styles.findMentorBtnText}>Find a Mentor</Text>
+                  </TouchableOpacity>
+                )}
             </View>
           }
         />
@@ -208,7 +253,7 @@ export default function MentorChatList() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF', // Clean white background for chat lists
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -219,6 +264,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
+    minHeight: 60, // UI jhatka na khaye search toggle hone pe
   },
   headerTitle: {
     fontSize: 22,
@@ -229,6 +275,26 @@ const styles = StyleSheet.create({
     padding: 5,
     backgroundColor: '#F3F4F6',
     borderRadius: 20,
+  },
+  // 👉 NEW: Search bar styles
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#111827',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  backButton: {
+    padding: 5,
   },
   listContent: {
     flexGrow: 1,
@@ -261,7 +327,7 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#10B981', // Green dot
+    backgroundColor: '#10B981', 
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },

@@ -8,10 +8,15 @@ import {
   Animated,
   Dimensions,
   Platform,
-  Easing
+  Easing,
+  TextInput,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// 👉 UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
 import { getBlogs } from '../../../../src/services/user';
 
 const { width } = Dimensions.get('window');
@@ -22,19 +27,10 @@ const SkeletonCard = () => {
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    // Pulse animation for skeleton
     Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, {
-          toValue: 0.7,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 0.3,
-          duration: 800,
-          useNativeDriver: true,
-        }),
+        Animated.timing(opacity, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
       ])
     ).start();
   }, []);
@@ -53,8 +49,15 @@ const SkeletonCard = () => {
 
 export default function BlogSection() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets(); // 👉 Safe Area (Notch) Support
+
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // 👉 NEW: Search & Filter States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [categories, setCategories] = useState(['All']);
 
   useEffect(() => {
     fetchBlogs();
@@ -65,7 +68,11 @@ export default function BlogSection() {
       setLoading(true);
       const res = await getBlogs();
       if (res && res.data) {
-        setBlogs(res.data.slice(0, 3)); // Home page par top 3
+        setBlogs(res.data);
+        
+        // 👉 Extract unique categories from API data dynamically
+        const uniqueCategories = ['All', ...new Set(res.data.map(item => item.category).filter(Boolean))];
+        setCategories(uniqueCategories);
       }
     } catch (err) {
       console.error(err);
@@ -74,6 +81,17 @@ export default function BlogSection() {
     }
   };
 
+  // 👉 NEW: Filtering Logic
+  const filteredBlogs = blogs.filter((blog) => {
+    // 1. Category Filter
+    const matchesCategory = activeCategory === 'All' || blog.category === activeCategory;
+    // 2. Search Query Filter
+    const matchesSearch = blog.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (blog.author && blog.author.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    return matchesCategory && matchesSearch;
+  });
+
   // --- 2. Animated Blog Card ---
   const BlogCard = ({ item, index }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -81,20 +99,8 @@ export default function BlogSection() {
 
     useEffect(() => {
       Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 600,
-          delay: index * 150,
-          easing: Easing.out(Easing.back(1)),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateX, {
-          toValue: 0,
-          duration: 600,
-          delay: index * 150,
-          easing: Easing.out(Easing.exp),
-          useNativeDriver: true,
-        }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 600, delay: index * 100, easing: Easing.out(Easing.back(1)), useNativeDriver: true }),
+        Animated.timing(translateX, { toValue: 0, duration: 600, delay: index * 100, easing: Easing.out(Easing.exp), useNativeDriver: true }),
       ]).start();
     }, []);
 
@@ -105,25 +111,18 @@ export default function BlogSection() {
           activeOpacity={0.8}
           onPress={() => navigation.navigate('BlogDetails', { blog: item })}
         >
-          {/* Thumbnail */}
-          <Image source={{ uri: item.image }} style={styles.thumbnail} />
-          
-          {/* Content */}
+          <Image source={{ uri: item.image || 'https://via.placeholder.com/150' }} style={styles.thumbnail} />
           <View style={styles.contentContainer}>
             <View style={styles.metaRow}>
-              <Text style={styles.categoryText}>{item.category}</Text>
+              <Text style={styles.categoryText}>{item.category || 'General'}</Text>
               <View style={styles.dot} />
-              <Text style={styles.authorText}>{item.author}</Text>
+              <Text style={styles.authorText}>{item.author || 'Admin'}</Text>
             </View>
-            
-            <Text style={styles.newsTitle} numberOfLines={2}>
-              {item.title}
-            </Text>
-            
+            <Text style={styles.newsTitle} numberOfLines={2}>{item.title}</Text>
             <View style={styles.bottomRow}>
               <Ionicons name="calendar-outline" size={12} color="#9CA3AF" />
               <Text style={styles.dateText}>
-                {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recently'}
               </Text>
               <Text style={styles.readMore}>Read Now →</Text>
             </View>
@@ -134,27 +133,81 @@ export default function BlogSection() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <View>
-          <Text style={styles.sectionTitle}>Curated for You</Text>
-          <View style={styles.accentBar} />
+    // 👉 Added insets.top to protect content from the notch
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header & Search */}
+      <View style={styles.headerSection}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <Ionicons name="chevron-back" size={24} color="#1F2937" />
+          </TouchableOpacity>
+
+          <View style={styles.titleWrapper}>
+            <Text style={styles.sectionTitle}>Curated for You</Text>
+            <View style={styles.accentBar} />
+          </View>
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate('AllBlogs')}>
-          <Text style={styles.viewAllText}>Explore All</Text>
-        </TouchableOpacity>
+
+        {/* 👉 SEARCH BAR */}
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color="#9CA3AF" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search articles, authors..."
+            placeholderTextColor="#9CA3AF"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="#D1D5DB" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
+      {/* 👉 CATEGORY FILTER (Horizontal Scroll) */}
+      {!loading && categories.length > 1 && (
+        <View style={styles.filterWrapper}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+            {categories.map((cat, index) => {
+              const isActive = activeCategory === cat;
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.filterPill, isActive && styles.activeFilterPill]}
+                  onPress={() => setActiveCategory(cat)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.filterText, isActive && styles.activeFilterText]}>
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Blog List Area */}
       <View style={styles.listContainer}>
         {loading ? (
-          // Dikhane ke liye 3 Skeletons
           <>
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
           </>
+        ) : filteredBlogs.length === 0 ? (
+           // Empty State if search/filter fails
+           <View style={styles.emptyContainer}>
+             <Ionicons name="document-text-outline" size={40} color="#D1D5DB" />
+             <Text style={styles.emptyText}>No articles found.</Text>
+           </View>
         ) : (
-          blogs.map((item, index) => <BlogCard key={item._id} item={item} index={index} />)
+           // Show filtered items
+          filteredBlogs.slice(0, 5).map((item, index) => (
+            <BlogCard key={item._id || index} item={item} index={index} />
+          ))
         )}
       </View>
     </View>
@@ -163,35 +216,96 @@ export default function BlogSection() {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 25,
-    paddingBottom: 10,
+    flex: 1, // Ensures it takes full height if used as main screen
+    backgroundColor: '#FAFAFA',
+    marginTop:20,
   },
-  headerRow: {
+  headerSection: {
+    paddingHorizontal: 10,
+    marginBottom: 15,
+  },
+  headerTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 14,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  titleWrapper: {
+    flex: 1,
+    marginBottom: 0,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
     color: '#111827',
   },
   accentBar: {
     height: 4,
-    width: 30,
+    width: 35,
     backgroundColor: PRIMARY_COLOR,
     borderRadius: 2,
-    marginTop: 4,
+    marginTop: 6,
   },
-  viewAllText: {
-    fontSize: 14,
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 4 },
+      android: { elevation: 1 },
+    }),
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 15,
+    color: '#111827',
+  },
+  filterWrapper: {
+    marginBottom: 16,
+  },
+  filterScroll: {
+    paddingHorizontal: 20,
+    gap: 8, // Requires newer React Native, use margin if error occurs
+  },
+  filterPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    marginRight: 8, // Fallback if gap doesn't work
+  },
+  activeFilterPill: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#C7D2FE',
+  },
+  filterText: {
+    fontSize: 13,
+    color: '#4B5563',
+    fontWeight: '600',
+  },
+  activeFilterText: {
     color: PRIMARY_COLOR,
     fontWeight: '700',
   },
   listContainer: {
     paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   newsCard: {
     flexDirection: 'row',
@@ -263,14 +377,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: PRIMARY_COLOR,
   },
-  // Skeleton Specific
   skeletonLine: {
     height: 12,
     backgroundColor: '#E5E7EB',
     borderRadius: 6,
     marginBottom: 8,
   },
-  loaderContainer: {
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 40,
+  },
+  emptyText: {
+    marginTop: 10,
+    fontSize: 15,
+    color: '#9CA3AF',
   }
 });

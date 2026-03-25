@@ -172,8 +172,11 @@ export default function TopMentorsOverview() {
       });
 
     } catch (error) {
-      console.error("Booking Error:", error);
-      Alert.alert("Error", error.message || "Something went wrong.");
+      // 👉 NAYA DEBUGGING LOG: Yeh error ke andar ka saara raaz khol dega
+      console.log("🔥 REAL BOOKING ERROR:", error?.response?.data?.data || error?.message || JSON.stringify(error));
+      
+      const errorMsg = error?.response?.data?.message || error?.message || "Something went wrong.";
+      Alert.alert("Booking Failed", errorMsg);
     } finally {
       setBookingMentorId(null); 
     }

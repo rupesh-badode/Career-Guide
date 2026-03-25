@@ -61,10 +61,10 @@ const ConsultProfileDetails = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF'}}>
       <View style={styles.header}>
         <Ionicons 
-          name="arrow-back" 
+          name="chevron-back" 
           size={24} 
           color="#1F2937" 
           onPress={() => navigation.goBack()}
@@ -167,6 +167,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
+    paddingTop:35,
   },
   backButton: {
     padding: 5,

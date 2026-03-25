@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, SafeAreaView 
+import {
+  View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, SafeAreaView,
+  Button,
+  TouchableOpacity
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getUserProfile } from '../../../../src/services/authAPI';
@@ -18,7 +20,7 @@ const ListItem = ({ icon, label, value }) => (
   </View>
 );
 
-const ProfileDetailsList = ({navigation}) => {
+const ProfileDetailsList = ({ navigation }) => {
   const [profileData, setProfileData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,10 +32,10 @@ const ProfileDetailsList = ({navigation}) => {
     try {
       setIsLoading(true);
       const data = await getUserProfile();
-      
+
       // Agar backend ka data kisi object (like data.user ya data.data) me aata hai, 
       // toh usko adjust kar lena. Main assume kar raha hu direct object aa raha hai.
-      setProfileData(data.user || data); 
+      setProfileData(data.user || data);
     } catch (error) {
       console.log("Error fetching profile:", error);
       Alert.alert("Error", "Could not load profile details.");
@@ -46,7 +48,7 @@ const ProfileDetailsList = ({navigation}) => {
   const formatAddress = (addressObj) => {
     if (!addressObj) return 'No Address Provided';
     const { addressLine1, addressLine2, city, state, zipCode } = addressObj;
-    
+
     // Sirf wahi fields dikhayega jo khali nahi hain
     const parts = [addressLine1, addressLine2, city, state, zipCode].filter(Boolean);
     return parts.join(', ');
@@ -72,65 +74,72 @@ const ProfileDetailsList = ({navigation}) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Ionicons 
-          name="arrow-back" 
-          size={24} 
-          color="#1F2937" 
+        <Ionicons
+          name="chevron-back"
+          size={24}
+          color="#1F2937"
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         />
+
         <Text style={styles.headerTitle}>Profile Details</Text>
-        {/* Empty view for balancing the center alignment of the title */}
-        <View style={{ width: 24, marginLeft: 12 }} /> 
+
+        {/* 👉 Empty View ko Edit Button se replace kar diya */}
+        <TouchableOpacity
+          onPress={() => navigation.navigate("EditProfile")}
+          style={{ marginLeft: 12, padding: 4 }}
+        >
+          <Ionicons name="pencil" size={22} color="#4F46E5" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        
+
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
-          
-          <ListItem 
-            icon="person-outline" 
-            label="Full Name" 
-            value={profileData.name} 
+
+          <ListItem
+            icon="person-outline"
+            label="Full Name"
+            value={profileData.name}
           />
           <View style={styles.divider} />
 
-          <ListItem 
-            icon="mail-outline" 
-            label="Email Address" 
-            value={profileData.email} 
+          <ListItem
+            icon="mail-outline"
+            label="Email Address"
+            value={profileData.email}
           />
           <View style={styles.divider} />
 
-          <ListItem 
-            icon="call-outline" 
-            label="Phone Number" 
-            value={profileData.phone} 
+          <ListItem
+            icon="call-outline"
+            label="Phone Number"
+            value={profileData.phone}
           />
           <View style={styles.divider} />
 
-          <ListItem 
-            icon="shield-checkmark-outline" 
-            label="Role" 
-            value={profileData.role} 
+          <ListItem
+            icon="shield-checkmark-outline"
+            label="Role"
+            value={profileData.role}
           />
           <View style={styles.divider} />
 
-          <ListItem 
-            icon="school-outline" 
-            label="NEET Score" 
-            value={profileData.neetScore?.toString()} 
+          <ListItem
+            icon="school-outline"
+            label="NEET Score"
+            value={profileData.neetScore?.toString()}
           />
         </View>
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Location Details</Text>
-          
-          <ListItem 
-            icon="location-outline" 
-            label="Full Address" 
-            value={formatAddress(profileData.address)} 
+
+          <ListItem
+            icon="location-outline"
+            label="Full Address"
+            value={formatAddress(profileData.address)}
           />
         </View>
 
@@ -143,6 +152,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF', // Header ke color se match karega taaki top status bar white dikhe
+    paddingTop: 25,
   },
   container: {
     flex: 1,
@@ -152,7 +162,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 22,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',

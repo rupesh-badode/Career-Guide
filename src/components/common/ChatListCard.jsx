@@ -75,7 +75,7 @@ export const BookingCard = ({ item, themeColor = "#3B82F6", onActionPress, onCar
       <View style={styles.leftColumn}>
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: consultant?.profilePicture || 'https://via.placeholder.com/150' }}
+            source={{ uri: consultant?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(consultant?.name)}&background=0D8ABC&color=fff` }}
             style={styles.image}
           />
           {consultant?.isActive && <View style={styles.onlineDot} />}
@@ -173,9 +173,10 @@ export default function ChatListCard({
   data = [],
   isLoading = false,
   onCardPress,
+  onScroll,
   onActionPress,
   customThemeColor,
-  contentPaddingTop, onScroll
+  contentPaddingTop,
 }) {
 
 
@@ -219,14 +220,14 @@ export default function ChatListCard({
     <View style={styles.container}>
       <Animated.FlatList
         data={data}
-        keyExtractor={(item) => item?._id}
+        keyExtractor={(item) => item?._id || Math.random().toString()}
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
-            scrollEventThrottle={16}
-            contentContainerStyle={{ 
-                paddingTop: contentPaddingTop, 
-                paddingBottom: 100 
-            }}
+        scrollEventThrottle={16}
+        contentContainerStyle={{
+          paddingTop: contentPaddingTop,
+          paddingBottom: 100
+        }}
         renderItem={({ item }) => (
           <BookingCard
             item={item}
@@ -241,7 +242,7 @@ export default function ChatListCard({
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 20, marginTop:20},
+  container: { paddingHorizontal: 20, marginTop: 20 },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 50 },
   emptyText: { color: '#6B7280', fontSize: 16, marginTop: 10 },
   card: {

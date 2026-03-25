@@ -218,7 +218,7 @@ const EditProfileScreen = ({ route, navigation }) => {
             >
                 <View style={styles.headerContainer}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
-                        <Ionicons name="arrow-back" size={24} color="#333" />
+                        <Ionicons name="chevron-back" size={24} color="#333" />
                     </TouchableOpacity>
                     <Text style={styles.headerText}>Edit {role} Profile</Text>
                     <View style={styles.headerSpacer} />
@@ -234,7 +234,7 @@ const EditProfileScreen = ({ route, navigation }) => {
                         <View style={styles.imageContainer}>
                             <Image
                                 source={{
-                                    uri: newLocalImage ? newLocalImage.uri : (currentPicture || 'https://via.placeholder.com/150')
+                                    uri: newLocalImage ? newLocalImage.uri : (currentPicture || 'https://media.istockphoto.com/id/2151669184/vector/vector-flat-illustration-in-grayscale-avatar-user-profile-person-icon-gender-neutral.jpg?s=612x612&w=0&k=20&c=UEa7oHoOL30ynvmJzSCIPrwwopJdfqzBs0q69ezQoM8=')
                                 }}
                                 style={styles.profileImage}
                             />

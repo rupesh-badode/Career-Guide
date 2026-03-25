@@ -40,24 +40,30 @@ export default function Blog() {
   };
 
   const renderBlogCard = ({ item }) => {
-    // Date format logic
-    const date = new Date(item.createdAt).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
+    // console.log("item",item) // Debugging ke liye thik hai
+    
+    // Fallback date agar createdAt undefined/null ho
+    const date = item.createdAt 
+      ? new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : 'Recently';
+
+    // Fallback author aur content ke liye errors avoid karne ke liye
+    const authorName = item.author || 'Admin';
+    const authorInitial = authorName.charAt(0).toUpperCase();
+    const safeContent = item.content ? item.content.replace(/<[^>]*>?/gm, '') : '';
 
     return (
       <TouchableOpacity 
         style={styles.card} 
         activeOpacity={0.9}
-        onPress={() => navigation.navigate('BlogDetails', { blogId: item._id })}
+        onPress={() => navigation.navigate('BlogDetails', { blog: item })} // 👈 Yahan maine `blog: item` pass kiya hai (Pichle component logic ke according)
       >
         {/* Blog Image */}
-        <Image source={{ uri: item.image }} style={styles.blogImage} />
+        <Image source={{ uri: item.image || 'https://via.placeholder.com/290x150' }} style={styles.blogImage} />
         
         {/* Category Badge - Absolutely Positioned */}
         <View style={styles.categoryBadge}>
-          <Text style={styles.categoryText}>{item.category}</Text>
+          <Text style={styles.categoryText}>{item.category || 'General'}</Text>
         </View>
 
         <View style={styles.contentContainer}>
@@ -66,15 +72,16 @@ export default function Blog() {
           </Text>
 
           <Text style={styles.excerpt} numberOfLines={2}>
-            {item.content.replace(/<[^>]*>?/gm, '')} {/* HTML tags remove karne ke liye */}
+            {safeContent}
           </Text>
 
+          {/* Footer ko excerpt aur title se bilkul alag rakha gaya hai */}
           <View style={styles.footer}>
             <View style={styles.authorRow}>
               <View style={styles.authorAvatar}>
-                <Text style={styles.avatarText}>{item.author[0]}</Text>
+                <Text style={styles.avatarText}>{authorInitial}</Text>
               </View>
-              <Text style={styles.authorName}>{item.author}</Text>
+              <Text style={styles.authorName}>{authorName}</Text>
             </View>
             
             <View style={styles.dateRow}>

@@ -94,13 +94,13 @@ export default function NewsSection() {
           newsData.map((item) => {
             // 🔥 FIX: Exact API keys use ki hain jo aapke console.log mein thin
             return (
-              <TouchableOpacity key={item.Id} style={styles.newsCard} activeOpacity={0.7}>
+              <TouchableOpacity key={item.Id} onPress={()=>navigation.navigate("News")} style={styles.newsCard} activeOpacity={0.7}>
                 
                 {/* Thumbnail: API image nahi bhej rahi toh default image use ki hai */}
-                <Image 
+                {/* <Image 
                   source={{ uri: DEFAULT_NEWS_IMAGE }} 
                   style={styles.thumbnail} 
-                />
+                /> */}
                 
                 <View style={styles.contentContainer}>
                   <View style={styles.metaRow}>

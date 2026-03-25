@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
     backgroundColor: '#FFFFFF',
-    paddingBottom: Platform.OS === 'ios' ? 30 : 16, // iOS safe area padding
+    paddingBottom: Platform.OS === 'ios' ? 30 : 36, // iOS safe area padding
   },
   applyButton: {
     backgroundColor: '#4F46E5',

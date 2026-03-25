@@ -6,122 +6,150 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
-  SafeAreaView,
   Animated,
   Platform,
   ActivityIndicator
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { myBooking } from '../../../../src/services/consultantAPI'; // Apne path ke hisaab se check kar lena
+import { myBooking } from '../../../../src/services/consultantAPI'; // Ensure path is correct
 import { useNavigation } from '@react-navigation/native';
 
+const THEME_COLOR = '#10B981';
+
 // ==========================================
-// ANIMATED LIST ITEM COMPONENT
+// ANIMATED LARGE CARD COMPONENT
 // ==========================================
 const ChatListItem = ({ item, index, onPressChat, onPressProfile, onPressVideoCall }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(30)).current;
+  const translateY = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
+  // ✨ Staggered Entry Animation
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 400,
-        delay: index * 100, // Stagger effect
+        duration: 500,
+        delay: index * 150,
         useNativeDriver: true,
       }),
-      Animated.timing(translateY, {
+      Animated.spring(translateY, {
         toValue: 0,
-        duration: 400,
-        delay: index * 100,
+        tension: 50,
+        friction: 8,
+        delay: index * 150,
         useNativeDriver: true,
       })
     ]).start();
   }, [index, fadeAnim, translateY]);
 
-  // Extracting details with fallbacks
+  // ✨ Button Press Animation
+  const animatePressIn = () => Animated.spring(scaleAnim, { toValue: 0.96, useNativeDriver: true }).start();
+  const animatePressOut = () => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+
+  // Extracting Data Safely
   const student = item?.studentId || {};
   const name = student?.name || 'Unknown User';
   const avatar = student?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff`;
-
-  // Format the date (e.g., "14 Mar")
+  
+  // Format Date
   const bookingDate = new Date(item.date);
-  const formattedDate = bookingDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-
-  // CHECK: Kya booking confirmed hai?
+  const formattedDate = bookingDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  
   const isConfirmed = item.status === 'confirmed';
-  const statusColor = isConfirmed ? '#10B981' : '#F59E0B'; 
+  const statusColor = isConfirmed ? THEME_COLOR : '#F59E0B'; // Green for confirmed, Yellow for pending
+  const statusBg = isConfirmed ? '#ECFDF5' : '#FEF3C7';
 
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY }] }}>
-      <View style={styles.chatItem}>
+      <View style={styles.card}>
         
-        {/* TOP ROW: Avatar & Info (Poora Clickable Chat ke liye) */}
-        <TouchableOpacity 
-          style={styles.topRow} 
-          activeOpacity={0.7}
-          onPress={() => onPressChat(item)}
-        >
-          {/* Profile Picture (Alag se clickable Profile ke liye) */}
-          <TouchableOpacity
-            style={styles.avatarContainer}
+        {/* TOP SECTION: Student Info & Status */}
+        <View style={styles.headerRow}>
+          <TouchableOpacity 
+            style={styles.profileSection} 
             activeOpacity={0.8}
-            onPress={(e) => {
-              e.stopPropagation(); // Ye child click ko parent tak jane se rokega
-              onPressProfile(item);
-            }} 
+            onPress={() => onPressProfile(item)}
           >
             <Image source={{ uri: avatar }} style={styles.avatar} />
-            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+            <View style={styles.nameContainer}>
+              <Text style={styles.nameText} numberOfLines={1}>{name}</Text>
+              {student?.neetScore && (
+                <Text style={styles.scoreText}>NEET Score: {student.neetScore}</Text>
+              )}
+            </View>
           </TouchableOpacity>
 
-          {/* Name & Booking Info */}
-          <View style={styles.chatInfo}>
-            <Text style={styles.chatName} numberOfLines={1}>{name}</Text>
-            <View style={styles.messageRow}>
-              <Ionicons
-                name={isConfirmed ? "checkmark-done" : "time-outline"}
-                size={16}
-                color={statusColor}
-                style={{ marginRight: 4 }}
-              />
-              <Text style={styles.chatMessage} numberOfLines={1}>
-                Booking: {item.time} ({item.status})
-              </Text>
+          {/* Status Badge */}
+          <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+            <Text style={[styles.statusText, { color: statusColor }]}>
+              {item.status ? item.status.toUpperCase() : 'PENDING'}
+            </Text>
+          </View>
+        </View>
+
+        {/* MIDDLE SECTION: Schedule Box */}
+        <View style={styles.scheduleBox}>
+          <View style={styles.scheduleItem}>
+            <Ionicons name="calendar" size={18} color={THEME_COLOR} />
+            <View style={styles.scheduleTextContainer}>
+              <Text style={styles.scheduleLabel}>Date</Text>
+              <Text style={styles.scheduleValue}>{formattedDate}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.divider} />
+
+          <View style={styles.scheduleItem}>
+            <Ionicons name="time" size={18} color={THEME_COLOR} />
+            <View style={styles.scheduleTextContainer}>
+              <Text style={styles.scheduleLabel}>Time</Text>
+              <Text style={styles.scheduleValue}>{item.time || 'TBA'}</Text>
             </View>
           </View>
 
-          {/* Date */}
-          <View style={styles.chatMeta}>
-            <Text style={styles.chatDate}>{formattedDate}</Text>
-          </View>
-        </TouchableOpacity>
+          <View style={styles.divider} />
 
-        {/* BOTTOM ROW: Action Buttons (Message & Video Call) */}
+          <View style={styles.scheduleItem}>
+            <Ionicons name="hourglass" size={18} color={THEME_COLOR} />
+            <View style={styles.scheduleTextContainer}>
+              <Text style={styles.scheduleLabel}>Duration</Text>
+              <Text style={styles.scheduleValue}>{item.duration ? `${item.duration} Min` : 'N/A'}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* BOTTOM SECTION: Actions */}
         {isConfirmed ? (
           <View style={styles.actionRow}>
             <TouchableOpacity 
-              style={[styles.actionButton, styles.msgButton]} 
-              activeOpacity={0.8}
+              style={[styles.actionBtn, styles.msgBtn]} 
+              activeOpacity={0.7}
               onPress={() => onPressChat(item)}
             >
-              <Ionicons name="chatbubbles" size={16} color="#3B82F6" />
-              <Text style={styles.msgButtonText}>Message</Text>
+              <Ionicons name="chatbubbles" size={20} color={THEME_COLOR} />
+              <Text style={styles.msgBtnText}>Message</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.videoButton]} 
-              activeOpacity={0.8}
-              onPress={() => onPressVideoCall(item)}
-            >
-              <Ionicons name="videocam" size={16} color="#FFFFFF" />
-              <Text style={styles.videoButtonText}>Join Call</Text>
-            </TouchableOpacity>
+            <Animated.View style={{ flex: 1, transform: [{ scale: scaleAnim }] }}>
+              <TouchableOpacity 
+                style={[styles.actionBtn, styles.callBtn]} 
+                activeOpacity={0.9}
+                onPressIn={animatePressIn}
+                onPressOut={animatePressOut}
+                onPress={() => onPressVideoCall(item)}
+              >
+                <Ionicons name="videocam" size={20} color="#FFF" />
+                <Text style={styles.callBtnText}>Join Video Call</Text>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         ) : (
-          /* Pending status ke liye message */
-          <View style={styles.pendingNote}>
-            <Text style={styles.pendingNoteText}>Buttons will appear once confirmed</Text>
+          <View style={styles.pendingFooter}>
+            <Ionicons name="information-circle-outline" size={16} color="#9CA3AF" />
+            <Text style={styles.pendingFooterText}>Action buttons will appear once confirmed</Text>
           </View>
         )}
 
@@ -142,7 +170,6 @@ export default function ChatListScreen() {
     try {
       setLoading(true);
       const res = await myBooking();
-
       if (res.success) {
         const apiData = res.data?.data || res.data || [];
         setData(apiData);
@@ -152,7 +179,7 @@ export default function ChatListScreen() {
     } catch (err) {
       console.error("Fetch API Err", err);
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -162,34 +189,37 @@ export default function ChatListScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Upcoming Sessions</Text>
+        <Text style={styles.headerSubtitle}>Manage your scheduled bookings</Text>
+      </View>
+
       {loading ? (
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#10B981" />
+          <ActivityIndicator size="large" color={THEME_COLOR} />
         </View>
       ) : (
         <FlatList
           data={data}
           keyExtractor={(item) => item._id}
-          // Yahan paddingBottom di gayi hai taaki aakhiri item tab bar ke upar rahe
-          contentContainerStyle={[styles.listContainer, { paddingBottom: 100 }]}
+          contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           renderItem={({ item, index }) => (
             <ChatListItem
               item={item}
               index={index}
-              
               onPressChat={(selectedItem) => {
                 navigation.navigate('ChatScreen', {
                   receiverId: selectedItem?.studentId?._id,
                   receiverName: selectedItem?.studentId?.name,
                   receiverAvatar: selectedItem?.studentId?.profilePicture,
-                  consultationId: selectedItem?._id
+                  consultationId: selectedItem?._id,
+                  senderId: selectedItem?.consultantId,
                 });
               }}
-              
               onPressProfile={(selectedItem) => {
                 navigation.navigate('StudentProfile', {
-                  studentData: selectedItem.studentId, 
+                  studentData: selectedItem.studentId,
                   bookingData: {
                     status: selectedItem.status,
                     date: selectedItem.date,
@@ -197,18 +227,17 @@ export default function ChatListScreen() {
                   }
                 });
               }}
-
               onPressVideoCall={(selectedItem) => {
                 navigation.navigate('VideoCall', {
-                  roomName: `room_${selectedItem?._id}`, 
+                  roomName: `room_${selectedItem?._id}`,
                 });
               }}
             />
           )}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name="calendar-outline" size={50} color="#D1D5DB" />
-              <Text style={styles.emptyText}>No bookings found.</Text>
+              <Ionicons name="calendar-clear-outline" size={60} color="#D1D5DB" />
+              <Text style={styles.emptyText}>No upcoming bookings</Text>
             </View>
           }
         />
@@ -221,155 +250,56 @@ export default function ChatListScreen() {
 // STYLES
 // ==========================================
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#F9FAFB', 
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 15,
+  safeArea: { flex: 1, backgroundColor: '#F3F4F6' },
+  loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 15, backgroundColor: '#F3F4F6' },
+  headerTitle: { fontSize: 24, fontWeight: '800', color: '#111827' },
+  headerSubtitle: { fontSize: 14, color: '#6B7280', marginTop: 4 },
+  listContainer: { paddingHorizontal: 16, paddingBottom: 100, paddingTop: 10 },
+  card: {
     backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 16,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 8 },
+      android: { elevation: 3 }
+    })
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  listContainer: {
-    paddingTop: 10,
-  },
-  chatItem: {
-    paddingTop: 15,
-    paddingBottom: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 15,
-    marginBottom: 10,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  topRow: {
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
+  profileSection: { flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 10 },
+  avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#F3F4F6' },
+  nameContainer: { marginLeft: 12, flex: 1 },
+  nameText: { fontSize: 18, fontWeight: '700', color: '#1F2937', marginBottom: 4 },
+  scoreText: { fontSize: 12, fontWeight: '600', color: THEME_COLOR },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
+  statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
+  statusText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+  scheduleBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12, 
-  },
-  avatarContainer: {
-    position: 'relative',
-    marginRight: 15,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#E5E7EB',
-  },
-  statusDot: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  chatInfo: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  chatName: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  messageRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  chatMessage: {
-    fontSize: 14,
-    color: '#6B7280',
-    flex: 1,
-  },
-  chatMeta: {
-    alignItems: 'flex-end',
-    justifyContent: 'flex-start',
-    marginLeft: 10,
-  },
-  chatDate: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    fontWeight: '500',
-  },
-  actionRow: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 5,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6'
+    backgroundColor: '#F9FAFB', // Light gray/greenish tint
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: '#F3F4F6'
   },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: 8,
-    flex: 0.48, 
-  },
-  msgButton: {
-    backgroundColor: '#EFF6FF', 
-  },
-  msgButtonText: {
-    color: '#3B82F6', 
-    fontWeight: '600',
-    marginLeft: 6,
-    fontSize: 14,
-  },
-  videoButton: {
-    backgroundColor: '#10B981', 
-  },
-  videoButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginLeft: 6,
-    fontSize: 14,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 100,
-  },
-  emptyText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#9CA3AF',
-  },
-  pendingNote: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    alignItems: 'center',
-  },
-  pendingNoteText: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    fontStyle: 'italic',
-  },
+  scheduleItem: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  scheduleTextContainer: { marginLeft: 8 },
+  scheduleLabel: { fontSize: 11, color: '#6B7280', fontWeight: '500', marginBottom: 2 },
+  scheduleValue: { fontSize: 13, color: '#111827', fontWeight: '700' },
+  divider: { width: 1, height: '80%', backgroundColor: '#E5E7EB', marginHorizontal: 10 },
+  actionRow: { flexDirection: 'row', gap: 12 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12 },
+  msgBtn: { flex: 0.45, backgroundColor: '#ECFDF5', borderWidth: 1, borderColor: '#D1FAE5' },
+  msgBtnText: { fontSize: 15, fontWeight: '700', color: THEME_COLOR, marginLeft: 8 },
+  callBtn: { flex: 1, backgroundColor: THEME_COLOR, shadowColor: THEME_COLOR, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 4 },
+  callBtnText: { fontSize: 15, fontWeight: '700', color: '#FFF', marginLeft: 8 },
+  pendingFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F9FAFB', paddingVertical: 12, borderRadius: 10 },
+  pendingFooterText: { fontSize: 12, color: '#6B7280', marginLeft: 6, fontStyle: 'italic' },
+  emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 100 },
+  emptyText: { marginTop: 12, fontSize: 16, color: '#9CA3AF', fontWeight: '500' },
 });

@@ -14,12 +14,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import RazorpayCheckout from 'react-native-razorpay'; // 👉 Razorpay Import
+import RazorpayCheckout from 'react-native-razorpay'; 
 
 // ⚠️ UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
 import { allMentor, BookMentor, verifyMentorbooking } from '../../../../src/services/user'; 
 
-const THEME_COLOR = '#4F46E5'; // Premium Indigo
+// 👉 NAYA IMPORT: Apna Modal Import Karo (Path apne folder structure ke hisaab se check kar lena)
+import SlotSelectionModal from './SlotSelectionModal'; 
+
+const THEME_COLOR = '#4F46E5'; 
 
 // --- Vertical Skeleton Loader ---
 const SkeletonListCard = () => {
@@ -55,8 +58,12 @@ export default function AllMentorsScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   
-  // 👉 Booking Loader State
+  // 👉 API Loader State
   const [bookingMentorId, setBookingMentorId] = useState(null);
+
+  // 👉 NAYE STATES: Modal handle karne ke liye
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedMentorForModal, setSelectedMentorForModal] = useState(null);
 
   // --- Fetch API Data ---
   useEffect(() => {
@@ -103,20 +110,25 @@ export default function AllMentorsScreen({ navigation }) {
     }
   };
 
-  // --- 🚀 Booking Flow Logic ---
-  const handleBook = async (mentor) => {
-    try {
-      setBookingMentorId(mentor._id); // Button ko loading state me dalo
+  // --- 🚀 STEP 1: OPEN MODAL ---
+  const handleOpenModal = (mentor) => {
+    setSelectedMentorForModal(mentor);
+    setIsModalVisible(true);
+  };
 
-      // ==========================================
-      // STEP 1: CREATE BOOKING ORDER 
-      // ==========================================
+  // --- 🚀 STEP 2: ACTUAL BOOKING FLOW (Triggered from Modal) ---
+  const processBooking = async (mentor, date, time, customAmount) => {
+    try {
+      // 1. Modal band karo aur loader chalu karo
+      setIsModalVisible(false);
+      setBookingMentorId(mentor._id); 
+
+      // 2. CREATE BOOKING ORDER (Using modal values)
       const orderPayload = {
         mentorId: mentor._id,
-        // Backend requirement ke hisaab se date/time bhej rahe hain
-        date: new Date().toISOString().split('T')[0], 
-        time: "10:00 AM", 
-        amount: 499 
+        date: date, // Modal se aayi hui date
+        time: time, // Modal se aaya hua time
+        amount: Number(customAmount) // Modal se aaya hua amount (Number me convert kiya)
       };
       
       const orderResponse = await BookMentor(orderPayload);
@@ -125,12 +137,10 @@ export default function AllMentorsScreen({ navigation }) {
         throw new Error(orderResponse.message || "Failed to initiate booking.");
       }
 
-      // ==========================================
-      // STEP 2: OPEN PAYMENT GATEWAY (Razorpay)
-      // ==========================================
+      // 3. OPEN PAYMENT GATEWAY (Razorpay)
       const options = {
-        description: `Session with ${mentor.name}`,
-        image: 'https://your-app-logo.com/logo.png', // Apni app ka logo
+        description: `Session with ${mentor.name} on ${date} at ${time}`,
+        image: 'https://your-app-logo.com/logo.png', 
         currency: 'INR',
         key: orderResponse.razorpayKey || 'YOUR_RAZORPAY_KEY', 
         amount: orderResponse.amount, 
@@ -145,9 +155,7 @@ export default function AllMentorsScreen({ navigation }) {
       };
 
       RazorpayCheckout.open(options).then(async (data) => {
-        // ==========================================
-        // STEP 3: VERIFY PAYMENT
-        // ==========================================
+        // 4. VERIFY PAYMENT
         const verifyPayload = {
           mentorId: mentor._id,
           razorpay_payment_id: data.razorpay_payment_id,
@@ -158,8 +166,8 @@ export default function AllMentorsScreen({ navigation }) {
         const verifyResponse = await verifyMentorbooking(verifyPayload);
 
         if (verifyResponse.success) {
-          Alert.alert("Success!", `Your session with ${mentor.name} is confirmed.`);
-          // navigation.navigate('MyBookings'); // Payment hone ke baad kahan jana hai
+          Alert.alert("Success!", `Your session with ${mentor.name} is confirmed for ${time}.`);
+          // navigation.navigate('MyBookings'); 
         } else {
           Alert.alert("Verification Failed", "Payment captured but verification failed. Contact support.");
         }
@@ -214,11 +222,11 @@ export default function AllMentorsScreen({ navigation }) {
             <Text style={styles.experienceText}>{item.experience || '5+'} Yrs Exp.</Text>
         </View>
         
-        {/* 👉 Updated Book Button */}
+        {/* 👉 BUTTON CHANGE: Ab direct API call nahi, Modal open hoga */}
         <TouchableOpacity 
           style={[styles.bookButton, bookingMentorId === item._id && { opacity: 0.7 }]} 
           activeOpacity={0.7}
-          onPress={() => handleBook(item)}
+          onPress={() => handleOpenModal(item)} // YAHAN CHANGE KIYA HAI
           disabled={bookingMentorId === item._id}
         >
           {bookingMentorId === item._id ? (
@@ -276,6 +284,18 @@ export default function AllMentorsScreen({ navigation }) {
           }
         />
       )}
+
+      {/* 👉 NAYA: Modal Component Inject Kiya */}
+      <SlotSelectionModal 
+        visible={isModalVisible}
+        mentor={selectedMentorForModal}
+        onClose={() => {
+          setIsModalVisible(false);
+          setSelectedMentorForModal(null);
+        }}
+        onConfirm={processBooking} 
+      />
+
     </SafeAreaView>
   );
 }

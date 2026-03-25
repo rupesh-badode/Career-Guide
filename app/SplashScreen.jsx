@@ -1,175 +1,158 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View, Easing } from "react-native";
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Animated,
+  Dimensions,
+  StatusBar,
+  ActivityIndicator
+} from 'react-native';
 
-export default function SplashScreen() {
-  // Animation Values
-  const entranceScale = useRef(new Animated.Value(0)).current;
-  const textTranslateY = useRef(new Animated.Value(50)).current;
-  const textOpacity = useRef(new Animated.Value(0)).current;
+const { width, height } = Dimensions.get('window');
+
+const SplashScreen = () => {
+  const [isImageLoading, setIsImageLoading] = useState(true);
   
-  // Continuous Animation Values
-  const rippleScale = useRef(new Animated.Value(1)).current;
-  const rippleOpacity = useRef(new Animated.Value(0.8)).current;
-  const floatAnim = useRef(new Animated.Value(0)).current;
+  // Animated Values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const slideUp = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
-    // 1. Entrance Animations (Drop and Fade In)
+    // Entrance Animation starts immediately
     Animated.parallel([
-      Animated.spring(entranceScale, {
+      Animated.timing(fadeAnim, {
         toValue: 1,
-        tension: 10,
-        friction: 3,
+        duration: 1000,
         useNativeDriver: true,
       }),
-      Animated.timing(textTranslateY, {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 4,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideUp, {
         toValue: 0,
         duration: 800,
-        easing: Easing.out(Easing.exp),
         useNativeDriver: true,
-        delay: 300, // Text aane mein thoda delay
-      }),
-      Animated.timing(textOpacity, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-        delay: 300,
       })
-    ]).start(() => {
-      // 2. Infinite Continuous Animations (Starts after entrance)
-      
-      // Floating Effect (Up and Down)
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(floatAnim, {
-            toValue: -10,
-            duration: 1500,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(floatAnim, {
-            toValue: 0,
-            duration: 1500,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          })
-        ])
-      ).start();
-
-      // Ripple/Glow Effect (Expanding waves)
-      Animated.loop(
-        Animated.parallel([
-          Animated.timing(rippleScale, {
-            toValue: 1.8,
-            duration: 2000,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(rippleOpacity, {
-            toValue: 0,
-            duration: 2000,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: true,
-          })
-        ])
-      ).start();
-    });
+    ]).start();
   }, []);
 
   return (
-    <View style={styles.splashContainer}>
+    <View style={styles.container}>
+      {/* 1. Light Orange Tint on Top (Taaki White na lage) */}
+      <View style={styles.topCircle} />
       
-      {/* Floating Logo Container */}
-      <Animated.View style={{ 
-        transform: [
-          { scale: entranceScale }, 
-          { translateY: floatAnim }
-        ],
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 40,
-        marginTop: 50,
-      }}>
-        
-        {/* Infinite Ripple Background */}
-        <Animated.View style={[
-          styles.rippleCircle,
+      <StatusBar barStyle="dark-content" />
+
+      {/* 2. Logo Container */}
+      <Animated.View 
+        style={[
+          styles.logoWrapper, 
           { 
-            transform: [{ scale: rippleScale }],
-            opacity: rippleOpacity 
+            opacity: fadeAnim, 
+            transform: [{ scale: scaleAnim }] 
           }
-        ]} />
+        ]}
+      >
+        <Image 
+          // 🛑 DHAYAN DEIN: Yahan file name ekdum sahi hona chahiye
+          // Agar folder "assets" hai toh '../assets/Aastroneet.png' check karein
+          source={require('../assets/aastroneet.png')} 
+          style={styles.logo}
+          resizeMode="contain"
+          onLoadEnd={() => setIsImageLoading(false)}
+        />
+        
+        {/* Agar image load ho rahi hai toh chota sa loader dikhega */}
+        {isImageLoading && (
+          <ActivityIndicator size="small" color="#F39C12" style={{ marginTop: 20 }} />
+        )}
+      </Animated.View>
 
-        {/* Main Logo Container */}
-        <View style={styles.logoCircle}>
-          {/* Layering Icons to mimic the Star + DNA look */}
-          <Ionicons name="star" size={50} color="#0EA5E9" style={styles.starIcon} />
-          <MaterialCommunityIcons name="dna" size={65} color="#10B981" />
+      {/* 3. Footer Branding */}
+      <Animated.View style={[styles.footer, { opacity: fadeAnim, transform: [{ translateY: slideUp }] }]}>
+        {/* <Text style={styles.brandName}>AASTRO NEET</Text>
+        <Text style={styles.tagline}>YOUR PATH TO MEDICAL SUCCESS</Text>
+         */}
+        {/* Simple Progress Bar Decoration */}
+        <View style={styles.progressBarBg}>
+           <Animated.View style={styles.progressBarActive} />
         </View>
-
       </Animated.View>
 
-      {/* Text Section with Glowing Shadow effect */}
-      <Animated.View style={{ 
-        opacity: textOpacity, 
-        transform: [{ translateY: textTranslateY }], 
-        alignItems: 'center' 
-      }}>
-        <Text style={styles.splashTitle}>AASTRONEET</Text>
-        <Text style={styles.splashSubtitle}>REACH YOUR POTENTIAL</Text>
-      </Animated.View>
-
+      <Text style={styles.version}>Version 1.0.1</Text>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  splashContainer: {
+  container: {
     flex: 1,
-    backgroundColor: '#ECFEFF', // Very Light Cyan/Blue Theme Background
+    backgroundColor: '#FAFAFA', // Pure white ki jagah off-white (Creamy)
     justifyContent: 'center',
     alignItems: 'center',
   },
-  rippleCircle: {
+  topCircle: {
     position: 'absolute',
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: '#6EE7B7', // Light mint green for the glow
+    top: -height * 0.1,
+    right: -width * 0.1,
+    width: width * 0.5,
+    height: width * 0.5,
+    borderRadius: width * 0.25,
+    backgroundColor: 'rgba(243, 156, 18, 0.05)', // Very light orange
   },
-  logoCircle: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: '#FFFFFF',
+  logoWrapper: {
+    width: width * 0.75,
+    height: width * 0.75,
     justifyContent: 'center',
     alignItems: 'center',
-    // Premium Shadow matching the light theme
-    shadowColor: '#0EA5E9',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 15,
   },
-  starIcon: {
+  logo: {
+    width: '100%',
+    height: '100%',
+  },
+  footer: {
     position: 'absolute',
-    opacity: 0.3, // Star behaves like a background element inside the circle
-    transform: [{ scale: 1.5 }],
+    bottom: 60,
+    alignItems: 'center',
+    width: '100%',
   },
-  splashTitle: {
-    fontSize: 42,
+  brandName: {
+    fontSize: 26,
     fontWeight: '900',
-    color: '#0F766E', // Deep Teal Green
-    letterSpacing: 3,
-    textShadowColor: 'rgba(45, 212, 191, 0.5)', // Neon text shadow
-    textShadowOffset: { width: 0, height: 4 },
-    textShadowRadius: 10,
+    color: '#D35400', // Deep Orange for visibility
+    letterSpacing: 2,
   },
-  splashSubtitle: {
-    fontSize: 16,
-    color: '#0284C7', // Sky Blue
-    marginTop: 8,
-    fontWeight: '700',
-    letterSpacing: 4,
+  tagline: {
+    fontSize: 12,
+    color: '#7F8C8D',
+    fontWeight: '600',
+    marginTop: 5,
+    letterSpacing: 1,
+  },
+  progressBarBg: {
+    height: 3,
+    width: 120,
+    backgroundColor: '#ECF0F1',
+    borderRadius: 10,
+    marginTop: 25,
+    overflow: 'hidden',
+  },
+  progressBarActive: {
+    height: '100%',
+    width: '40%', // Animation logic can be added
+    backgroundColor: '#F39C12',
+  },
+  version: {
+    position: 'absolute',
+    bottom: 20,
+    fontSize: 11,
+    color: '#BDC3C7',
   }
 });
+
+export default SplashScreen;

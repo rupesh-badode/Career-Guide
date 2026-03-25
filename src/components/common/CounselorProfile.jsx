@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,13 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AllConsultant } from '../../services/user';
+import { SingleConsultant } from '../../services/user';
+
+// 👉 UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
 
 // ==========================================
 // DUMMY REVIEWS DATA
@@ -33,7 +36,7 @@ const REVIEWS = [
 ];
 
 export default function CounselorProfile({ route, navigation }) {
-  // 👉 1. Navigation params extraction with safe fallback
+  // 👉 1. Navigation params extraction (Used as initial fast-load data)
   const {
     counselorId,
     counselorName,
@@ -43,14 +46,45 @@ export default function CounselorProfile({ route, navigation }) {
     counselorSpecialization
   } = route?.params || {};
 
-  // 👉 2. Fallback Variables
-  const displayName = counselorName || `Dr. Unknown`;
-  const displayAvatar = counselorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0D8ABC&color=fff`;
-  const displayRole = counselorRole ? `${counselorRole} • ${counselorSpecialization || 'General'}` : 'Senior Consultant';
-  const displayExperience = counselorExperience ? `${counselorExperience} Exp.` : '5+ Years Exp.';
-  const displayPrice = '₹ 15 / min';
+  // 👉 2. States for API Data
+  const [profileData, setProfileData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // 👉 3. Fetch Data from API
+  useEffect(() => {
+    const fetchConsultantDetails = async () => {
+      if (!counselorId) {
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const response = await SingleConsultant(counselorId);
+        // Map the backend response properly (adjust `.consultant` based on your actual API response structure)
+        const fetchedData = response?.consultant || response?.data || response;
+        setProfileData(fetchedData);
+      } catch (error) {
+        console.log("Error fetching consultant details:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchConsultantDetails();
+  }, [counselorId]);
+
+  // 👉 4. Dynamic Variables (Prioritize API data, fallback to route.params, then default values)
+  const displayName = profileData?.name || counselorName || `Expert Consultant`;
+  const displayAvatar = profileData?.image || profileData?.profilePicture || counselorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0D8ABC&color=fff`;
   
+  const roleStr = profileData?.role || counselorRole;
+  const specStr = profileData?.specialization || counselorSpecialization || 'General';
+  const displayRole = roleStr ? `${roleStr} • ${specStr}` : specStr;
+  
+  const displayExperience = profileData?.experience ? `${profileData.experience} Years Exp.` : counselorExperience ? `${counselorExperience} Exp.` : '5+ Years Exp.';
+  
+  // Handling price dynamically from backend
+  const displayPrice = profileData?.price ? `₹ ${profileData.price} / session` : '₹ 500 / session';
+  const bookingAmount = profileData?.price || 500;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -63,7 +97,7 @@ export default function CounselorProfile({ route, navigation }) {
           style={styles.iconButton}
           onPress={() => navigation?.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="chevron-back-outline" size={24} color="#1F2937" />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle} numberOfLines={1}>
@@ -82,12 +116,15 @@ export default function CounselorProfile({ route, navigation }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* Main Loading Indicator overlaying the top content slightly if needed */}
+        {isLoading && !profileData && (
+          <ActivityIndicator size="small" color="#4F46E5" style={{ marginBottom: 15 }} />
+        )}
 
         {/* ==========================================
             2. PROFILE INFO CARD
         ========================================== */}
         <View style={styles.profileCard}>
-          {/* FIXED: Using displayAvatar here so fallback works */}
           <Image source={{ uri: displayAvatar }} style={styles.profileImage} />
 
           <View style={styles.profileDetails}>
@@ -96,17 +133,16 @@ export default function CounselorProfile({ route, navigation }) {
               <Text style={styles.name} numberOfLines={1}>
                 {displayName}
               </Text>
-              <TouchableOpacity>
-                <Ionicons name="ellipsis-horizontal" size={20} color="#6B7280" />
-              </TouchableOpacity>
+              {/* <TouchableOpacity>
+                {/* <Ionicons name="ellipsis-horizontal" size={20} color="#6B7280" /> */}
+              {/* </TouchableOpacity> */} 
             </View>
 
             <Text style={styles.subtitle} numberOfLines={2}>{displayRole}</Text>
 
             <View style={styles.infoRow}>
               <Ionicons name="language-outline" size={14} color="#6B7280" />
-              {/* FIXED: Removed COUNSELOR reference */}
-              <Text style={styles.infoText}>English, Hindi</Text>
+              <Text style={styles.infoText}>{profileData?.languages?.join(', ') || 'English, Hindi'}</Text>
             </View>
             <View style={styles.infoRow}>
               <Ionicons name="briefcase-outline" size={14} color="#6B7280" />
@@ -121,23 +157,32 @@ export default function CounselorProfile({ route, navigation }) {
         </View>
 
         {/* ==========================================
-            3. STATS SECTION
+            3. ABOUT SECTION (Added dynamically for API data)
+        ========================================== */}
+        {profileData?.about && (
+          <View style={styles.aboutSection}>
+             <Text style={styles.sectionTitle}>About</Text>
+             <Text style={styles.aboutText}>{profileData.about}</Text>
+          </View>
+        )}
+
+        {/* ==========================================
+            4. STATS SECTION
         ========================================== */}
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
-            {/* FIXED: Removed COUNSELOR reference */}
-            <Text style={styles.statValue}>1.2k+</Text>
+            <Text style={styles.statValue}>{profileData?.totalSessions || '1.2k+'}</Text>
             <Text style={styles.statLabel}>Orders</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.statBox}>
-            <Text style={styles.statValue}>50k+</Text>
+            <Text style={styles.statValue}>{profileData?.totalMinutes || '50k+'}</Text>
             <Text style={styles.statLabel}>Minutes</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.statBox}>
             <View style={styles.ratingRow}>
-              <Text style={styles.statValue}>4.9</Text>
+              <Text style={styles.statValue}>{profileData?.rating || '4.9'}</Text>
               <Ionicons name="star" size={16} color="#F59E0B" style={{ marginLeft: 4, marginTop: -2 }} />
             </View>
             <Text style={styles.statLabel}>Rating</Text>
@@ -145,10 +190,9 @@ export default function CounselorProfile({ route, navigation }) {
         </View>
 
         {/* ==========================================
-            4. USER REVIEWS SECTION
+            5. USER REVIEWS SECTION
         ========================================== */}
         <View style={styles.reviewsSection}>
-          {/* FIXED: Using REVIEWS array directly */}
           <Text style={styles.sectionTitle}>User Reviews ({REVIEWS.length})</Text>
 
           {REVIEWS.map((review) => (
@@ -181,29 +225,14 @@ export default function CounselorProfile({ route, navigation }) {
       </ScrollView>
 
       {/* ==========================================
-          5. FIXED BOTTOM ACTION BAR
+          6. FIXED BOTTOM ACTION BAR
       ========================================== */}
       <View style={styles.bottomBar}>
-        {/* <TouchableOpacity
-          style={[styles.actionBtn, styles.chatBtn]}
-          onPress={() => navigation.navigate('ChatScreen', {
-            counselorId: counselorId,
-            counselorName: displayName,
-            counselorAvatar: displayAvatar,
-            consultationId: counselorId
-          })}
-        >
-          <Ionicons name="chatbubble-ellipses-outline" size={20} color="#4F46E5" />
-          <Text style={styles.chatBtnText}>Chat</Text>
-        </TouchableOpacity> */}
-
-        <View style={{ width: 15 }} />
-
         <TouchableOpacity style={[styles.actionBtn, styles.callBtn]}
-          onPress={() => navigation.navigate("BookingScreen", { // 👉 1. Change target screen
-            consultantId: counselorId,       // 👉 2. Pass the ID for the backend
-            consultantName: displayName,    // 👉 3. Pass name for the UI
-            amount:  500   // 👉 4. Pass the price (fallback to 500 if missing)
+          onPress={() => navigation.navigate("BookingScreen", {
+            consultantId: counselorId,
+            consultantName: displayName,
+            amount: bookingAmount // Automatically uses API price or fallback
           })} >
           <Ionicons name="calendar-outline" size={20} color="#FFFFFF" />
           <Text style={styles.callBtnText}>Book Now</Text>
@@ -238,11 +267,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1F2937',
     flex: 1,
-    textAlign: 'center', // Center aligned the name
+    textAlign: 'center',
   },
   iconButton: {
     padding: 5,
-    width: 40, // Fixed width so title stays perfectly centered
+    width: 40,
   },
   scrollContent: {
     padding: 20,
@@ -310,6 +339,15 @@ const styles = StyleSheet.create({
     color: '#10B981',
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  aboutSection: {
+    marginBottom: 20,
+    paddingHorizontal: 5,
+  },
+  aboutText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 22,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -414,17 +452,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: 50,
     borderRadius: 25,
-  },
-  chatBtn: {
-    backgroundColor: '#EEF2FF',
-    borderWidth: 1,
-    borderColor: '#4F46E5',
-  },
-  chatBtnText: {
-    color: '#4F46E5',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
   },
   callBtn: {
     backgroundColor: '#4F46E5',

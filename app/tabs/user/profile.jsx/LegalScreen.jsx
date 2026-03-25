@@ -10,6 +10,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 // 👉 API IMPORTS (Ensure these exist in your service files)
 import {getMentorLegal} from "../../../../src/services/mentorAPI"
+import { getLegal } from '../../../../src/services/user';
+import { getConsultantLegal } from '../../../../src/services/consultantAPI';
 
 const LegalScreen = ({ navigation }) => {
   // 👉 1. ROLE & THEME SETUP
@@ -46,7 +48,7 @@ const LegalScreen = ({ navigation }) => {
       }
 
       // Adjust extraction based on your actual API response structure
-      setLegalDoc(response?.data?.data || response); 
+      setLegalDoc(response?.data?.data || response?.data); 
     } catch (error) {
       console.log("Legal Fetch Error:", error);
       Alert.alert("Error", "Failed to fetch legal documents.");

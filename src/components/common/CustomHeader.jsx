@@ -47,7 +47,7 @@ export default function CustomHeader({
   notificationCount = 2,
   routeName,
   onProfilePress,
-  onLogoutPress, 
+  onLogoutPress,
   onBackPress,
   onNotificationPress,
   onActionPress,
@@ -59,7 +59,7 @@ export default function CustomHeader({
 }) {
 
   const insets = useSafeAreaInsets();
-  
+
   // 👉 1. STRICT ROLE CHECK
   const role = useSelector((state) => state.auth.role) || 'User';
   const isConsultant = role === 'Consultant';
@@ -71,7 +71,7 @@ export default function CustomHeader({
 
   const [cartCount, setCartCount] = useState(0);
   const isFocused = useIsFocused();
-  
+
   const [searchText, setSearchText] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [userData, setUserData] = useState(null);
@@ -134,7 +134,7 @@ export default function CustomHeader({
         } else {
           res = await getUserProfile();
         }
-        
+
         const profileInfo = res?.data || res?.user || res?.consultant || res?.mentor || res;
         if (profileInfo) setUserData(profileInfo);
       } catch (err) {
@@ -155,17 +155,14 @@ export default function CustomHeader({
     }
   };
 
-  const handleFilterSelect = (action) => {
-    setFilterDropdownVisible(false);
-    if (onSortSelect) onSortSelect(action);
-  };
+
 
   const handleProfileMenuSelect = (action) => {
     setProfileDropdownVisible(false);
     if (action === 'profile' && onProfilePress) {
-      onProfilePress(); 
+      onProfilePress();
     } else if (action === 'logout' && onLogoutPress) {
-      onLogoutPress(); 
+      onLogoutPress();
     }
   };
 
@@ -181,9 +178,9 @@ export default function CustomHeader({
       );
     }
 
-    if (routeName === 'Chat'|| routeName === 'Appointment' || routeName === 'Sessions') {
+    if (routeName === 'Chat' || routeName === 'Appointment' || routeName === 'Sessions') {
       const headerTitle = routeName === 'Chat' ? 'Messages' : (routeName === 'Sessions' ? 'Sessions' : 'Appointments');
-      
+
       return (
         <View style={[styles.contentContainer, { justifyContent: 'space-between' }]}>
           {isSearching ? (
@@ -216,10 +213,16 @@ export default function CustomHeader({
               <View style={styles.rightIconsContainer}>
                 <HeaderIconButton icon={theme.actionIcon} color="#333" onPress={() => toggleSearch(true)} />
                 <View style={{ width: 10 }} />
-                <HeaderIconButton 
-                  icon="filter-outline" 
-                  color="#333" 
-                  onPress={() => setFilterDropdownVisible(true)} 
+
+                <HeaderIconButton
+                  icon="filter-outline"
+                  color="#333"
+                  onPress={() => {
+                    // 👉 Ye direct Chat.js me paas kiye gaye function ko call karega
+                    if (onFilterPress) {
+                      onFilterPress();
+                    }
+                  }}
                 />
               </View>
             </>
@@ -241,19 +244,19 @@ export default function CustomHeader({
                 {theme.greeting}
                 <Text style={styles.nameText}>{displayName}</Text>
               </Text>
-              <Text style={styles.subText}>{theme.subText} <Ionicons name="chevron-down" size={16} color="#6B7280" style={{ marginLeft: 0}} /></Text>
+              <Text style={styles.subText}>{theme.subText} <Ionicons name="chevron-down" size={16} color="#6B7280" style={{ marginLeft: 0 }} /></Text>
             </View>
           </Pressable>
 
           <View style={styles.rightIconsContainer}>
             {/* Show Cart ONLY for Users */}
             {isUser && (
-              <HeaderIconButton icon="cart-outline" color="#333" badgeCount={cartCount} onPress={()=>navigation.navigate("CartScreen")} />
+              <HeaderIconButton icon="cart-outline" color="#333" badgeCount={cartCount} onPress={() => navigation.navigate("CartScreen")} />
             )}
-            
+
             {/* Show Notification/Action icon for Mentors/Consultants */}
             {(isConsultant || isMentor) && (
-               <HeaderIconButton icon="notifications-outline" color="#333" badgeCount={0} onPress={() => console.log("Notif pressed")} />
+              <HeaderIconButton icon="notifications-outline" color="#333" badgeCount={0} onPress={() => console.log("Notif pressed")} />
             )}
           </View>
         </View>
@@ -273,7 +276,7 @@ export default function CustomHeader({
               {theme.greeting}
               <Text style={styles.nameText}>{displayName}</Text>
             </Text>
-            <Text style={styles.subText}>{theme.subText} <Ionicons name="chevron-down" size={16} color="#6B7280" style={{ marginLeft: 0}} /></Text>
+            <Text style={styles.subText}>{theme.subText} <Ionicons name="chevron-down" size={16} color="#6B7280" style={{ marginLeft: 0 }} /></Text>
           </View>
         </Pressable>
 
@@ -287,51 +290,30 @@ export default function CustomHeader({
 
   return (
     <>
-      <BlurView 
-        intensity={90} 
-        tint="light" 
+      <BlurView
+        intensity={90}
+        tint="light"
         style={{
           position: 'absolute',
           top: 0, left: 0, right: 0,
           height: insets.top,
           zIndex: 1001,
-        }} 
+        }}
       />
 
-      <AnimatedBlurView 
-        intensity={85} 
-        tint="light" 
+      <AnimatedBlurView
+        intensity={85}
+        tint="light"
         style={[
-          styles.blurWrapper, 
-          { 
+          styles.blurWrapper,
+          {
             paddingTop: (insets?.top || 40) + 10,
-            transform: [{ translateY: translateY || 0 }] 
+            transform: [{ translateY: translateY || 0 }]
           }
         ]}
       >
         {renderHeaderContent()}
       </AnimatedBlurView>
-
-      {/* Filter Modal */}
-      <Modal transparent={true} visible={isFilterDropdownVisible} animationType="fade" onRequestClose={() => setFilterDropdownVisible(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setFilterDropdownVisible(false)}>
-          <View style={[styles.dropdownContainerRight, { top: insets.top + 60 }]}>
-            <TouchableOpacity style={styles.dropdownItem} onPress={() => handleFilterSelect('asc')}>
-              <Ionicons name="arrow-up-outline" size={20} color="#4B5563" />
-              <Text style={styles.dropdownText}>Sort Ascending</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.dropdownItem} onPress={() => handleFilterSelect('desc')}>
-              <Ionicons name="arrow-down-outline" size={20} color="#4B5563" />
-              <Text style={styles.dropdownText}>Sort Descending</Text>
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.dropdownItem} onPress={() => handleFilterSelect('unread')}>
-              <Ionicons name="mail-unread-outline" size={20} color={theme.primary} />
-              <Text style={[styles.dropdownText, { color: theme.primary, fontWeight: '600' }]}>Unread Messages</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
 
       {/* Profile Modal */}
       <Modal transparent={true} visible={isProfileDropdownVisible} animationType="fade" onRequestClose={() => setProfileDropdownVisible(false)}>

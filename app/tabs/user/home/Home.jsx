@@ -12,10 +12,17 @@ import OnboardingScreen from "./OnboardingScreen";
 import WhyLoveAastroneet from "./WhyLoveAastroneet";
 import SmartTools from "./SmartTools";
 import TopMentorsOverview from "./TopMentorsOverview";
+import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useDispatch } from "react-redux";
+import { logout } from "../../../../src/redux/authSlice";
 
 export default function Index() {
     const insets = useSafeAreaInsets();
     const HEADER_HEIGHT = insets.top + 60; // Apne header ke hisaab se adjust karein
+    const navigation = useNavigation();
+
+    const dispatch = useDispatch();
 
     const scrollY = useRef(new Animated.Value(0)).current;
     const scrollYClamped = Animated.diffClamp(scrollY, 0, HEADER_HEIGHT);
@@ -25,6 +32,31 @@ export default function Index() {
         inputRange: [0, HEADER_HEIGHT],
         outputRange: [1, 0], // 1 = Pura dikhega, 0 = Wahin par gayab ho jayega
     });
+
+     function logoutClick() {
+    Alert.alert(
+      "Confirm Logout",
+      "Are You Sure?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Yes, Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('userToken');
+              await AsyncStorage.removeItem('userData');
+              dispatch(logout());
+              console.log("Logout Successfully! Redirecting...");
+            } catch (error) {
+              console.error("Failed to LogOut:", error);
+            }
+          },
+        },
+      ]
+    );
+  }
+
 
     return (
         <View style={styles.container}>
@@ -61,7 +93,7 @@ export default function Index() {
                 }
             ]}>
                 {/* ⚠️ Ensure karein ki ab CustomHeader me koi old translateY prop na ja raha ho */}
-                <CustomHeader routeName="Home" />
+                <CustomHeader routeName="Home" onProfilePress={()=>navigation.navigate("Profile")} onLogoutPress={logoutClick}  />
             </Animated.View>
         </View>
     );

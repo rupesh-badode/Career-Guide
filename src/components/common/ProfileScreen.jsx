@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, Image, Pressable,
   ScrollView, SafeAreaView, Platform,
-  Alert
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -146,7 +146,7 @@ export default function ProfileScreen() {
                   source={{
                     uri:
                       userData?.profilePicture ||
-                      "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name)}&background=0D8ABC&color=fff` ,
                   }}
                   style={styles.profileImage}
                 />
@@ -162,7 +162,7 @@ export default function ProfileScreen() {
 
                 {userData?.phone && (
                   <Text style={[styles.userEmail, { marginTop: -5, fontSize: 12 }]}>
-                    📞 +91 {userData.phone}
+                    +91 {userData.phone}
                   </Text>
                 )}
 
@@ -174,7 +174,7 @@ export default function ProfileScreen() {
                   ]}
                 >
                   <Text style={[styles.roleText, { color: theme.primary }]}>
-                    Edit {role} Profile
+                    Edit {role} EdProfile
                   </Text>
                 </Pressable>
               </View>
