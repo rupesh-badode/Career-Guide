@@ -244,7 +244,7 @@ export default function AllMentorsScreen({ navigation }) {
     <SafeAreaView style={styles.mainContainer}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation?.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#111827" />
+            <Ionicons name="chevron-back" size={24} color="#111827" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Find Your Mentor</Text>
         <View style={{ width: 40 }} /> 

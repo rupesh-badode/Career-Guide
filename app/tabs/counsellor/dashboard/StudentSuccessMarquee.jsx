@@ -105,7 +105,7 @@ export default function StudentSuccessMarquee() {
               <View style={styles.avatarWrapper}>
                 <Image source={{ uri: item.image }} style={styles.avatar} />
                 <View style={styles.quoteIconBadge}>
-                  <Ionicons name="quote" size={12} color="#FFF" />
+                  <Ionicons name="chevron-down" size={12} color="#FFF" />
                 </View>
               </View>
 

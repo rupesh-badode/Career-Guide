@@ -13,9 +13,9 @@ import WhyLoveAastroneet from "./WhyLoveAastroneet";
 import SmartTools from "./SmartTools";
 import TopMentorsOverview from "./TopMentorsOverview";
 import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+// import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
-import { logout } from "../../../../src/redux/authSlice";
+// import { logout } from "../../../../src/redux/authSlice";
 
 export default function Index() {
     const insets = useSafeAreaInsets();
@@ -33,29 +33,7 @@ export default function Index() {
         outputRange: [1, 0], // 1 = Pura dikhega, 0 = Wahin par gayab ho jayega
     });
 
-     function logoutClick() {
-    Alert.alert(
-      "Confirm Logout",
-      "Are You Sure?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Yes, Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await AsyncStorage.removeItem('userToken');
-              await AsyncStorage.removeItem('userData');
-              dispatch(logout());
-              console.log("Logout Successfully! Redirecting...");
-            } catch (error) {
-              console.error("Failed to LogOut:", error);
-            }
-          },
-        },
-      ]
-    );
-  }
+    
 
 
     return (
@@ -93,7 +71,7 @@ export default function Index() {
                 }
             ]}>
                 {/* ⚠️ Ensure karein ki ab CustomHeader me koi old translateY prop na ja raha ho */}
-                <CustomHeader routeName="Home" onProfilePress={()=>navigation.navigate("Profile")} onLogoutPress={logoutClick}  />
+                <CustomHeader routeName="Home" onProfilePress={()=>navigation.navigate("Profile")}/>
             </Animated.View>
         </View>
     );

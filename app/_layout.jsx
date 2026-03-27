@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -17,16 +17,8 @@ import io from 'socket.io-client';
 import { backendConfig } from '../src/constants/MainContent';
 
 // --- SCREEN IMPORTS ---
-import ProfileScreen from '../src/components/common/ProfileScreen';
-import CustomHeader from '../src/components/common/CustomHeader';
-import Index from './tabs/user/home/Home';
-import Chat from './tabs/user/chat/Chat';
 import CounselorProfile from '../src/components/common/CounselorProfile';
-import AppointmentSreen from './tabs/user/appointment/AppointmentScreen';
 
-import CounselorDashboard from './tabs/counsellor/dashboard/CounselorDashboard';
-import ManageAppointments from './tabs/counsellor/manageappoinment/ManageAppointments';
-import CounselorChat from './tabs/counsellor/chat/CounselorChat';
 import RegisterScreen from './auth/SignUp';
 import SplashScreen from './SplashScreen';
 import OtpVerification from './auth/OtpVerification';
@@ -35,15 +27,12 @@ import ForgotPassword from './auth/ForgotPassword';
 import ResetPassword from './auth/ResetPassword';
 import ProfileDetailsList from './tabs/user/profile.jsx/ProfileDetailsList';
 import EditProfileScreen from '../src/components/common/EditProfileScreen';
-import { getConsultantProfile } from '../src/services/consultantAPI';
 import ConsultProfileDetails from './tabs/counsellor/profile/ContsultProfileDetails';
 import BookingScreen from './tabs/user/razor pay/BookingScreen';
 import BookingSuccess from './tabs/user/razor pay/BookingSuccess';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import KycScreen from './tabs/counsellor/profile/KycScreen';
 import KycDetailsScreen from './tabs/counsellor/profile/KycDetails';
 
-import NewsScreen from './tabs/user/news/NewsScreen';
 import BlogScreen from './tabs/user/blog/BlogScreen';
 import ChatScreen from '../src/components/common/ChatScreen';
 import StudentProfile from './tabs/counsellor/chat/StudentProfile';
@@ -57,6 +46,11 @@ import AddAddress from './tabs/user/profile.jsx/AddAddress';
 import AllMentorsScreen from './tabs/user/mentor/AllMentorsScreen';
 import MentorChatList from './tabs/user/mentor/MentorsChatList';
 import BlogDetails from './tabs/user/blog/BlogDetails';
+import MentorBlog from './tabs/mentor/blog/AnimatedBlogCard';
+import WelcomeScreen from './WelcomeScreen';
+import ChangePasswordScreen from './auth/ChangePasswordScreen';
+import AudioCallScreen from '../src/components/common/AudioCallScreen';
+import CheckoutButton from './tabs/user/profile.jsx/CheckoutButton';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -169,6 +163,7 @@ function AppNavigator() {
         /* Condition 2: Not Logged In */
         !isAuthenticated ? (
           <>
+            <Stack.Screen name='WelcomeScreen' component={WelcomeScreen} />
             <Stack.Screen name='Login' component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
             <Stack.Screen name='OtpVerification' component={OtpVerification} />
@@ -190,6 +185,7 @@ function AppNavigator() {
             <Stack.Screen name='BookingScreen' component={BookingScreen} />
             <Stack.Screen name="BookingSuccess" component={BookingSuccess} header={{ headerShown: false }} />
             <Stack.Screen name='VideoCall' component={VideoCallScreen} />
+            <Stack.Screen name='AudioCall' component={AudioCallScreen} />
             <Stack.Screen name='KycScreen' component={KycScreen} />
             <Stack.Screen name='KycDetails' component={KycDetailsScreen} />
             <Stack.Screen name='LegalScreen' component={LegalScreen} />
@@ -201,6 +197,9 @@ function AppNavigator() {
             <Stack.Screen name='MentorChatList' component={MentorChatList} />
             <Stack.Screen name="Blogs" component={BlogScreen} />
             <Stack.Screen name='BlogDetails' component={BlogDetails} />
+            <Stack.Screen name='MentorBlog' component={MentorBlog} />
+            <Stack.Screen name='ChangePassword' component={ChangePasswordScreen} />
+            <Stack.Screen name='CheckoutButton' component={CheckoutButton} />
           </>
         )}
 

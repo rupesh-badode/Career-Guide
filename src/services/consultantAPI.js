@@ -115,3 +115,66 @@ export const getConsultantLegal = async () => {
         return { success: false, message: errorMsg };
     }
 }
+
+export const CreateAvailability = async (payload) => {
+    try {
+        const res = await Axios.post("/consultant/create-availability", payload);
+        return { success: true, data: res.data };
+    } catch (err) {
+        console.error("API ERR", err);
+        const errorMsg = err.response?.data?.message || err.message || "Availability creation failed";
+        return { success: false, message: errorMsg };
+    }
+}
+
+export const getMyAvailblity = async () => {
+    try{
+        const res = await Axios.get("/consultant/my-availability");
+        return { success: true, data: res.data };
+    }catch(err){
+        console.error("API ERR", err);
+        const errorMsg = err.response?.data?.message || err.message || "Failed to fetch availability";
+        return { success: false, message: errorMsg };
+    }
+}
+
+// consultantAPI.js
+export const UpdateAvailability = async (id, payload) => {
+    try {
+        // 👉 FIX: Axios.put mein doosra argument payload (body) hota hai
+        const res = await Axios.put(`/consultant/update-availability/${id}`, payload);
+        return { success: true, data: res.data };
+    } catch (err) {
+        console.error("API ERR", err);
+        const errorMsg = err.response?.data?.message || err.message || "Availability update failed";
+        return { success: false, message: errorMsg };
+    }
+}
+
+export const DeleteDate = async (id) => {
+    try {
+        const res = await Axios.delete(`/consultant/delete-availability/${id}`);
+        return { success: true, data: res.data };
+    } catch (err) {
+        console.error("API ERR", err);
+        const errorMsg = err.response?.data?.message || err.message || "Availability deletion failed";
+        return { success: false, message: errorMsg };
+    }
+}
+
+// consultantAPI.js mein
+export const DeleteSlot = async (payload) => {
+    try {
+        // 👉 FIX: Yahan dhyan se dekho, maine Axios.delete likha hai aur payload ko 'data' ke andar bheja hai.
+        // (GET request me body nahi jaati, isiliye 404 aa raha tha)
+        const res = await Axios.delete("/consultant/delete-particular-slot", {
+            data: payload
+        });
+        
+        return { success: true, data: res.data };
+    } catch (err) {
+        console.error("API ERR", err);
+        const errorMsg = err.response?.data?.message || err.message || "Failed to delete slot";
+        return { success: false, message: errorMsg };
+    }
+}

@@ -11,7 +11,9 @@ export default function Dashboard() {
     {/* <ConsultantHeroSection/> */}
     {/* <WhyJoinSection/> */}
     {/* <ConsultantFeatures/> */}
+
     <StudentSuccessMarquee/>
+
     {/* <StudentWallOfFame/> */}
     </>
   );

@@ -1,408 +1,388 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  FlatList, 
-  Image, 
-  SafeAreaView, 
-  Platform 
+  View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, 
+  ScrollView, Alert, Platform, UIManager, LayoutAnimation, Animated, 
+  TextInput, KeyboardAvoidingView
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Calendar } from 'react-native-calendars';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { CreateAvailability } from '../../../../src/services/consultantAPI';
 
-// ==========================================
-// DUMMY DATA
-// ==========================================
-const APPOINTMENTS = [
-  {
-    id: '1',
-    studentName: 'Rahul Sharma',
-    image: 'https://randomuser.me/api/portraits/men/32.jpg',
-    date: '12 Mar 2026',
-    time: '10:30 AM',
-    status: 'pending', // pending, upcoming, completed, cancelled
-  },
-  {
-    id: '2',
-    studentName: 'Priya Desai',
-    image: 'https://randomuser.me/api/portraits/women/68.jpg',
-    date: '14 Mar 2026',
-    time: '02:00 PM',
-    status: 'pending',
-  },
-  {
-    id: '3',
-    studentName: 'Amit Patel',
-    image: 'https://randomuser.me/api/portraits/men/45.jpg',
-    date: '10 Mar 2026',
-    time: '09:00 AM',
-    status: 'upcoming',
-  },
-  {
-    id: '4',
-    studentName: 'Neha Gupta',
-    image: 'https://randomuser.me/api/portraits/women/72.jpg',
-    date: '08 Mar 2026',
-    time: '04:15 PM',
-    status: 'completed',
-  },
-  {
-    id: '5',
-    studentName: 'Vikram Singh',
-    image: 'https://randomuser.me/api/portraits/men/67.jpg',
-    date: '05 Mar 2026',
-    time: '11:00 AM',
-    status: 'cancelled',
-  },
+// Enable LayoutAnimation for Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const THEME_COLOR = '#10B981'; // Emerald Green
+const TEXT_DARK = '#111827';
+const TEXT_MUTED = '#6B7280';
+
+// Pre-defined slots
+const DEFAULT_SLOTS = [
+  "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", 
+  "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", 
+  "05:00 PM", "06:00 PM", "07:00 PM", "08:00 PM"
 ];
 
-// Tabs setup
+export default function CreateAvailabilityScreen({ navigation }) {
+  const todayStr = new Date().toISOString().split('T')[0];
+  
+  const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [selectedSlots, setSelectedSlots] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [duration, setDuration] = useState('');
+  
+  // Custom Time ke liye states
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [allAvailableSlots, setAllAvailableSlots] = useState(DEFAULT_SLOTS);
 
-const TABS = [
-  { id: 'pending', label: 'Requests' },
-  { id: 'upcoming', label: 'Upcoming' },
-  { id: 'past', label: 'Past' }, // Completed & Cancelled will go here
-];
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-export default function ManageAppointments({ navigation }) {
-  const [activeTab, setActiveTab] = useState('pending');
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
-  // --- Filtering Logic ---
-  const filteredAppointments = APPOINTMENTS.filter(apt => {
-    if (activeTab === 'past') return apt.status === 'completed' || apt.status === 'cancelled';
-    return apt.status === activeTab;
-  });
+  const handleDayPress = (day) => {
+    setSelectedDate(day.dateString);
+  };
 
-  // --- Helper for Status Badges ---
-  const getStatusStyle = (status) => {
-    switch(status) {
-      case 'pending': return { bg: '#FEF3C7', text: '#D97706', label: 'Pending' }; // Amber
-      case 'upcoming': return { bg: '#DBEAFE', text: '#2563EB', label: 'Confirmed' }; // Blue
-      case 'completed': return { bg: '#D1FAE5', text: '#059669', label: 'Completed' }; // Emerald
-      case 'cancelled': return { bg: '#FEE2E2', text: '#DC2626', label: 'Cancelled' }; // Red
-      default: return { bg: '#F3F4F6', text: '#4B5563', label: 'Unknown' };
+  const toggleSlot = (slot) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    if (selectedSlots.includes(slot)) {
+      setSelectedSlots(prev => prev.filter(s => s !== slot));
+    } else {
+      setSelectedSlots(prev => [...prev, slot]);
     }
   };
 
-  // --- Render Single Appointment Card ---
-  const renderAppointmentCard = ({ item }) => {
-    const statusStyle = getStatusStyle(item.status);
+  const handleTimeChange = (event, selectedDateObj) => {
+    setShowTimePicker(false);
+    if (selectedDateObj) {
+      let hours = selectedDateObj.getHours();
+      let minutes = selectedDateObj.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      
+      hours = hours % 12;
+      hours = hours ? hours : 12; 
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      
+      const formattedTime = `${hours}:${minutes} ${ampm}`;
+      
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      
+      if (!allAvailableSlots.includes(formattedTime)) {
+        setAllAvailableSlots(prev => [...prev, formattedTime]);
+      }
+      if (!selectedSlots.includes(formattedTime)) {
+        setSelectedSlots(prev => [...prev, formattedTime]);
+      }
+    }
+  };
 
-    return (
-      <View style={styles.card}>
-        
-        {/* Top Row: Image, Name & Status Badge */}
-        <View style={styles.cardHeader}>
-          <View style={styles.clientInfo}>
-            <Image source={{ uri: item.image }} style={styles.clientImage} />
-            <Text style={styles.clientName}>{item.studentName}</Text>
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-            <Text style={[styles.statusText, { color: statusStyle.text }]}>{statusStyle.label}</Text>
-          </View>
-        </View>
+  const handleSubmit = async () => {
+    if (!selectedDate) {
+      Alert.alert("Missing Details", "Please select a date.");
+      return;
+    }
+    if (selectedSlots.length === 0) {
+      Alert.alert("Missing Details", "Please select at least one time slot.");
+      return;
+    }
+    if (!amount || isNaN(amount)) {
+      Alert.alert("Missing Amount", "Please enter a valid amount.");
+      return;
+    }
+    if(!duration){
+      Alert.alert("Missing Duration", "Please enter a valid duration.");
+      return;
+    }
 
-        {/* Middle Row: Date & Time */}
-        <View style={styles.dateTimeRow}>
-          <View style={styles.dtItem}>
-            <Ionicons name="calendar-outline" size={16} color="#6B7280" />
-            <Text style={styles.dtText}>{item.date}</Text>
-          </View>
-          <View style={styles.dtItem}>
-            <Ionicons name="time-outline" size={16} color="#6B7280" />
-            <Text style={styles.dtText}>{item.time}</Text>
-          </View>
-        </View>
+    setIsLoading(true);
 
-        {/* Bottom Row: Dynamic Actions based on Status */}
-        <View style={styles.actionRow}>
-          
-          {item.status === 'pending' && (
-            <>
-              <TouchableOpacity style={[styles.actionBtn, styles.declineBtn]}>
-                <Text style={styles.declineText}>Decline</Text>
-              </TouchableOpacity>
-              <View style={{ width: 10 }} />
-              <TouchableOpacity style={[styles.actionBtn, styles.acceptBtn]}>
-                <Text style={styles.acceptText}>Approve</Text>
-              </TouchableOpacity>
-            </>
-          )}
+    try {
+      // 👉 FIX: amount ab har slot ke andar aayega
+      const formattedSlots = selectedSlots.map(time => ({
+        time: time,
+        amount: Number(amount),
+        duration:Number(duration) 
+      }));
 
-          {item.status === 'upcoming' && (
-            <>
-              <TouchableOpacity style={[styles.actionBtn, styles.rescheduleBtn]}>
-                <Text style={styles.rescheduleText}>Reschedule</Text>
-              </TouchableOpacity>
-              <View style={{ width: 10 }} />
-              <TouchableOpacity style={[styles.actionBtn, styles.joinBtn]}>
-                <Ionicons name="videocam" size={16} color="#FFF" style={{ marginRight: 6 }} />
-                <Text style={styles.joinText}>Join Call</Text>
-              </TouchableOpacity>
-            </>
-          )}
+      const payload = {
+        date: selectedDate, // 'YYYY-MM-DD'
+        slots: formattedSlots // Array of objects [{time, amount}]
+      };
 
-          {item.status === 'completed' && (
-            <TouchableOpacity style={[styles.actionBtn, styles.notesBtn]}>
-              <Ionicons name="document-text-outline" size={16} color="#10B981" style={{ marginRight: 6 }} />
-              <Text style={styles.notesText}>View Notes</Text>
-            </TouchableOpacity>
-          )}
+      console.log("Submitting Payload:", payload);
 
-          {item.status === 'cancelled' && (
-            <Text style={styles.cancelledNote}>This session was cancelled.</Text>
-          )}
-
-        </View>
-
-      </View>
-    );
+      const response = await CreateAvailability(payload); 
+      
+      console.log("API Response:", response);
+      
+      if (response && response.success) { 
+        Alert.alert("Success", "Availability created successfully.");
+        // Optional: navigation.goBack();
+      } else {
+        Alert.alert("Error", response?.message || "Failed to create availability.");
+      }
+    } catch (error) {
+      console.log("Create Availability Error:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-  
-      {/* Tabs (Pending | Upcoming | Past) */}
-      <View style={styles.tabsContainer}>
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <TouchableOpacity 
-              key={tab.id} 
-              style={[styles.tabBtn, isActive && styles.activeTabBtn]}
-              onPress={() => setActiveTab(tab.id)}
-            >
-              <Text style={[styles.tabText, isActive && styles.activeTabText]}>{tab.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Set Availability</Text>
+          <View style={{ width: 40 }} />
+        </View>
 
-      {/* List */}
-      <View style={styles.listContainer}>
-        {filteredAppointments.length > 0 ? (
-          <FlatList
-            data={filteredAppointments}
-            keyExtractor={(item) => item.id}
-            renderItem={renderAppointmentCard}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 100 }}
-          />
-        ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name="calendar-clear-outline" size={60} color="#D1D5DB" />
-            <Text style={styles.emptyStateText}>No appointments found here.</Text>
-          </View>
-        )}
-      </View>
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }}>
+            
+            {/* CALENDAR */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Select Date</Text>
+              <View style={styles.card}>
+                <Calendar
+                  minDate={todayStr}
+                  onDayPress={handleDayPress}
+                  markedDates={{
+                    [selectedDate]: { selected: true, selectedColor: THEME_COLOR, selectedTextColor: '#fff' }
+                  }}
+                  theme={{
+                    todayTextColor: THEME_COLOR,
+                    arrowColor: THEME_COLOR,
+                    textDayFontWeight: '500',
+                    monthTextColor: TEXT_DARK,
+                    textMonthFontWeight: 'bold',
+                  }}
+                />
+              </View>
+            </View>
+            {/* duration */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Duration (Minutes)</Text>
+              <View style={[styles.card, styles.inputContainer]}>
+                <Ionicons name="timer-outline" size={24} color={TEXT_MUTED} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. 30"
+                  placeholderTextColor="#9CA3AF"
+                  value={duration}
+                  onChangeText={setDuration}
+                  keyboardType="numeric" // Number pad khulega
+                  returnKeyType="done"
+                />
+              </View>
+            </View>
 
+            {/* TIME SLOTS */}
+            <View style={styles.section}>
+              <View style={styles.slotsHeader}>
+                <Text style={styles.sectionTitle}>Select Time Slots</Text>
+                <Text style={styles.slotCount}>
+                  {selectedSlots.length > 0 ? `${selectedSlots.length} Selected` : 'None Selected'}
+                </Text>
+              </View>
+              
+              <View style={styles.gridContainer}>
+                {allAvailableSlots.map((slot, index) => {
+                  const isSelected = selectedSlots.includes(slot);
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      activeOpacity={0.7}
+                      onPress={() => toggleSlot(slot)}
+                      style={[styles.slotChip, isSelected && styles.slotChipActive]}
+                    >
+                      <Ionicons 
+                        name={isSelected ? "time" : "time-outline"} 
+                        size={16} 
+                        color={isSelected ? "#fff" : TEXT_MUTED} 
+                        style={{ marginRight: 6 }} 
+                      />
+                      <Text style={[styles.slotText, isSelected && styles.slotTextActive]}>
+                        {slot}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <TouchableOpacity 
+                style={styles.customTimeBtn}
+                onPress={() => setShowTimePicker(true)}
+              >
+                <Ionicons name="add-circle-outline" size={20} color={THEME_COLOR} />
+                <Text style={styles.customTimeText}>Add Custom Time Slot</Text>
+              </TouchableOpacity>
+
+              {showTimePicker && (
+                <DateTimePicker
+                  value={new Date()}
+                  mode="time"
+                  is24Hour={false}
+                  display="default"
+                  onChange={handleTimeChange}
+                />
+              )}
+            </View>
+
+            {/* AMOUNT PER SLOT */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Amount Per Slot (₹)</Text>
+              <View style={[styles.card, styles.inputContainer]}>
+                <Ionicons name="wallet-outline" size={24} color={TEXT_MUTED} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. 500"
+                  placeholderTextColor="#9CA3AF"
+                  value={amount}
+                  onChangeText={setAmount}
+                  keyboardType="numeric" // Number pad khulega
+                  returnKeyType="done"
+                />
+              </View>
+            </View>
+
+          </Animated.View>
+        </ScrollView>
+
+        {/* FOOTER */}
+        <View style={styles.footer}>
+          <TouchableOpacity 
+            style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+            onPress={handleSubmit}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Text style={styles.submitBtnText}>Save Availability</Text>
+                <Ionicons name="checkmark-circle" size={20} color="#fff" style={{ marginLeft: 8 }} />
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-// ==========================================
-// STYLES
-// ==========================================
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1F2937',
-  },
-  iconButton: {
-    padding: 5,
+  safeArea: { flex: 1, backgroundColor: '#F9FAFB' }, // Halka grayish background better contrast ke liye
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: TEXT_DARK },
+  scrollContent: { padding: 16, paddingBottom: 180 }, // Footer ke liye space
+  section: { marginBottom: 24 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: TEXT_DARK, marginBottom: 12 },
+  
+  card: { 
+    backgroundColor: '#fff', 
+    borderRadius: 16, 
+    borderWidth: 1, 
+    borderColor: '#F3F4F6', 
+    elevation: 3, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.05, 
+    shadowRadius: 8 
   },
   
-  // --- Tabs ---
-  tabsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+  slotsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  slotCount: { fontSize: 13, fontWeight: '600', color: THEME_COLOR, marginBottom: 12 },
+  gridContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' },
+  
+  slotChip: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    width: '31%', 
+    backgroundColor: '#fff', 
+    paddingVertical: 12, 
+    borderRadius: 12, 
+    borderWidth: 1.5, 
+    borderColor: '#E5E7EB' 
   },
-  tabBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 8,
-    marginHorizontal: 4,
-    backgroundColor: '#F3F4F6',
+  slotChipActive: { 
+    backgroundColor: THEME_COLOR, 
+    borderColor: THEME_COLOR, 
+    transform: [{ scale: 1.02 }] // Smooth press feel
   },
-  activeTabBtn: {
-    backgroundColor: '#10B981', // Indigo
+  slotText: { fontSize: 13, fontWeight: '600', color: TEXT_MUTED },
+  slotTextActive: { color: '#fff' },
+  
+  customTimeBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    padding: 14, 
+    marginTop: 16, 
+    backgroundColor: '#ECFDF5', 
+    borderRadius: 12, 
+    borderWidth: 1, 
+    borderColor: '#A7F3D0', 
+    borderStyle: 'dashed' 
   },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  activeTabText: {
-    color: '#FFFFFF',
-  },
-
-  // --- List & Card ---
-  listContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 15,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 15,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 },
-      android: { elevation: 2 },
-      web: { boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.04)' },
-    }),
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  clientInfo: {
+  customTimeText: { marginLeft: 8, fontSize: 14, fontWeight: '600', color: THEME_COLOR },
+  
+  // 👉 ADDED: Input aur Icon ki styling
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    height: 56,
   },
-  clientImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E5E7EB',
+  inputIcon: {
     marginRight: 10,
   },
-  clientName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  dateTimeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: '#F9FAFB',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
-  },
-  dtItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dtText: {
-    fontSize: 13,
-    color: '#4B5563',
-    marginLeft: 6,
-    fontWeight: '500',
-  },
-  
-  // --- Actions ---
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    paddingTop: 15,
-  },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    flex: 1, // Dono buttons ko equal width dega
-  },
-  
-  // Specific Button Styles
-  declineBtn: {
-    backgroundColor: '#FEE2E2', // Light Red
-  },
-  declineText: {
-    color: '#DC2626',
-    fontWeight: 'bold',
-  },
-  acceptBtn: {
-    backgroundColor: '#10B981', // Emerald
-  },
-  acceptText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  rescheduleBtn: {
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-  },
-  rescheduleText: {
-    color: '#4B5563',
-    fontWeight: 'bold',
-  },
-  joinBtn: {
-    backgroundColor: '#4F46E5', // Indigo
-  },
-  joinText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  notesBtn: {
-    backgroundColor: '#EEF2FF',
-    borderWidth: 1,
-    borderColor: '#4F46E5',
-    flex: 0, // Shrink to fit content
-  },
-  notesText: {
-    color: '#10B981',
-    fontWeight: 'bold',
-  },
-  cancelledNote: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    fontStyle: 'italic',
+  input: {
     flex: 1,
-    textAlign: 'center',
-  },
-
-  // --- Empty State ---
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 60,
-  },
-  emptyStateText: {
-    marginTop: 15,
     fontSize: 16,
-    color: '#9CA3AF',
-    fontWeight: '500',
+    color: TEXT_DARK,
+    fontWeight: '600',
+    height: '100%',
   },
+  
+  footer: { 
+    position: 'absolute', 
+    bottom: 0, 
+    width: '100%', 
+    backgroundColor: '#fff', 
+    padding: 16, 
+    paddingBottom: Platform.OS === 'ios' ? 34 :100, 
+    borderTopWidth: 1, 
+    borderTopColor: '#F3F4F6', 
+    elevation: 10 
+  },
+  submitBtn: { 
+    backgroundColor: THEME_COLOR, 
+    paddingVertical: 16, 
+    borderRadius: 12, 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    shadowColor: THEME_COLOR, 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowOpacity: 0.3, 
+    shadowRadius: 6, 
+    elevation: 5 
+  },
+  submitBtnDisabled: { opacity: 0.7 },
+  submitBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
 });

@@ -20,7 +20,7 @@ const THEME_COLOR = '#10B981';
 // ==========================================
 // ANIMATED LARGE CARD COMPONENT
 // ==========================================
-const ChatListItem = ({ item, index, onPressChat, onPressProfile, onPressVideoCall }) => {
+const ChatListItem = ({ item, index, onPressChat,  onPressVideoCall }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(50)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -70,7 +70,7 @@ const ChatListItem = ({ item, index, onPressChat, onPressProfile, onPressVideoCa
           <TouchableOpacity 
             style={styles.profileSection} 
             activeOpacity={0.8}
-            onPress={() => onPressProfile(item)}
+            // onPress={() => onPressProfile(item)}
           >
             <Image source={{ uri: avatar }} style={styles.avatar} />
             <View style={styles.nameContainer}>
@@ -161,7 +161,7 @@ const ChatListItem = ({ item, index, onPressChat, onPressProfile, onPressVideoCa
 // ==========================================
 // MAIN SCREEN COMPONENT
 // ==========================================
-export default function ChatListScreen() {
+export default function ChatListScreen({ searchQuery = "" }) {
   const navigation = useNavigation();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -187,6 +187,14 @@ export default function ChatListScreen() {
     fetchAPI();
   }, []);
 
+  const filteredData = data.filter((item) => {
+    if (!searchQuery) return true; // Agar search khali hai, toh sab dikhao
+    
+    // ChatListItem ke hisaab se student ka naam nikal rahe hain
+    const name = item?.studentId?.name || 'Unknown User';
+    return name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -200,7 +208,7 @@ export default function ChatListScreen() {
         </View>
       ) : (
         <FlatList
-          data={data}
+          data={filteredData}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
@@ -217,16 +225,16 @@ export default function ChatListScreen() {
                   senderId: selectedItem?.consultantId,
                 });
               }}
-              onPressProfile={(selectedItem) => {
-                navigation.navigate('StudentProfile', {
-                  studentData: selectedItem.studentId,
-                  bookingData: {
-                    status: selectedItem.status,
-                    date: selectedItem.date,
-                    time: selectedItem.time
-                  }
-                });
-              }}
+              // onPressProfile={(selectedItem) => {
+              //   navigation.navigate('StudentProfile', {
+              //     studentData: selectedItem.studentId,
+              //     bookingData: {
+              //       status: selectedItem.status,
+              //       date: selectedItem.date,
+              //       time: selectedItem.time
+              //     }
+              //   });
+              // }}
               onPressVideoCall={(selectedItem) => {
                 navigation.navigate('VideoCall', {
                   roomName: `room_${selectedItem?._id}`,

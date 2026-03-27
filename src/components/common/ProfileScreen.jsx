@@ -137,7 +137,7 @@ export default function ProfileScreen() {
 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
 
             {/* --- 1. PROFILE AVATAR SECTION --- */}
             <View style={styles.profileSection}>
@@ -174,7 +174,7 @@ export default function ProfileScreen() {
                   ]}
                 >
                   <Text style={[styles.roleText, { color: theme.primary }]}>
-                    Edit {role} EdProfile
+                    Edit {role} Profile
                   </Text>
                 </Pressable>
               </View>
@@ -222,16 +222,16 @@ export default function ProfileScreen() {
                   />
                   <MenuItem
                     icon="calendar-outline"
-                    title="Manage Sessions"
-                    subtitle="View your upcoming classes/sessions"
+                    title="Manage KYC"
+                    subtitle="view and manage KYC"
                     color={theme.primary}
                     onPress={() => navigation.navigate("MentorSessions")} // Replace with actual route
                   />
                   <MenuItem
-                    icon="wallet-outline"
-                    title="Earnings & Wallet"
+                    icon="image-outline"
+                    title="Blogs"
                     color={theme.primary}
-                    onPress={() => navigation.navigate("MentorWallet")} // Replace with actual route
+                    onPress={() => navigation.navigate("MentorBlog")} // Replace with actual route
                   />
                 </>
               )}
@@ -242,8 +242,15 @@ export default function ProfileScreen() {
                   <MenuItem
                     icon="person-outline"
                     title="Profile Details"
+                    subtitle={"view personal information"}
                     color={theme.primary}
                     onPress={() => navigation.navigate("ProfileDetail")}
+                  />
+                  <MenuItem
+                    icon="key-outline"
+                    title="Change Password"
+                    color={theme.primary}
+                    onPress={() => navigation.navigate("ChangePassword")}
                   />
                   <MenuItem
                     icon="chatbubbles-outline"
@@ -265,6 +272,7 @@ export default function ProfileScreen() {
               <MenuItem
                 icon="document-text"
                 title="Legal Documents"
+                subtitle="View Terms and conditions"
                 color={theme.primary}
                 onPress={() => navigation.navigate("LegalScreen")}
               />

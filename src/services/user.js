@@ -3,113 +3,113 @@ import { Axios } from "../constants/MainContent";
 
 
 
-export const AllConsultant = async () =>{
-  try{
+export const AllConsultant = async () => {
+  try {
     // 👉 Add 'await' right before Axios.get
     const response = await Axios.get("/user/all-consultant");
-    
+
     // Now 'response' is the actual data, not a pending Promise!
-    return response.data; 
-  } catch(error){
+    return response.data;
+  } catch (error) {
     throw error.response?.data || error.message || "failed to load";
   }
 }
 
 
 
-export const SingleConsultant = async (id) =>{
-  try{
+export const SingleConsultant = async (id) => {
+  try {
     // 👉 Add 'await' right before Axios.get
     const response = await Axios.get(`/user/get-consultant/${id}`);
-    
+
     // Now 'response' is the actual data, not a pending Promise!
-    return response.data; 
-  } catch(error){
+    return response.data;
+  } catch (error) {
     throw error.response?.data || error.message || "failed to load";
   }
 }
 
 
 
-export const MyBookings = async () =>{
-  try{
+export const MyBookings = async () => {
+  try {
     // 👉 Add 'await' right before Axios.get
     const response = await Axios.get("/user/my-bookings");
-    
+
     // Now 'response' is the actual data, not a pending Promise!
-    return response.data; 
-  } catch(error){
+    return response.data;
+  } catch (error) {
     throw error.response?.data || error.message || "failed to load";
   }
 }
 
 
-export const chatHistory = async(consultationId) => {
-  try{
+export const chatHistory = async (consultationId) => {
+  try {
     // ✅ Backticks (`) aur ${} ka use karein
-    const res = await Axios.get(`/user/chat/${consultationId}`); 
+    const res = await Axios.get(`/user/chat/${consultationId}`);
     return res.data;
-  }catch(err){
-    throw err.res?.data|| err.message||"Failed to Load";
+  } catch (err) {
+    throw err.res?.data || err.message || "Failed to Load";
   }
 }
 
-export const getWHONews = async()=>{
-  try{
-    const res  = await Axios.get(`/user/who-news`);
+export const getWHONews = async () => {
+  try {
+    const res = await Axios.get(`/user/who-news`);
     return res.data;
-  }catch(err){
-    throw err.res?.data|| err.message||"Failed to Load";
+  } catch (err) {
+    throw err.res?.data || err.message || "Failed to Load";
   }
 }
 
-export const getBanners = async()=>{
-  try{
-    const res  = await Axios.get(`/user/all-banners`);
+export const getBanners = async () => {
+  try {
+    const res = await Axios.get(`/user/all-banners`);
     return res.data;
-  }catch(err){
-    throw err.res?.data|| err.message||"Failed to Load";
+  } catch (err) {
+    throw err.res?.data || err.message || "Failed to Load";
   }
 }
 
-export const getBlogs = async()=>{
-  try{
-    const res  = await Axios.get(`/user/get-blogs`);
+export const getBlogs = async () => {
+  try {
+    const res = await Axios.get(`/user/get-blogs`);
     return res.data;
-  }catch(err){
-    throw err.res?.data|| err.message||"Failed to Load";
-  }
-}
-
-
-export const getSingleBlog = async(id)=>{
-  try{
-    const res  = await Axios.get(`/user/get-blog/${id}`);
-    return res.data;
-  }catch(err){
-    throw err.res?.data|| err.message||"Failed to Load";
+  } catch (err) {
+    throw err.res?.data || err.message || "Failed to Load";
   }
 }
 
 
-
-
-export const getLegal = async()=>{
-  try{
-    const res  = await Axios.get(`/user/active-legals`);
+export const getSingleBlog = async (id) => {
+  try {
+    const res = await Axios.get(`/user/get-blog/${id}`);
     return res.data;
-  }catch(err){
-    throw err.res?.data|| err.message||"Failed to Load";
+  } catch (err) {
+    throw err.res?.data || err.message || "Failed to Load";
   }
 }
 
 
-export const getCart = async()=>{
-  try{
-    const res  = await Axios.get(`/user/get-cart`);
+
+
+export const getLegal = async () => {
+  try {
+    const res = await Axios.get(`/user/active-legals`);
     return res.data;
-  }catch(err){
-    throw err.res?.data|| err.message||"Failed to Load";
+  } catch (err) {
+    throw err.res?.data || err.message || "Failed to Load";
+  }
+}
+
+
+export const getCart = async () => {
+  try {
+    const res = await Axios.get(`/user/get-cart`);
+    return res.data;
+  } catch (err) {
+    throw err.res?.data || err.message || "Failed to Load";
   }
 }
 
@@ -140,7 +140,7 @@ export const DeleteCart = async (bookId, type) => {
     // URL: /user/remove-cart/remove/12345
     // Body: { type: "hardcover" }
     const res = await Axios.delete(`/user/remove-cart/remove/${bookId}`, {
-      data: { type } 
+      data: { type }
     });
     return res.data;
   } catch (err) {
@@ -183,55 +183,92 @@ export const defaultAddress = async (id) => {
 
 
 
-export const allMentor = async () =>{
-  try{
+export const allMentor = async () => {
+  try {
     // 👉 Add 'await' right before Axios.get
     const response = await Axios.get("/user/all-mentors");
     // Now 'response' is the actual data, not a pending Promise!
-    return response.data; 
-  } catch(error){
+    return response.data;
+  } catch (error) {
     throw error.response?.data || error.message || "failed to load";
   }
 }
 
 
-export const BookMentor = async (payload) =>{
-  try{
+export const BookMentor = async (payload) => {
+  try {
     // 👉 Add 'await' right before Axios.get
-    const response = await Axios.post("/user/book-mentor",payload);
+    const response = await Axios.post("/user/book-mentor", payload);
     // Now 'response' is the actual data, not a pending Promise!
-    return response.data; 
-  } catch(error){
+    return response.data;
+  } catch (error) {
     throw error.response?.data || error.message || "failed to load";
   }
 }
 
 
-export const verifyMentorbooking = async (payload) =>{
-  try{
+export const verifyMentorbooking = async (payload) => {
+  try {
     // 👉 Add 'await' right before Axios.get
-    const response = await Axios.post("/user/verify-mentor-booking",payload);
+    const response = await Axios.post("/user/verify-mentor-booking", payload);
     // Now 'response' is the actual data, not a pending Promise!
-    return response.data; 
-  } catch(error){
+    return response.data;
+  } catch (error) {
     throw error.response?.data || error.message || "failed to load";
   }
 }
 
 
-export const getMentorBooking = async () =>{
-  try{
+export const getMentorBooking = async () => {
+  try {
     // 👉 Add 'await' right before Axios.get
     const response = await Axios.get("/user/get-mentor-bookings");
     // Now 'response' is the actual data, not a pending Promise!
-    return response.data; 
-  } catch(error){
+    return response.data;
+  } catch (error) {
     throw error.response?.data || error.message || "failed to load";
   }
 }
 
 
+export const giveRating = async (payload) => {
+  try {
+    const res = await Axios.post("/user/give-rating", payload);
+    return res.data;
+  } catch (err) {
+    throw err.response?.data || err.message || "failed to load";
+
+  }
+}
 
 
+export const BuyProduct = async (payload) =>{
+  try{
+    const res = await Axios.post("/user/buy-product",payload);
+    return res.data;
+  }catch(err){
+    throw err.response?.data || err.message || "failed to load";
+  }
+}
 
+export const VerifyProductPayment = async (payload) =>{
+  try{
+    const res = await Axios.post("/user/verify-product-payment",payload);
+    return res.data;
+  }catch(err){
+    throw err.response?.data || err.message || "failed to load";
+  }
+}
+
+
+// src/services/booking.js
+export const getSlots = async (payload) => {
+  try {
+    // payload me ab sirf { consultantId: "..." } aayega
+    const res = await Axios.get(`/user/get-slots`, { params: payload });
+    return res.data;
+  } catch(err) {
+    throw err.response?.data || err.message || "failed to load";
+  }
+}
 

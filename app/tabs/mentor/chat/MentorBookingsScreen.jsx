@@ -21,7 +21,7 @@ const MentorBookingsScreen = () => {
             if (response.success) {
                 // Assuming backend returns data inside response.data.bookings ya response.data
                 // Aap apne backend response ke hisaab se isko adjust kar lena:
-                setBookings(response.data.bookings || response.data || []);
+                setBookings(response.data.bookings || response.data?.data || []);
             } else {
                 Alert.alert("Error", response.message);
             }
@@ -118,9 +118,7 @@ const MentorBookingsScreen = () => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>My Bookings</Text>
-            </View>
+            
 
             {isLoading ? (
                 <View style={styles.loaderContainer}>

@@ -16,9 +16,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import RazorpayCheckout from 'react-native-razorpay';
 
-// 👉 Make sure to import the SlotSelectionModal we created!
-// Adjust the path if you saved it in a different folder.
-
 // ⚠️ UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
 import { allMentor, BookMentor, verifyMentorbooking } from '../../../../src/services/user';
 import SlotSelectionModal from '../mentor/SlotSelectionModal';
@@ -104,7 +101,7 @@ export default function TopMentorsOverview() {
   const handleProcessPayment = async (mentor, selectedDate, selectedTime, enteredAmount) => {
     setSlotModalVisible(false); // Modal band kardo
     setBookingMentorId(mentor._id); // Button pe loader dikhao
-    
+
     try {
       // 👉 1. Amount ko strictly ek solid Integer number banayein (Decimals and spaces remove karne ke liye)
       const finalAmount = parseInt(enteredAmount, 10);
@@ -118,34 +115,34 @@ export default function TopMentorsOverview() {
 
       const orderPayload = {
         mentorId: mentor._id,
-        date: selectedDate, 
-        time: selectedTime, 
+        date: selectedDate,
+        time: selectedTime,
         amount: finalAmount // 👉 Ab yeh strictly ek number (e.g., 500) jayega
       };
-      
+
       // 👉 DEBUG: Terminal me check karne ke liye ki payload kya bana
       console.log("🚀 PAYLOAD GOING TO BACKEND:", orderPayload);
 
       const orderResponse = await BookMentor(orderPayload);
-      
+
       if (!orderResponse.success) {
         throw new Error(orderResponse.message || "Failed to initiate booking.");
       }
 
       const options = {
         description: `Mentorship Session with ${mentor.name} on ${selectedDate} at ${selectedTime}`,
-        image: 'https://your-app-logo.com/logo.png', 
+        image: 'https://your-app-logo.com/logo.png',
         currency: 'INR',
-        key: orderResponse.razorpayKey || 'YOUR_RAZORPAY_KEY', 
-        amount: orderResponse.amount, 
+        key: orderResponse.razorpayKey || 'YOUR_RAZORPAY_KEY',
+        amount: orderResponse.amount,
         name: 'Career Guide',
-        order_id: orderResponse.orderId, 
+        order_id: orderResponse.orderId,
         prefill: {
-          email: 'user@example.com', 
+          email: 'user@example.com',
           contact: '9999999999',
           name: 'Student Name'
         },
-        theme: { color: MENTOR_PRIMARY } 
+        theme: { color: MENTOR_PRIMARY }
       };
 
       RazorpayCheckout.open(options).then(async (data) => {
@@ -174,11 +171,11 @@ export default function TopMentorsOverview() {
     } catch (error) {
       // 👉 NAYA DEBUGGING LOG: Yeh error ke andar ka saara raaz khol dega
       console.log("🔥 REAL BOOKING ERROR:", error?.response?.data?.data || error?.message || JSON.stringify(error));
-      
+
       const errorMsg = error?.response?.data?.message || error?.message || "Something went wrong.";
       Alert.alert("Booking Failed", errorMsg);
     } finally {
-      setBookingMentorId(null); 
+      setBookingMentorId(null);
     }
   };
 
@@ -193,10 +190,18 @@ export default function TopMentorsOverview() {
         onPress={() => console.log("Navigate to Mentor Profile", item._id)}
         style={styles.cardHeader}
       >
-        <Image
-          source={{ uri: item.profilePicture || item.image || 'https://via.placeholder.com/150' }}
-          style={styles.avatar}
-        />
+        {item.profilePicture || item.image ? (
+          <Image
+            source={{ uri: item.profilePicture || item.image }}
+            style={styles.avatar}
+          />
+        ) : (
+          <View style={styles.nameAvatar}>
+            <Text style={styles.nameAvatarText}>
+              {item.name?.charAt(0)?.toUpperCase()}
+            </Text>
+          </View>
+        )}
         <View style={styles.headerInfo}>
           <Text style={styles.mentorName} numberOfLines={1}>{item.name}</Text>
           <Text style={styles.mentorSubject} numberOfLines={1}>
@@ -214,14 +219,38 @@ export default function TopMentorsOverview() {
 
       {/* Bottom Action Row */}
       <View style={styles.cardFooter}>
-        <View style={styles.ratingBox}>
-          <Ionicons name="star" size={14} color="#F59E0B" />
-          <Text style={styles.ratingText}>{item.rating || '4.9'}</Text>
+
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+
+          {/* Rating */}
+          <View style={styles.ratingBox}>
+            <Ionicons name="star" size={14} color="#F59E0B" />
+            <Text style={styles.ratingText}>
+              {item.averageRating || 0}
+            </Text>
+          </View>
+
+          {/* Total Ratings */}
+          <Text style={{ fontSize: 12, color: "#6B7280" }}>
+            ({item.totalRatings || 0})
+          </Text>
+
+          {/* Experience */}
+          <View style={{
+            backgroundColor: "#EEF2FF",
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+            borderRadius: 6
+          }}>
+            <Text style={{ fontSize: 11, color: "#4F46E5", fontWeight: "600" }}>
+              {item.experience || 0} yrs
+            </Text>
+          </View>
+
         </View>
 
         <TouchableOpacity
           activeOpacity={0.7}
-          // 👉 Changed from handleBook(item) to handleOpenSlotModal(item)
           onPress={() => handleOpenSlotModal(item)}
           disabled={bookingMentorId === item._id}
           style={styles.bookBtnWrapper}
@@ -234,6 +263,7 @@ export default function TopMentorsOverview() {
             </Text>
           )}
         </TouchableOpacity>
+
       </View>
     </View>
   );
@@ -314,5 +344,18 @@ const styles = StyleSheet.create({
   headerTextSpace: { marginLeft: 12, flex: 1, justifyContent: 'center' },
   skeletonText: { height: 12, backgroundColor: '#F3E8FF', borderRadius: 4 },
   emptyBox: { padding: 20, alignItems: 'center' },
+  nameAvatar: {
+  width: 50,
+  height: 50,
+  borderRadius: 25,
+  backgroundColor: "#4F46E5",
+  justifyContent: "center",
+  alignItems: "center"
+},
+nameAvatarText: {
+  color: "#fff",
+  fontSize: 18,
+  fontWeight: "bold"
+},
   emptyText: { color: '#9CA3AF', fontStyle: 'italic' }
 });

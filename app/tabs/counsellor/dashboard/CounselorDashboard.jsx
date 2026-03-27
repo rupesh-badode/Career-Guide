@@ -41,7 +41,10 @@ export default function CounselorDashboard() {
                    Agar gap zyada lag raha ho, toh Dashboard component ke andar ka 
                    paddingTop ya SafeAreaView remove kar dein.
                 */}
+
                 <Dashboard />
+
+                
             </Animated.ScrollView>
 
             {/* Fixed Header: Sirf opacity animate hogi, position nahi */}

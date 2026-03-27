@@ -8,12 +8,12 @@ import {
   ScrollView,
   SafeAreaView,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert // <-- Added Alert import
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SingleConsultant } from '../../services/user';
-
-// 👉 UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
+import { SingleConsultant } from '../../services/user'; // 👉 Update path if needed
+import RatingModal from './RatingModal'; // 👉 Update path if needed
 
 // ==========================================
 // DUMMY REVIEWS DATA
@@ -36,7 +36,7 @@ const REVIEWS = [
 ];
 
 export default function CounselorProfile({ route, navigation }) {
-  // 👉 1. Navigation params extraction (Used as initial fast-load data)
+  // 👉 1. Navigation params extraction
   const {
     counselorId,
     counselorName,
@@ -46,9 +46,15 @@ export default function CounselorProfile({ route, navigation }) {
     counselorSpecialization
   } = route?.params || {};
 
-  // 👉 2. States for API Data
+  // 👉 2. States for API Data & Modals
   const [profileData, setProfileData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
+
+  const handleRatingSuccess = () => {
+    Alert.alert("Success", "Thank you for your feedback!");
+    // Optional: Refresh your profileData here if you want to show the new rating immediately
+  };
 
   // 👉 3. Fetch Data from API
   useEffect(() => {
@@ -59,7 +65,6 @@ export default function CounselorProfile({ route, navigation }) {
       }
       try {
         const response = await SingleConsultant(counselorId);
-        // Map the backend response properly (adjust `.consultant` based on your actual API response structure)
         const fetchedData = response?.consultant || response?.data || response;
         setProfileData(fetchedData);
       } catch (error) {
@@ -72,17 +77,20 @@ export default function CounselorProfile({ route, navigation }) {
     fetchConsultantDetails();
   }, [counselorId]);
 
-  // 👉 4. Dynamic Variables (Prioritize API data, fallback to route.params, then default values)
+  // 👉 4. Dynamic Variables (API data fallback to route params)
   const displayName = profileData?.name || counselorName || `Expert Consultant`;
   const displayAvatar = profileData?.image || profileData?.profilePicture || counselorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0D8ABC&color=fff`;
-  
+
   const roleStr = profileData?.role || counselorRole;
   const specStr = profileData?.specialization || counselorSpecialization || 'General';
   const displayRole = roleStr ? `${roleStr} • ${specStr}` : specStr;
-  
-  const displayExperience = profileData?.experience ? `${profileData.experience} Years Exp.` : counselorExperience ? `${counselorExperience} Exp.` : '5+ Years Exp.';
-  
-  // Handling price dynamically from backend
+
+  const displayExperience = profileData?.experience 
+    ? `${profileData.experience} Years Exp.` 
+    : counselorExperience 
+      ? `${counselorExperience} Exp.` 
+      : '5+ Years Exp.';
+
   const displayPrice = profileData?.price ? `₹ ${profileData.price} / session` : '₹ 500 / session';
   const bookingAmount = profileData?.price || 500;
 
@@ -116,7 +124,6 @@ export default function CounselorProfile({ route, navigation }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Main Loading Indicator overlaying the top content slightly if needed */}
         {isLoading && !profileData && (
           <ActivityIndicator size="small" color="#4F46E5" style={{ marginBottom: 15 }} />
         )}
@@ -128,21 +135,19 @@ export default function CounselorProfile({ route, navigation }) {
           <Image source={{ uri: displayAvatar }} style={styles.profileImage} />
 
           <View style={styles.profileDetails}>
-
             <View style={styles.nameRow}>
               <Text style={styles.name} numberOfLines={1}>
                 {displayName}
               </Text>
-              {/* <TouchableOpacity>
-                {/* <Ionicons name="ellipsis-horizontal" size={20} color="#6B7280" /> */}
-              {/* </TouchableOpacity> */} 
             </View>
 
             <Text style={styles.subtitle} numberOfLines={2}>{displayRole}</Text>
 
             <View style={styles.infoRow}>
               <Ionicons name="language-outline" size={14} color="#6B7280" />
-              <Text style={styles.infoText}>{profileData?.languages?.join(', ') || 'English, Hindi'}</Text>
+              <Text style={styles.infoText}>
+                {profileData?.languages?.join(', ') || 'English, Hindi'}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Ionicons name="briefcase-outline" size={14} color="#6B7280" />
@@ -152,38 +157,34 @@ export default function CounselorProfile({ route, navigation }) {
             <View style={styles.priceTag}>
               <Text style={styles.priceText}>{displayPrice}</Text>
             </View>
-
           </View>
         </View>
 
         {/* ==========================================
-            3. ABOUT SECTION (Added dynamically for API data)
+            3. ABOUT SECTION
         ========================================== */}
         {profileData?.about && (
           <View style={styles.aboutSection}>
-             <Text style={styles.sectionTitle}>About</Text>
-             <Text style={styles.aboutText}>{profileData.about}</Text>
+            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.aboutText}>{profileData.about}</Text>
           </View>
         )}
 
         {/* ==========================================
-            4. STATS SECTION
+            4. STATS SECTION (Restored Wrapper)
         ========================================== */}
         <View style={styles.statsContainer}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{profileData?.totalSessions || '1.2k+'}</Text>
-            <Text style={styles.statLabel}>Orders</Text>
-          </View>
-          <View style={styles.divider} />
           <View style={styles.statBox}>
             <Text style={styles.statValue}>{profileData?.totalMinutes || '50k+'}</Text>
             <Text style={styles.statLabel}>Minutes</Text>
           </View>
+          
           <View style={styles.divider} />
+          
           <View style={styles.statBox}>
             <View style={styles.ratingRow}>
               <Text style={styles.statValue}>{profileData?.rating || '4.9'}</Text>
-              <Ionicons name="star" size={16} color="#F59E0B" style={{ marginLeft: 4, marginTop: -2 }} />
+              <Ionicons name="star" size={18} color="#F59E0B" style={styles.ratingStar} />
             </View>
             <Text style={styles.statLabel}>Rating</Text>
           </View>
@@ -193,9 +194,20 @@ export default function CounselorProfile({ route, navigation }) {
             5. USER REVIEWS SECTION
         ========================================== */}
         <View style={styles.reviewsSection}>
-          <Text style={styles.sectionTitle}>User Reviews ({REVIEWS.length})</Text>
+          <View style={styles.reviewSectionHeader}>
+            <Text style={styles.sectionTitle}>User Reviews ({REVIEWS?.length || 0})</Text>
+            
+            <TouchableOpacity 
+              style={styles.writeReviewBtn}
+              activeOpacity={0.7}
+              onPress={() => setIsRatingModalVisible(true)}
+            >
+              <Ionicons name="create-outline" size={16} color="#4F46E5" />
+              <Text style={styles.writeReviewText}>Write a Review</Text>
+            </TouchableOpacity>
+          </View>
 
-          {REVIEWS.map((review) => (
+          {REVIEWS?.map((review) => (
             <View key={review.id} style={styles.reviewCard}>
               <View style={styles.reviewHeader}>
                 <View>
@@ -206,7 +218,7 @@ export default function CounselorProfile({ route, navigation }) {
                         key={i}
                         name={i < review.rating ? "star" : "star-outline"}
                         size={14}
-                        color="#F59E0B"
+                        color={i < review.rating ? "#F59E0B" : "#D1D5DB"}
                       />
                     ))}
                   </View>
@@ -217,9 +229,11 @@ export default function CounselorProfile({ route, navigation }) {
             </View>
           ))}
 
-          <TouchableOpacity style={styles.viewAllBtn}>
-            <Text style={styles.viewAllText}>Read All Reviews</Text>
-          </TouchableOpacity>
+          {REVIEWS?.length > 0 && (
+            <TouchableOpacity style={styles.viewAllBtn} activeOpacity={0.7}>
+              <Text style={styles.viewAllText}>Read All Reviews</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
       </ScrollView>
@@ -227,24 +241,38 @@ export default function CounselorProfile({ route, navigation }) {
       {/* ==========================================
           6. FIXED BOTTOM ACTION BAR
       ========================================== */}
+    
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={[styles.actionBtn, styles.callBtn]}
+        <TouchableOpacity 
+          style={[styles.actionBtn, styles.callBtn]}
+          activeOpacity={0.9}
           onPress={() => navigation.navigate("BookingScreen", {
             consultantId: counselorId,
             consultantName: displayName,
-            amount: bookingAmount // Automatically uses API price or fallback
-          })} >
-          <Ionicons name="calendar-outline" size={20} color="#FFFFFF" />
-          <Text style={styles.callBtnText}>Book Now</Text>
+            amount: bookingAmount 
+          })} 
+        >
+          <Ionicons name="calendar" size={20} color="#FFFFFF" />
+          <Text style={styles.callBtnText}>Book Session Now</Text>
         </TouchableOpacity>
       </View>
+
+      {/* ==========================================
+          7. MODALS
+      ========================================== */}
+      <RatingModal 
+        isVisible={isRatingModalVisible}
+        onClose={() => setIsRatingModalVisible(false)}
+        consultantId={counselorId || "123456789"} 
+        onSubmitSuccess={handleRatingSuccess}
+      />
 
     </SafeAreaView>
   );
 }
 
 // ==========================================
-// STYLES
+// UNIFIED STYLES
 // ==========================================
 const styles = StyleSheet.create({
   safeArea: {
@@ -275,8 +303,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 120,
+    paddingBottom: 120, // Ensures content isn't hidden behind the bottom bar
   },
+  
+  // --- Profile Card ---
   profileCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -286,7 +316,6 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 },
       android: { elevation: 2 },
-      web: { boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.04)' },
     }),
   },
   profileImage: {
@@ -340,6 +369,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
+  
+  // --- About Section ---
   aboutSection: {
     marginBottom: 20,
     paddingHorizontal: 5,
@@ -349,6 +380,8 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     lineHeight: 22,
   },
+
+  // --- Stats Section ---
   statsContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -357,6 +390,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     justifyContent: 'space-evenly',
     alignItems: 'center',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 },
+      android: { elevation: 2 },
+    }),
   },
   statBox: {
     alignItems: 'center',
@@ -374,39 +411,72 @@ const styles = StyleSheet.create({
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ratingStar: {
+    marginLeft: 4,
+    marginTop: -2,
   },
   divider: {
     width: 1,
     height: 30,
     backgroundColor: '#E5E7EB',
   },
+
+  // --- Reviews Section ---
   reviewsSection: {
-    marginBottom: 20,
+    paddingHorizontal: 5,
+    paddingTop: 10,
+    paddingBottom: 40,
+  },
+  reviewSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 15,
+    color: '#111827',
+  },
+  writeReviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF2FF', 
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  writeReviewText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4F46E5', 
+    marginLeft: 4,
   },
   reviewCard: {
     backgroundColor: '#FFFFFF',
+    padding: 16,
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
   reviewerName: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#1F2937',
+    marginBottom: 2,
   },
   starsRow: {
     flexDirection: 'row',
+    gap: 2,
     marginTop: 4,
   },
   reviewDate: {
@@ -414,19 +484,22 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   reviewComment: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#4B5563',
     lineHeight: 20,
   },
   viewAllBtn: {
-    paddingVertical: 12,
     alignItems: 'center',
+    paddingVertical: 12,
+    marginTop: 8,
   },
   viewAllText: {
-    color: '#4F46E5',
-    fontWeight: 'bold',
     fontSize: 14,
+    fontWeight: '600',
+    color: '#4F46E5',
   },
+
+  // --- Bottom Action Bar ---
   bottomBar: {
     position: 'absolute',
     bottom: 0,
@@ -436,13 +509,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
     paddingTop: 15,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 15,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 35,
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: -3 }, shadowOpacity: 0.05, shadowRadius: 5 },
       android: { elevation: 10 },
-      web: { boxShadow: '0px -4px 10px rgba(0, 0, 0, 0.03)' },
     }),
   },
   actionBtn: {

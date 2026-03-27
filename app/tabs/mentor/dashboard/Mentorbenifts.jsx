@@ -147,7 +147,7 @@ export default function MentorBenefits() {
       <Animated.View style={[styles.imageContainer, { transform: [{ translateY: mainImageFloat }] }]}>
         <Image 
           // Yahan apni koi transparent cool illustration lagana
-          source={{ uri: 'https://static.vecteezy.com/system/resources/previews/050/980/745/non_2x/3d-man-is-doing-online-teaching-illustration-png.png' }} 
+          source={{ uri: 'https://static.vecteezy.com/system/resources/previews/061/904/343/non_2x/business-mentor-giving-advice-in-transparent-background-free-png.png' }} 
           style={styles.mainImage}
           resizeMode="contain"
         />

@@ -24,7 +24,7 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/aastroneet.png"
     },
     "plugins": [
       "expo-notifications",
@@ -50,7 +50,8 @@
         {
           "microphonePermission": "Allow Career Guide to access your microphone for audio calls."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ]
   }
 }

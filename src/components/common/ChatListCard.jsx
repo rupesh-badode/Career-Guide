@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   Animated,
   Platform,
   FlatList,
-  Linking
+  Linking,
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
@@ -50,6 +51,7 @@ export const SkeletonCard = () => {
   );
 };
 
+
 // ==========================================
 // 2. REAL BOOKING CARD COMPONENT (API Mapped)
 // ==========================================
@@ -59,13 +61,10 @@ export const BookingCard = ({ item, themeColor = "#3B82F6", onActionPress, onCar
 
   const navigation = useNavigation();
 
-
-
   // 👉 Check if booking is confirmed
   const isConfirmed = item?.status === 'confirmed';
 
-
-
+ 
   return (
     <TouchableOpacity
       style={styles.card}
@@ -113,51 +112,71 @@ export const BookingCard = ({ item, themeColor = "#3B82F6", onActionPress, onCar
           </View>
         </View>
 
+        {/* ==========================================
+            ACTION BUTTONS ROW (Audio, Video, Message)
+        ========================================== */}
         <View style={styles.bottomRow}>
           {isConfirmed && (
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: themeColor }]}
-              activeOpacity={0.8}
-              onPress={() => {
-                // 👉 Jaise hi click hoga, VideoCall screen khulegi aur auto-connect hogi
-                navigation.navigate('VideoCall', {
-                  roomName: `room_${item?._id}`, // Unique ID
-                });
-              }}
-            >
-              <Ionicons style={{ color: "#ffff" }} name="videocam" size={18} />
-              <Text style={{ color: "#ffff" }}> Join</Text>
-            </TouchableOpacity>
+            <>
+              {/* 👉 1. Audio Call Button */}
+              <TouchableOpacity
+                style={[styles.actionButton, { backgroundColor: themeColor }]}
+                activeOpacity={0.7}
+                onPress={() => {
+                  navigation.navigate('AudioCall', {
+                    roomName: `room_${item?._id}`,
+                    consultantName: consultant?.name
+                  });
+                }}
+              >
+                <Ionicons name="call" size={18} color="#FFFFFF" />
+                <Text style={styles.actionButtonText}>Audio</Text>
+              </TouchableOpacity>
+
+              {/* 👉 2. Video Call Button */}
+              <TouchableOpacity
+                style={[styles.actionButton, { backgroundColor: themeColor }]}
+                activeOpacity={0.7}
+                onPress={() => {
+                  navigation.navigate('VideoCall', {
+                    roomName: `room_${item?._id}`,
+                    consultantName: consultant?.name
+                  });
+                }}
+              >
+                <Ionicons name="videocam" size={18} color="#FFFFFF" />
+                <Text style={styles.actionButtonText}>Video</Text>
+              </TouchableOpacity>
+            </>
           )}
 
-          {/* Message Button - Update here 👇 */}
+          {/* 👉 3. Message/Chat Button */}
           <TouchableOpacity
             style={[
               styles.actionButton,
               {
-                // Confirmed hai to theme color (Blue defaults), warna gray
-                backgroundColor: isConfirmed ? themeColor : '#E5E7EB',
-                // Thoda border dete hain disabled state me
-                borderColor: isConfirmed ? themeColor : '#D1D5DB',
+                backgroundColor: isConfirmed ? themeColor : '#F3F4F6',
+                borderColor: isConfirmed ? themeColor : '#E5E7EB',
                 borderWidth: isConfirmed ? 0 : 1,
               }
             ]}
             onPress={() => isConfirmed && onActionPress && onActionPress(item)}
-            activeOpacity={isConfirmed ? 0.8 : 1}
-            disabled={!isConfirmed} // Disable button if not confirmed
+            activeOpacity={isConfirmed ? 0.7 : 1}
+            disabled={!isConfirmed}
           >
             <Ionicons
               name="chatbubbles"
               size={18}
-              color={isConfirmed ? "#FFFFFF" : "#9CA3AF"} // Icon gray ho jayega
+              color={isConfirmed ? "#FFFFFF" : "#9CA3AF"}
             />
             <Text
               style={[
                 styles.actionButtonText,
-                { color: isConfirmed ? "#ffffff" : "#9CA3AF" } // Text gray ho jayega
+                { color: isConfirmed ? "#FFFFFF" : "#9CA3AF" }
               ]}
+              numberOfLines={1}
             >
-              Message
+              Chat
             </Text>
           </TouchableOpacity>
         </View>
@@ -224,6 +243,11 @@ export default function ChatListCard({
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        // refreshControl={<RefreshControl refreshing={isRefreshing}
+        //     onRefresh={onRefresh}
+        //     tintColor="#059669" // iOS spinner color (matches your theme)
+        //     colors={['#059669']} // Android spinner color
+        //     progressBackgroundColor="#ffffff"/>}
         contentContainerStyle={{
           paddingTop: contentPaddingTop,
           paddingBottom: 100
@@ -243,7 +267,7 @@ export default function ChatListCard({
 
 const styles = StyleSheet.create({
   container: { paddingHorizontal: 20, marginTop: 20 },
-  emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 50 },
+  emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 200 },
   emptyText: { color: '#6B7280', fontSize: 16, marginTop: 10 },
   card: {
     flexDirection: 'row',
@@ -263,26 +287,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 16,
-    gap: 12,
+    gap: 10, // Adds even spacing between buttons (works in modern React Native/Expo)
   },
   actionButton: {
-    flex: 1,
+    flex: 1, // Ensures all visible buttons stretch evenly
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     borderRadius: 8,
-    elevation: 2,
+    // Optional: Add a subtle shadow for iOS and Android
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 3,
+    elevation: 2, 
   },
   actionButtonText: {
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-    marginLeft: 8,
+    marginLeft: 6, // Pushes the text slightly away from the Icon
   },
   leftColumn: { width: 75, alignItems: 'center', marginRight: 15 },
   imageContainer: { position: 'relative', marginBottom: 8 },

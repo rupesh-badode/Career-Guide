@@ -113,9 +113,9 @@ export default function CounselorList() {
               <Ionicons name="star" size={12} color="#F59E0B" />
               <Text style={styles.ratingText}>{rating}</Text>
             </View>
-            <TouchableOpacity style={styles.likeButton}>
+            {/* <TouchableOpacity style={styles.likeButton}>
               <Ionicons name="heart-outline" size={16} color="#9CA3AF" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           {/* Profile Image & Online Status */}

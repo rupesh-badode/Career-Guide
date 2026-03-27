@@ -87,7 +87,8 @@ export default function MentorBlogsOverview() {
         activeOpacity={0.9}
         style={styles.cardContainer}
         // 👉 Navigation set karo. Aap slug ya _id bhej sakte ho full blog padhne ke liye
-        onPress={() => console.log("Navigate to Blog Detail", item.slug || item._id)}
+        // Corrected code
+        onPress={() => navigation.navigate("BlogDetails", { blog: item })}
       >
         {/* Cover Image */}
         <View style={styles.imageContainer}>
@@ -134,10 +135,10 @@ export default function MentorBlogsOverview() {
       {/* Section Header */}
       <View style={styles.sectionHeader}>
         <View>
-          <Text style={styles.sectionTitle}>Latest Articles</Text>
+          <Text style={styles.sectionTitle}>Latest Blogs</Text>
           <Text style={styles.sectionSubtitle}>Insights & guidance for you</Text>
         </View>
-        <TouchableOpacity onPress={() => console.log("Navigate to All Blogs")}>
+        <TouchableOpacity onPress={() => navigation.navigate("MentorBlog")}>
           <Text style={styles.viewAllText}>View All</Text>
         </TouchableOpacity>
       </View>

@@ -23,12 +23,16 @@ import {
   getCart,
   UpdateCart,
 } from '../../../../src/services/user';
+import { useSelector } from 'react-redux';
+import CheckoutButton from './CheckoutButton';
 
 const CartScreen = ({ navigation }) => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const isFocused = useIsFocused();
+
+  const { userData } = useSelector((state) => state.auth);
 
   // Modal & Address States
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -224,7 +228,7 @@ const CartScreen = ({ navigation }) => {
               <Text style={styles.sheetTitle}>Select Address</Text>
               <TouchableOpacity onPress={() => setShowAddressModal(false)}><Ionicons name="close" size={24} /></TouchableOpacity>
             </View>
-            
+
             {loadingAddresses ? (
               // SHOW ADDRESS SKELETONS
               <View>{[1, 2].map((k) => <AddressItemSkeleton key={k} />)}</View>
@@ -261,9 +265,13 @@ const CartScreen = ({ navigation }) => {
               <Ionicons name="add-circle-outline" size={20} color="#2563eb" />
               <Text style={styles.addAddressText}>Add New Address</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.checkoutBtn} onPress={() => { setShowAddressModal(false); Alert.alert("Success", "Redirecting..."); }}>
-              <Text style={styles.checkoutBtnText}>Continue to Payment</Text>
-            </TouchableOpacity>
+            {/* 👉 Embedded Checkout Component */}
+            <CheckoutButton
+              selectedAddressId={selectedAddressId}
+              userData={userData}
+              // ✅ FIX: Added optional chaining (?) and a fallback (|| 0)
+              Amount={cart?.totalAmount || 0} 
+            />
           </View>
         </View>
       </Modal>
@@ -297,7 +305,7 @@ const styles = StyleSheet.create({
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   summaryText: { fontSize: 16, color: '#64748b' },
   totalPrice: { fontSize: 22, fontWeight: 'bold' },
-  checkoutBtn: { backgroundColor: '#0f172a', paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
+  checkoutBtn: { backgroundColor: '#2563eb', paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
   checkoutBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   bottomSheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '85%' },

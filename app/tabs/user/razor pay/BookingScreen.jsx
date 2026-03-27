@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  View, Text, TouchableOpacity, StyleSheet, Alert, 
-  ActivityIndicator, ScrollView, Platform, Dimensions 
+import {
+  View, Text, TouchableOpacity, StyleSheet, Alert,
+  ActivityIndicator, ScrollView, Platform, Dimensions
 } from 'react-native';
 import RazorpayCheckout from 'react-native-razorpay';
 import { createBooking, verifyBookingPayment } from '../../../../src/services/booking';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { key_id } from '../../../../src/constants/MainContent';
+import { Calendar } from 'react-native-calendars';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { getSlots } from '../../../../src/services/user';
+import { logo } from "../../../../assets/icon.png"
 
 const { width } = Dimensions.get('window');
 
@@ -14,78 +19,132 @@ export default function BookingScreen({ route, navigation }) {
   const { consultantId = "1", consultantName = "Expert Consultant", amount = 499 } = route.params || {};
 
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
+
+  // Calendar ke liye strict YYYY-MM-DD format chahiye
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const [selectedDate, setSelectedDate] = useState(todayStr);
   const [selectedTime, setSelectedTime] = useState(null);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
-  // Dates Generate Karein (Next 7 Days)
-  const dates = useMemo(() => {
-    return [...Array(7)].map((_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      
-      // Local date format nikalne ke liye
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      
-      return {
-        id: i,
-        full: `${year}-${month}-${day}`, // YYYY-MM-DD
-        day: d.toLocaleDateString('en-US', { weekday: 'short' }),
-        date: d.getDate(),
-      };
-    });
-  }, []);
+  // States API data ke liye
+  const [allSlotsData, setAllSlotsData] = useState({});
+  const [isFetchingSlots, setIsFetchingSlots] = useState(false);
 
-  // By default aaj ki date select kar do
+  // 1. Ek hi baar saara data backend se mangwayein
   useEffect(() => {
-    if (dates.length > 0 && !selectedDate) {
-      setSelectedDate(dates[0].full);
+    const fetchAllSlots = async () => {
+      setIsFetchingSlots(true);
+      try {
+        const response = await getSlots({ consultantId });
+
+        if (response && response.success && response.slots) {
+          const cleanData = {};
+
+          response.slots.forEach(dayRecord => {
+            if (!dayRecord.date) return;
+
+            // Date ko strict YYYY-MM-DD format mein nikalna
+            const recordDateStr = dayRecord.date.split('T')[0];
+
+            if (!cleanData[recordDateStr]) {
+              cleanData[recordDateStr] = [];
+            }
+
+            if (dayRecord.slots && Array.isArray(dayRecord.slots)) {
+              dayRecord.slots.forEach(slotItem => {
+                if (!slotItem.isBooked) {
+                  cleanData[recordDateStr].push(slotItem.time);
+                }
+              });
+            }
+          });
+
+          // Duplicates hatana
+          Object.keys(cleanData).forEach(dateKey => {
+            cleanData[dateKey] = [...new Set(cleanData[dateKey])];
+          });
+
+          setAllSlotsData(cleanData);
+        }
+      } catch (error) {
+        console.log("Error fetching slots:", error);
+      } finally {
+        setIsFetchingSlots(false);
+      }
+    };
+
+    if (consultantId) {
+      fetchAllSlots();
     }
-  }, [dates]);
+  }, [consultantId]);
 
-  // All Time Slots
-  const allTimeSlots = ["09:00 AM", "11:00 AM", "01:00 PM", "03:00 PM", "05:00 PM", "07:00 PM"];
-
-  // 👉 NEW LOGIC: Dynamic Slots Calculation
-  const availableSlots = useMemo(() => {
-    if (!selectedDate) return allTimeSlots;
-
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${year}-${month}-${day}`;
-
-    // Agar future ki date hai toh saare slots dikhao
-    if (selectedDate !== todayStr) {
-      return allTimeSlots;
-    }
-
-    // Agar aaj ki date hai toh purane time wale slots hata do
-    return allTimeSlots.filter(slot => {
-      const [time, modifier] = slot.split(' ');
-      let [hours, minutes] = time.split(':');
-      hours = parseInt(hours, 10);
-      
-      if (modifier === 'PM' && hours !== 12) hours += 12;
-      if (modifier === 'AM' && hours === 12) hours = 0;
-
-      const slotTime = new Date();
-      slotTime.setHours(hours, parseInt(minutes, 10), 0, 0);
-
-      // Current time se bada (future) ka slot hona chahiye
-      // (Aap chaho toh yaha buffer bhi laga sakte ho: slotTime > new Date(today.getTime() + 30 * 60000) for 30 min advance)
-      return slotTime > today;
-    });
+  // 2. Jab bhi date change ho, purana time reset kar dein
+  useEffect(() => {
+    setSelectedTime(null);
   }, [selectedDate]);
 
-  // Agar user date change karta hai aur selected slot ab available nahi hai, toh selection hata do
-  useEffect(() => {
-    if (selectedTime && !availableSlots.includes(selectedTime)) {
-      setSelectedTime(null);
+  // 3. Date ke hisaab se slots filter karein
+  const availableSlotsForDate = useMemo(() => {
+    if (!allSlotsData || Object.keys(allSlotsData).length === 0 || !selectedDate) {
+      return [];
     }
-  }, [selectedDate, availableSlots]);
+    return allSlotsData[selectedDate] || [];
+  }, [allSlotsData, selectedDate]);
+
+  // 4. Calendar marking (Green Text for available, Blue BG for selected)
+  const markedDatesForCalendar = useMemo(() => {
+    let marked = {};
+
+    if (allSlotsData && Object.keys(allSlotsData).length > 0) {
+      Object.keys(allSlotsData).forEach(dateStr => {
+        if (allSlotsData[dateStr].length > 0) {
+          marked[dateStr] = {
+            customStyles: {
+              text: {
+                color: '#10B981', // Green Text
+                fontWeight: 'bold',
+              }
+            }
+          };
+        }
+      });
+    }
+
+    if (selectedDate) {
+      marked[selectedDate] = {
+        customStyles: {
+          container: {
+            backgroundColor: '#2563EB', // Blue Color
+            borderRadius: 20,
+          },
+          text: {
+            color: '#FFFFFF',
+            fontWeight: 'bold',
+          }
+        }
+      };
+    }
+
+    return marked;
+  }, [allSlotsData, selectedDate]);
+
+  // Handle Manual Time Selection
+  const handleTimeChange = (event, selectedDateObj) => {
+    setShowTimePicker(false);
+    if (selectedDateObj) {
+      let hours = selectedDateObj.getHours();
+      let minutes = selectedDateObj.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+
+      const formattedTime = `${hours}:${minutes} ${ampm}`;
+      setSelectedTime(formattedTime);
+    }
+  };
 
   const handlePayment = async () => {
     if (!selectedDate || !selectedTime) {
@@ -94,7 +153,7 @@ export default function BookingScreen({ route, navigation }) {
     }
 
     if (Platform.OS === 'web') {
-      Alert.alert("Web Notice", "Razorpay integration works on Mobile Devices (Android/iOS).");
+      Alert.alert("Web Notice", "Razorpay integration works on Mobile Devices.");
       return;
     }
 
@@ -115,11 +174,13 @@ export default function BookingScreen({ route, navigation }) {
 
       const options = {
         description: `Consultation with ${consultantName}`,
-        image: 'https://cdn-icons-png.flaticon.com/512/2922/2922503.png',
+        image: Image.resolveAssetSource(
+          require('../../../../assets/aastroneet.png')
+        ).uri,
         currency: 'INR',
-        key: 'rzp_test_Your_Key_Here',
+        key: key_id,
         amount: orderResponse.order.amount,
-        name: 'Career Guide App',
+        name: 'Aastroneet',
         order_id: orderResponse.order.id,
         theme: { color: '#4F46E5' },
         prefill: { email: 'user@example.com', contact: '9999999999', name: 'John Doe' }
@@ -142,6 +203,13 @@ export default function BookingScreen({ route, navigation }) {
     }
   };
 
+  // UI me display karne ke liye date ko DD-MM-YYYY banana (Optional but looks good)
+  const displayFormattedDate = (dateString) => {
+    if (!dateString) return "";
+    const [y, m, d] = dateString.split('-');
+    return `${d}-${m}-${y}`;
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -153,7 +221,6 @@ export default function BookingScreen({ route, navigation }) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        
         <View style={styles.summaryCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{consultantName.charAt(0)}</Text>
@@ -164,46 +231,82 @@ export default function BookingScreen({ route, navigation }) {
           </View>
         </View>
 
-        {/* Date Selection */}
+        {/* 👉 FULL CALENDAR VIEW */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Select Date</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-            {dates.map((item) => (
-              <TouchableOpacity 
-                key={item.id} 
-                onPress={() => setSelectedDate(item.full)}
-                style={[styles.dateBox, selectedDate === item.full && styles.activeBox]}
-              >
-                <Text style={[styles.dateDay, selectedDate === item.full && styles.activeText]}>{item.day}</Text>
-                <Text style={[styles.dateNum, selectedDate === item.full && styles.activeText]}>{item.date}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <View style={styles.calendarContainer}>
+            <Calendar
+              minDate={todayStr}
+              onDayPress={(day) => setSelectedDate(day.dateString)}
+              markingType={'custom'}
+              markedDates={markedDatesForCalendar}
+              theme={{
+                todayTextColor: '#4F46E5',
+                arrowColor: '#4F46E5',
+                textDayFontWeight: '500',
+              }}
+            />
+          </View>
         </View>
 
-        {/* Time Selection Grid */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Available Slots</Text>
-          {availableSlots.length > 0 ? (
+          <Text style={styles.sectionLabel}>
+            Available Slots for {displayFormattedDate(selectedDate)}
+          </Text>
+
+          {isFetchingSlots ? (
+            <ActivityIndicator size="large" color="#4F46E5" style={{ marginVertical: 20 }} />
+          ) : availableSlotsForDate.length > 0 ? (
             <View style={styles.grid}>
-              {availableSlots.map((slot, index) => (
-                <TouchableOpacity 
-                  key={index} 
+              {availableSlotsForDate.map((slot, index) => (
+                <TouchableOpacity
+                  key={index}
                   onPress={() => setSelectedTime(slot)}
-                  style={[styles.slot, selectedTime === slot && styles.activeSlot]}
+                  style={[
+                    styles.slotCard,
+                    selectedTime === slot && styles.activeSlotCard
+                  ]}
                 >
-                  <Text style={[styles.slotText, selectedTime === slot && styles.activeText]}>{slot}</Text>
+                  <Text style={[
+                    styles.slotText,
+                    selectedTime === slot && styles.activeText
+                  ]}>
+                    {slot}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
           ) : (
-            <View style={styles.noSlotsContainer}>
-               <Text style={styles.noSlotsText}>No slots available for today.</Text>
+            <View style={styles.noSlotContainer}>
+              <Ionicons name="calendar-clear-outline" size={32} color="#94A3B8" />
+              <Text style={styles.noSlotText}>No slots available for this date.</Text>
             </View>
           )}
+
+          {/* Manual Time Picker Button */}
+          <TouchableOpacity
+            style={styles.customTimeBtn}
+            onPress={() => setShowTimePicker(true)}
+          >
+            <Ionicons name="time-outline" size={20} color="#4F46E5" />
+            <Text style={styles.customTimeText}>
+              {selectedTime && !availableSlotsForDate.includes(selectedTime)
+                ? `Custom Time: ${selectedTime}`
+                : "Or Enter Custom Time Manually"}
+            </Text>
+          </TouchableOpacity>
+          {showTimePicker && (
+            <DateTimePicker
+              value={new Date()}
+              mode="time"
+              is24Hour={false}
+              display="default"
+              onChange={handleTimeChange}
+            />
+          )}
+
         </View>
 
-        {/* Pricing Table */}
         <View style={styles.tableCard}>
           <Text style={styles.tableTitle}>Payment Summary</Text>
           <View style={styles.tableRow}>
@@ -219,26 +322,24 @@ export default function BookingScreen({ route, navigation }) {
             <Text style={styles.totalValue}>₹{amount}</Text>
           </View>
         </View>
-
       </ScrollView>
 
-      {/* Footer */}
       <View style={styles.footer}>
         <View>
           <Text style={styles.footerSub}>Amount to Pay</Text>
           <Text style={styles.footerPrice}>₹{amount}</Text>
         </View>
-        <TouchableOpacity 
-          style={[styles.mainPayBtn, (isLoading || !selectedTime) && styles.disabledBtn]} 
+        <TouchableOpacity
+          style={[styles.mainPayBtn, (isLoading || !selectedDate || !selectedTime) && styles.disabledBtn]}
           onPress={handlePayment}
-          disabled={isLoading || !selectedTime}
+          disabled={isLoading || !selectedDate || !selectedTime}
         >
           {isLoading ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <>
               <Text style={styles.mainPayBtnText}>Book Now</Text>
-              <MaterialIcons name="security" size={18} color="#fff" style={{marginLeft: 8}} />
+              <MaterialIcons name="security" size={18} color="#fff" style={{ marginLeft: 8 }} />
             </>
           )}
         </TouchableOpacity>
@@ -260,18 +361,16 @@ const styles = StyleSheet.create({
   cType: { fontSize: 13, color: '#64748B' },
   section: { marginBottom: 25 },
   sectionLabel: { fontSize: 16, fontWeight: '700', color: '#334155', marginBottom: 12 },
-  horizontalScroll: { flexDirection: 'row' },
-  dateBox: { width: 65, height: 80, backgroundColor: '#fff', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12, borderWidth: 1, borderColor: '#E2E8F0' },
-  activeBox: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
-  dateDay: { fontSize: 12, color: '#64748B' },
-  dateNum: { fontSize: 18, fontWeight: 'bold', color: '#1E293B', marginTop: 4 },
+  calendarContainer: { backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#E2E8F0', paddingBottom: 10 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
+  slotCard: { width: '31%', backgroundColor: '#EEF2FF', paddingVertical: 12, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: '#C7D2FE', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
+  activeSlotCard: { backgroundColor: '#4F46E5', borderColor: '#4F46E5', transform: [{ scale: 1.02 }] },
+  slotText: { fontSize: 13, fontWeight: '700', color: '#4F46E5' },
   activeText: { color: '#fff' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  slot: { width: '31%', backgroundColor: '#fff', paddingVertical: 12, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
-  activeSlot: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
-  slotText: { fontSize: 13, fontWeight: '600', color: '#475569' },
-  noSlotsContainer: { padding: 20, backgroundColor: '#FEF2F2', borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: '#FECACA' },
-  noSlotsText: { color: '#DC2626', fontWeight: '600' },
+  noSlotContainer: { padding: 20, alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', borderStyle: 'dashed', marginBottom: 15 },
+  noSlotText: { fontSize: 15, fontWeight: '600', color: '#475569', marginTop: 8 },
+  customTimeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, backgroundColor: '#EEF2FF', borderRadius: 10, borderWidth: 1, borderColor: '#C7D2FE', borderStyle: 'dashed' },
+  customTimeText: { marginLeft: 8, fontSize: 14, fontWeight: '600', color: '#4F46E5' },
   tableCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E2E8F0' },
   tableTitle: { fontSize: 15, fontWeight: '700', color: '#1E293B', marginBottom: 15 },
   tableRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
