@@ -19,6 +19,7 @@ import RazorpayCheckout from 'react-native-razorpay';
 // ⚠️ UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
 import { allMentor, BookMentor, verifyMentorbooking } from '../../../../src/services/user';
 import SlotSelectionModal from '../mentor/SlotSelectionModal';
+import {  key_id } from '../../../../src/constants/MainContent';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.75;
@@ -99,14 +100,12 @@ export default function TopMentorsOverview() {
 
   // 👉 Triggered when user clicks "Proceed to Pay" inside the Modal
   const handleProcessPayment = async (mentor, selectedDate, selectedTime, enteredAmount) => {
-    setSlotModalVisible(false); // Modal band kardo
-    setBookingMentorId(mentor._id); // Button pe loader dikhao
+    setSlotModalVisible(false); 
+    setBookingMentorId(mentor._id); // Loader ON karein
 
     try {
-      // 👉 1. Amount ko strictly ek solid Integer number banayein (Decimals and spaces remove karne ke liye)
+      // 1. Validate Amount
       const finalAmount = parseInt(enteredAmount, 10);
-
-      // 👉 2. Check lagayein ki amount valid hai ya nahi
       if (isNaN(finalAmount) || finalAmount <= 0) {
         Alert.alert("Invalid Amount", "Please enter a valid amount greater than 0.");
         setBookingMentorId(null);
@@ -117,25 +116,24 @@ export default function TopMentorsOverview() {
         mentorId: mentor._id,
         date: selectedDate,
         time: selectedTime,
-        amount: finalAmount // 👉 Ab yeh strictly ek number (e.g., 500) jayega
+        amount: finalAmount
       };
 
-      // 👉 DEBUG: Terminal me check karne ke liye ki payload kya bana
       console.log("🚀 PAYLOAD GOING TO BACKEND:", orderPayload);
 
+      // 2. Create Order in Backend
       const orderResponse = await BookMentor(orderPayload);
-
       if (!orderResponse.success) {
         throw new Error(orderResponse.message || "Failed to initiate booking.");
       }
 
       const options = {
         description: `Mentorship Session with ${mentor.name} on ${selectedDate} at ${selectedTime}`,
-        image: 'https://your-app-logo.com/logo.png',
+        image: 'https://woocommerce.com/wp-content/uploads/2021/01/fb-razorpay@2x.png',
         currency: 'INR',
-        key: orderResponse.razorpayKey || 'YOUR_RAZORPAY_KEY',
+        key: key_id,
         amount: orderResponse.amount,
-        name: 'Career Guide',
+        name: 'Aastroneet',
         order_id: orderResponse.orderId,
         prefill: {
           email: 'user@example.com',
@@ -145,36 +143,42 @@ export default function TopMentorsOverview() {
         theme: { color: MENTOR_PRIMARY }
       };
 
-      RazorpayCheckout.open(options).then(async (data) => {
-        const verifyPayload = {
-          mentorId: mentor._id,
-          razorpay_payment_id: data.razorpay_payment_id,
-          razorpay_order_id: data.razorpay_order_id,
-          razorpay_signature: data.razorpay_signature,
-          date: selectedDate,
-          time: selectedTime
-        };
+      // 👉 FIX: Added 'await' here. Code will pause until payment completes or cancels.
+      const data = await RazorpayCheckout.open(options);
 
-        const verifyResponse = await verifyMentorbooking(verifyPayload);
+      // 3. Payment Success - Verify from Backend
+      const verifyPayload = {
+        mentorId: mentor._id,
+        razorpay_payment_id: data.razorpay_payment_id,
+        razorpay_order_id: data.razorpay_order_id,
+        razorpay_signature: data.razorpay_signature,
+        date: selectedDate,
+        time: selectedTime
+      };
 
-        if (verifyResponse.success) {
-          Alert.alert("Booking Confirmed!", `Your session with ${mentor.name} is booked for ${selectedDate} at ${selectedTime}.`);
-        } else {
-          Alert.alert("Verification Failed", "Payment captured but verification failed. Contact support.");
-        }
+      const verifyResponse = await verifyMentorbooking(verifyPayload);
 
-      }).catch((error) => {
-        console.log("Payment Error:", error);
-        Alert.alert("Payment Cancelled", "You cancelled the payment process.");
-      });
+      if (verifyResponse.success) {
+        Alert.alert("Booking Confirmed!", `Your session with ${mentor.name} is booked for ${selectedDate} at ${selectedTime}.`);
+      } else {
+        Alert.alert("Verification Failed", "Payment captured but verification failed. Contact support.");
+      }
 
     } catch (error) {
-      // 👉 NAYA DEBUGGING LOG: Yeh error ke andar ka saara raaz khol dega
-      console.log("🔥 REAL BOOKING ERROR:", error?.response?.data?.data || error?.message || JSON.stringify(error));
+      console.log("🔥 REAL BOOKING ERROR:", error);
 
-      const errorMsg = error?.response?.data?.message || error?.message || "Something went wrong.";
-      Alert.alert("Booking Failed", errorMsg);
+      // 👉 FIX: Handle Razorpay Cancellation vs API Errors gracefully
+      if (error.code === 0 || error.description) {
+        // Yeh block tab chalega jab user back button dabayega (Razorpay error)
+        Alert.alert("Payment Cancelled", "You cancelled the payment process.");
+      } else {
+        // Yeh block tab chalega jab aapki API me koi error aayega
+        const errorMsg = error?.response?.data?.message || error?.message || "Something went wrong.";
+        Alert.alert("Booking Failed", errorMsg);
+      }
+
     } finally {
+      // 👉 Ab loading spinner exact tabhi gayab hoga jab payment verify ya cancel ho jayegi
       setBookingMentorId(null);
     }
   };
@@ -315,7 +319,8 @@ export default function TopMentorsOverview() {
 const styles = StyleSheet.create({
   sectionContainer: { marginTop: 25, marginBottom: 15 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 15 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
+  sectionTitle: { fontSize: 22, fontWeight: 'bold', color: '#111827' },
+  
   viewAllText: { fontSize: 14, color: MENTOR_PRIMARY, fontWeight: '600' },
   listContent: { paddingLeft: 20, paddingRight: 5 },
   cardContainer: {

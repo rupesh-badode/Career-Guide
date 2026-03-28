@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { View, Text, StyleSheet, Animated } from "react-native";
+import { View, StyleSheet, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 
@@ -11,14 +11,17 @@ import FilterBottomSheet from "./FilterBottomSheet";
 export default function Chat() {
     const [userData, setUserData] = useState([]);
     const [loading, setLoading] = useState(true);
+    
+    // 👉 NAYA STATE: Refreshing ke liye
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    
     const navigation = useNavigation();
     const [searchQuery, setSearchQuery] = useState("");
     const [isFilterVisible, setIsFilterVisible] = useState(false);
     const [activeFilters, setActiveFilters] = useState(null);
 
-    // 🔥 ANIMATION LOGIC START
     const insets = useSafeAreaInsets();
-    const HEADER_HEIGHT = insets.top + 60; // Space adjust karne ke liye 60 ko 45-50 kar sakte hain
+    const HEADER_HEIGHT = insets.top + 80; 
 
     const scrollY = useRef(new Animated.Value(0)).current;
     const scrollYClamped = Animated.diffClamp(scrollY, 0, HEADER_HEIGHT);
@@ -27,10 +30,10 @@ export default function Chat() {
         inputRange: [0, HEADER_HEIGHT],
         outputRange: [1, 0],
     });
-    // 🔥 ANIMATION LOGIC END
 
-    const fetchData = async () => {
-        setLoading(true);
+    // 👉 UPDATE: fetchData ab batayega ki ye normal load hai ya refresh load
+    const fetchData = async (isRefresh = false) => {
+        if (!isRefresh) setLoading(true); // Agar refresh nahi hai, tabhi main loader dikhao
         try {
             const res = await MyBookings();
             const bookingsList = res?.data || [];
@@ -39,19 +42,24 @@ export default function Chat() {
         } catch (err) {
             console.log("Error fetching bookings:", err);
         } finally {
-            setLoading(false);
+            if (!isRefresh) setLoading(false);
         }
     }
 
     useEffect(() => {
-        fetchData();
+        fetchData(false); // Initial load
     }, []);
 
-    // 🔥 Chat.js ke andar useMemo wala part
+    // 👉 NAYA FUNCTION: Pull-to-refresh hone par ye chalega
+    const onRefresh = async () => {
+        setIsRefreshing(true);
+        await fetchData(true); // Pass true taaki skeleton dubara load na ho
+        setIsRefreshing(false);
+    };
+
     const filteredData = useMemo(() => {
         let result = userData;
 
-        // 1. Search Query Logic
         if (searchQuery) {
             result = result.filter((item) => {
                 const name = item?.consultantId?.name || item?.userId?.name || "";
@@ -59,37 +67,77 @@ export default function Chat() {
             });
         }
 
-        // 2. BOTTOM SHEET FILTER LOGIC (SIRF YAHI KAAM KAREGA AB)
         if (activeFilters) {
-
-            // Example 1: Institute Type se filter
-            if (activeFilters?.instituteType && activeFilters.instituteType.length > 0) {
+            if (activeFilters.specialization?.length > 0) {
+                result = result.filter(item => 
+                    activeFilters.specialization.includes(item?.consultantId?.specialization)
+                );
+            }
+            if (activeFilters.status?.length > 0) {
+                result = result.filter(item => 
+                    activeFilters.status.some(s => s.toLowerCase() === item?.status?.toLowerCase())
+                );
+            }
+            if (activeFilters.paymentStatus?.length > 0) {
+                result = result.filter(item => 
+                    activeFilters.paymentStatus.some(s => s.toLowerCase() === item?.paymentStatus?.toLowerCase())
+                );
+            }
+            if (activeFilters.amount?.length > 0) {
                 result = result.filter(item => {
-                    // Dhyan de: Ensure karein ki API me item ke andar instituteType kahan hai
-                    const instType = item?.consultantId?.instituteType || item?.instituteType;
-                    return activeFilters.instituteType.includes(instType);
+                    const price = item?.amount || 0;
+                    return activeFilters.amount.some(filter => {
+                        if (filter === 'Free') return price === 0;
+                        if (filter === 'Under ₹500') return price > 0 && price < 500;
+                        if (filter === '₹500 - ₹1000') return price >= 500 && price <= 1000;
+                        if (filter === 'Above ₹1000') return price > 1000;
+                        return false;
+                    });
                 });
             }
-
-            // Example 2: State ya University se filter (Agar bottom sheet me hai)
-            if (activeFilters?.state && activeFilters.state.length > 0) {
+            if (activeFilters.duration?.length > 0) {
                 result = result.filter(item => {
-                    const stateName = item?.consultantId?.state || item?.state;
-                    return activeFilters.state.includes(stateName);
+                    const dur = item?.duration;
+                    return activeFilters.duration.some(filter => filter.includes(dur?.toString()));
                 });
             }
-
+            if (activeFilters.experience?.length > 0) {
+                result = result.filter(item => {
+                    const exp = parseInt(item?.consultantId?.experience) || 0;
+                    return activeFilters.experience.some(filter => {
+                        if (filter === '0-2 Years') return exp >= 0 && exp <= 2;
+                        if (filter === '3-5 Years') return exp >= 3 && exp <= 5;
+                        if (filter === '6-10 Years') return exp >= 6 && exp <= 10;
+                        if (filter === '10+ Years') return exp >= 10;
+                        return false;
+                    });
+                });
+            }
+            if (activeFilters.rating?.length > 0) {
+                result = result.filter(item => {
+                    const rating = item?.consultantId?.averageRating || 0;
+                    return activeFilters.rating.some(filter => {
+                        if (filter === '4.5 & Above') return rating >= 4.5;
+                        if (filter === '4.0 & Above') return rating >= 4.0;
+                        if (filter === '3.0 & Above') return rating >= 3.0;
+                        if (filter === 'Top Rated Only') return rating >= 4.5;
+                        return false;
+                    });
+                });
+            }
         }
-
         return result;
     }, [userData, searchQuery, activeFilters]);
+
     return (
         <View style={styles.container}>
-            {/* 🔥 VIRTUALIZATION FIX: List direct render hogi aur header ke theek niche se start hone ke liye padding legi */}
             <ChatListCard
                 data={filteredData}
                 isLoading={loading}
-                // Niche wale 2 props animation ke liye naye add kiye hain
+                // 👉 UPDATE: Ye 2 naye props pass kiye hain ChatListCard ko
+                isRefreshing={isRefreshing}
+                onRefresh={onRefresh}
+                
                 contentPaddingTop={HEADER_HEIGHT}
                 onScroll={Animated.event(
                     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -122,7 +170,6 @@ export default function Chat() {
                 }}
             />
 
-            {/* 🔥 HEADER KO ABSOLUTE BANAYA */}
             <Animated.View style={[
                 styles.headerContainer,
                 {
@@ -141,7 +188,6 @@ export default function Chat() {
                 visible={isFilterVisible}
                 onClose={() => setIsFilterVisible(false)}
                 onApply={(selectedFilters) => {
-                    console.log("Applied Filters:", selectedFilters);
                     setActiveFilters(selectedFilters);
                 }}
             />

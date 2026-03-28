@@ -40,8 +40,8 @@ export default function MentorDashboard() {
                 )}
                 scrollEventThrottle={16}
             >
-              <MentorBenefits/>
               <MentorImageCarousel/>
+              <MentorBenefits/>
               <MentorBlogsOverview/>
                {/* <AnimatedDashboard /> */}
             </Animated.ScrollView>

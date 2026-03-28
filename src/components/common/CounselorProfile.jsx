@@ -174,19 +174,21 @@ export default function CounselorProfile({ route, navigation }) {
             4. STATS SECTION (Restored Wrapper)
         ========================================== */}
         <View style={styles.statsContainer}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{profileData?.totalMinutes || '50k+'}</Text>
-            <Text style={styles.statLabel}>Minutes</Text>
-          </View>
-          
-          <View style={styles.divider} />
           
           <View style={styles.statBox}>
             <View style={styles.ratingRow}>
-              <Text style={styles.statValue}>{profileData?.rating || '4.9'}</Text>
+              {/* 👇 Average Rating Yahan Aayegi */}
+              <Text style={styles.statValue}>
+                {profileData?.averageRating ? parseFloat(profileData.averageRating).toFixed(1) : '0.0'}
+              </Text>
               <Ionicons name="star" size={18} color="#F59E0B" style={styles.ratingStar} />
             </View>
-            <Text style={styles.statLabel}>Rating</Text>
+            {/* 👇 Total Ratings Yahan Aayegi */}
+            <Text style={styles.statLabel}>
+              {profileData?.totalRatings 
+                ? `${profileData.totalRatings} Review${profileData.totalRatings > 1 ? 's' : ''}` 
+                : 'No Reviews'}
+            </Text>
           </View>
         </View>
 
@@ -195,7 +197,10 @@ export default function CounselorProfile({ route, navigation }) {
         ========================================== */}
         <View style={styles.reviewsSection}>
           <View style={styles.reviewSectionHeader}>
-            <Text style={styles.sectionTitle}>User Reviews ({REVIEWS?.length || 0})</Text>
+            {/* 👇 profileData.reviews.length use karein */}
+            <Text style={styles.sectionTitle}>
+               User Reviews ({profileData?.reviews?.length || 0})
+            </Text>
             
             <TouchableOpacity 
               style={styles.writeReviewBtn}
@@ -207,29 +212,40 @@ export default function CounselorProfile({ route, navigation }) {
             </TouchableOpacity>
           </View>
 
-          {REVIEWS?.map((review) => (
-            <View key={review.id} style={styles.reviewCard}>
-              <View style={styles.reviewHeader}>
-                <View>
-                  <Text style={styles.reviewerName}>{review.user}</Text>
-                  <View style={styles.starsRow}>
-                    {[...Array(5)].map((_, i) => (
-                      <Ionicons
-                        key={i}
-                        name={i < review.rating ? "star" : "star-outline"}
-                        size={14}
-                        color={i < review.rating ? "#F59E0B" : "#D1D5DB"}
-                      />
-                    ))}
+          {/* 👇 Agar reviews hain toh map karein, nahi toh empty state dikhayein */}
+          {profileData?.reviews && profileData.reviews.length > 0 ? (
+            profileData.reviews.map((review, index) => (
+              <View key={review._id || index} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <View>
+                    <Text style={styles.reviewerName}>{review.userName || review.user || "Anonymous"}</Text>
+                    <View style={styles.starsRow}>
+                      {[...Array(5)].map((_, i) => (
+                        <Ionicons
+                          key={i}
+                          name={i < (review.rating || 0) ? "star" : "star-outline"}
+                          size={14}
+                          color={i < (review.rating || 0) ? "#F59E0B" : "#D1D5DB"}
+                        />
+                      ))}
+                    </View>
                   </View>
+                  {/* Agar date backend se ISO string aati hai toh usko format kar sakte hain */}
+                  <Text style={styles.reviewDate}>
+                    {review.date ? new Date(review.date).toLocaleDateString() : 'Recent'}
+                  </Text>
                 </View>
-                <Text style={styles.reviewDate}>{review.date}</Text>
+                <Text style={styles.reviewComment}>{review.comment}</Text>
               </View>
-              <Text style={styles.reviewComment}>{review.comment}</Text>
+            ))
+          ) : (
+             // 👇 Agar koi review nahi hai
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text style={{ color: '#9CA3AF' }}>No reviews yet. Be the first to review!</Text>
             </View>
-          ))}
+          )}
 
-          {REVIEWS?.length > 0 && (
+          {profileData?.reviews?.length > 3 && (
             <TouchableOpacity style={styles.viewAllBtn} activeOpacity={0.7}>
               <Text style={styles.viewAllText}>Read All Reviews</Text>
             </TouchableOpacity>

@@ -69,9 +69,10 @@ export default function Request() {
     <View style={styles.container}>
 
       <CustomHeader
-        routeName="Appointment"
+        routeName="CounsutantAppoinment"
         onActionPress={() => setIsAvailabilityModalVisible(true)}
       />
+
       <CreateAvailabilityScreen />
 
       <Modal
@@ -105,7 +106,6 @@ export default function Request() {
             onDeleteSlot={handleDeleteSlot}
             onDeleteDate={handleDeleteDate}
           />
-
         </View>
       </Modal>
 

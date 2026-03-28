@@ -20,10 +20,14 @@ const THEME_COLOR = '#10B981';
 // ==========================================
 // ANIMATED LARGE CARD COMPONENT
 // ==========================================
-const ChatListItem = ({ item, index, onPressChat,  onPressVideoCall }) => {
+
+const ChatListItem = ({ item, index, onPressChat, onPressVideoCall, onPressAudioCall }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Separate scale animations for Audio and Video buttons
+  const scaleAnimAudio = useRef(new Animated.Value(1)).current;
+  const scaleAnimVideo = useRef(new Animated.Value(1)).current;
 
   // ✨ Staggered Entry Animation
   useEffect(() => {
@@ -44,34 +48,30 @@ const ChatListItem = ({ item, index, onPressChat,  onPressVideoCall }) => {
     ]).start();
   }, [index, fadeAnim, translateY]);
 
-  // ✨ Button Press Animation
-  const animatePressIn = () => Animated.spring(scaleAnim, { toValue: 0.96, useNativeDriver: true }).start();
-  const animatePressOut = () => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+  // ✨ Button Press Animations
+  const animatePressIn = (anim) => Animated.spring(anim, { toValue: 0.94, useNativeDriver: true }).start();
+  const animatePressOut = (anim) => Animated.spring(anim, { toValue: 1, useNativeDriver: true }).start();
 
   // Extracting Data Safely
   const student = item?.studentId || {};
   const name = student?.name || 'Unknown User';
   const avatar = student?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff`;
-  
+
   // Format Date
   const bookingDate = new Date(item.date);
   const formattedDate = bookingDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-  
+
   const isConfirmed = item.status === 'confirmed';
-  const statusColor = isConfirmed ? THEME_COLOR : '#F59E0B'; // Green for confirmed, Yellow for pending
+  const statusColor = isConfirmed ? THEME_COLOR : '#F59E0B';
   const statusBg = isConfirmed ? '#ECFDF5' : '#FEF3C7';
 
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY }] }}>
       <View style={styles.card}>
-        
+
         {/* TOP SECTION: Student Info & Status */}
         <View style={styles.headerRow}>
-          <TouchableOpacity 
-            style={styles.profileSection} 
-            activeOpacity={0.8}
-            // onPress={() => onPressProfile(item)}
-          >
+          <TouchableOpacity style={styles.profileSection} activeOpacity={0.8}>
             <Image source={{ uri: avatar }} style={styles.avatar} />
             <View style={styles.nameContainer}>
               <Text style={styles.nameText} numberOfLines={1}>{name}</Text>
@@ -99,9 +99,7 @@ const ChatListItem = ({ item, index, onPressChat,  onPressVideoCall }) => {
               <Text style={styles.scheduleValue}>{formattedDate}</Text>
             </View>
           </View>
-          
           <View style={styles.divider} />
-
           <View style={styles.scheduleItem}>
             <Ionicons name="time" size={18} color={THEME_COLOR} />
             <View style={styles.scheduleTextContainer}>
@@ -109,9 +107,7 @@ const ChatListItem = ({ item, index, onPressChat,  onPressVideoCall }) => {
               <Text style={styles.scheduleValue}>{item.time || 'TBA'}</Text>
             </View>
           </View>
-
           <View style={styles.divider} />
-
           <View style={styles.scheduleItem}>
             <Ionicons name="hourglass" size={18} color={THEME_COLOR} />
             <View style={styles.scheduleTextContainer}>
@@ -123,28 +119,48 @@ const ChatListItem = ({ item, index, onPressChat,  onPressVideoCall }) => {
 
         {/* BOTTOM SECTION: Actions */}
         {isConfirmed ? (
-          <View style={styles.actionRow}>
-            <TouchableOpacity 
-              style={[styles.actionBtn, styles.msgBtn]} 
+          <View>
+            {/* Top row of actions: Message */}
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.msgBtn, { marginBottom: 12 }]}
               activeOpacity={0.7}
               onPress={() => onPressChat(item)}
             >
               <Ionicons name="chatbubbles" size={20} color={THEME_COLOR} />
-              <Text style={styles.msgBtnText}>Message</Text>
+              <Text style={styles.msgBtnText}>Message Student</Text>
             </TouchableOpacity>
 
-            <Animated.View style={{ flex: 1, transform: [{ scale: scaleAnim }] }}>
-              <TouchableOpacity 
-                style={[styles.actionBtn, styles.callBtn]} 
-                activeOpacity={0.9}
-                onPressIn={animatePressIn}
-                onPressOut={animatePressOut}
-                onPress={() => onPressVideoCall(item)}
-              >
-                <Ionicons name="videocam" size={20} color="#FFF" />
-                <Text style={styles.callBtnText}>Join Video Call</Text>
-              </TouchableOpacity>
-            </Animated.View>
+            {/* Bottom row of actions: Audio & Video Call */}
+            <View style={styles.callActionRow}>
+
+              {/* Audio Call Button */}
+              <Animated.View style={{ flex: 1, transform: [{ scale: scaleAnimAudio }] }}>
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.audioCallBtn]}
+                  activeOpacity={0.9}
+                  onPressIn={() => animatePressIn(scaleAnimAudio)}
+                  onPressOut={() => animatePressOut(scaleAnimAudio)}
+                  onPress={() => onPressAudioCall(item)}
+                >
+                  <Ionicons name="call" size={18} color={THEME_COLOR} />
+                  <Text style={styles.audioCallBtnText}>Audio Call</Text>
+                </TouchableOpacity>
+              </Animated.View>
+
+              {/* Video Call Button */}
+              <Animated.View style={{ flex: 1, transform: [{ scale: scaleAnimVideo }] }}>
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.callBtn]}
+                  activeOpacity={0.9}
+                  onPressIn={() => animatePressIn(scaleAnimVideo)}
+                  onPressOut={() => animatePressOut(scaleAnimVideo)}
+                  onPress={() => onPressVideoCall(item)}
+                >
+                  <Ionicons name="videocam" size={18} color="#FFF" />
+                  <Text style={styles.callBtnText}>Video Call</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
           </View>
         ) : (
           <View style={styles.pendingFooter}>
@@ -189,7 +205,7 @@ export default function ChatListScreen({ searchQuery = "" }) {
 
   const filteredData = data.filter((item) => {
     if (!searchQuery) return true; // Agar search khali hai, toh sab dikhao
-    
+
     // ChatListItem ke hisaab se student ka naam nikal rahe hain
     const name = item?.studentId?.name || 'Unknown User';
     return name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -199,7 +215,7 @@ export default function ChatListScreen({ searchQuery = "" }) {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Upcoming Sessions</Text>
-        <Text style={styles.headerSubtitle}>Manage your scheduled bookings</Text>
+        <Text style={styles.headerSubtitle}>Manage your Sessions</Text>
       </View>
 
       {loading ? (
@@ -225,16 +241,13 @@ export default function ChatListScreen({ searchQuery = "" }) {
                   senderId: selectedItem?.consultantId,
                 });
               }}
-              // onPressProfile={(selectedItem) => {
-              //   navigation.navigate('StudentProfile', {
-              //     studentData: selectedItem.studentId,
-              //     bookingData: {
-              //       status: selectedItem.status,
-              //       date: selectedItem.date,
-              //       time: selectedItem.time
-              //     }
-              //   });
-              // }}
+              // 👉 NAYA: Audio Call Navigation
+              onPressAudioCall={(selectedItem) => {
+                navigation.navigate('AudioCall', { // Make sure name matches your stack navigator
+                  roomName: `room_${selectedItem?._id}`,
+                });
+              }}
+              // 👉 EXISTING: Video Call Navigation
               onPressVideoCall={(selectedItem) => {
                 navigation.navigate('VideoCall', {
                   roomName: `room_${selectedItem?._id}`,
@@ -274,6 +287,22 @@ const styles = StyleSheet.create({
       android: { elevation: 3 }
     })
   },
+  // Button Styles Updates
+  actionRow: { flexDirection: 'row', gap: 12 },
+  callActionRow: { flexDirection: 'row', gap: 12 }, // Naya row audio/video ke liye
+  actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12 },
+  
+  // Message Button (Full width now)
+  msgBtn: { width: '100%', backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB' },
+  msgBtnText: { fontSize: 15, fontWeight: '700', color: '#4B5563', marginLeft: 8 },
+  
+  // Audio Call Button (Outline Style)
+  audioCallBtn: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: THEME_COLOR },
+  audioCallBtnText: { fontSize: 14, fontWeight: '700', color: THEME_COLOR, marginLeft: 6 },
+  
+  // Video Call Button (Solid Style)
+  callBtn: { flex: 1, backgroundColor: THEME_COLOR, shadowColor: THEME_COLOR, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 4 },
+  callBtnText: { fontSize: 14, fontWeight: '700', color: '#FFF', marginLeft: 6 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
   profileSection: { flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 10 },
   avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#F3F4F6' },

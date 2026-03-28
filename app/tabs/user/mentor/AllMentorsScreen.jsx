@@ -21,6 +21,7 @@ import { allMentor, BookMentor, verifyMentorbooking } from '../../../../src/serv
 
 // 👉 NAYA IMPORT: Apna Modal Import Karo (Path apne folder structure ke hisaab se check kar lena)
 import SlotSelectionModal from './SlotSelectionModal'; 
+import { key_id } from '../../../../src/constants/MainContent';
 
 const THEME_COLOR = '#4F46E5'; 
 
@@ -142,7 +143,7 @@ export default function AllMentorsScreen({ navigation }) {
         description: `Session with ${mentor.name} on ${date} at ${time}`,
         image: 'https://your-app-logo.com/logo.png', 
         currency: 'INR',
-        key: orderResponse.razorpayKey || 'YOUR_RAZORPAY_KEY', 
+        key:key_id, 
         amount: orderResponse.amount, 
         name: 'Career Guide',
         order_id: orderResponse.orderId, 

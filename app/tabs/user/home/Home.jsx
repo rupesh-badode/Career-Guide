@@ -53,10 +53,10 @@ export default function Index() {
             >
                 <OnboardingScreen />
                 <ImageCarousel />
-                <WhyLoveAastroneet/>
                 <CounselorList />
-                <SmartTools/>
+                <WhyLoveAastroneet/>
                 <TopMentorsOverview/>
+                {/* <SmartTools/> */}
                 <Blog />
                 <FeaturedBooks />
                 <NewsSection />

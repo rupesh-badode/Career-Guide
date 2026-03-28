@@ -41,9 +41,9 @@ export default function Blog() {
 
   const renderBlogCard = ({ item }) => {
     // console.log("item",item) // Debugging ke liye thik hai
-    
+
     // Fallback date agar createdAt undefined/null ho
-    const date = item.createdAt 
+    const date = item.createdAt
       ? new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       : 'Recently';
 
@@ -53,14 +53,14 @@ export default function Blog() {
     const safeContent = item.content ? item.content.replace(/<[^>]*>?/gm, '') : '';
 
     return (
-      <TouchableOpacity 
-        style={styles.card} 
+      <TouchableOpacity
+        style={styles.card}
         activeOpacity={0.9}
         onPress={() => navigation.navigate('BlogDetails', { blog: item })} // 👈 Yahan maine `blog: item` pass kiya hai (Pichle component logic ke according)
       >
         {/* Blog Image */}
         <Image source={{ uri: item.image || 'https://via.placeholder.com/290x150' }} style={styles.blogImage} />
-        
+
         {/* Category Badge - Absolutely Positioned */}
         <View style={styles.categoryBadge}>
           <Text style={styles.categoryText}>{item.category || 'General'}</Text>
@@ -83,7 +83,7 @@ export default function Blog() {
               </View>
               <Text style={styles.authorName}>{authorName}</Text>
             </View>
-            
+
             <View style={styles.dateRow}>
               <Ionicons name="calendar-outline" size={14} color="#6B7280" />
               <Text style={styles.dateText}>{date}</Text>
@@ -126,6 +126,8 @@ export default function Blog() {
 const styles = StyleSheet.create({
   container: {
     marginVertical: 20,
+    marginTop: 16,
+    marginBottom: 8
   },
   header: {
     flexDirection: 'row',
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '800',
     color: '#111827',
   },

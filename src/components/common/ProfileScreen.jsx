@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, Image, Pressable,
   ScrollView, SafeAreaView, Platform,
-  Alert,
+  Alert, Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,74 +12,102 @@ import { useNavigation } from '@react-navigation/native';
 // 👉 TEENO API IMPORT KAREIN
 import { getUserProfile } from '../../services/authAPI';
 import { getConsultantProfile } from '../../services/consultantAPI';
-import { getMentorProfile } from '../../services/mentorAPI'; // Make sure this function exists in your mentorAPI file
-import { changeRole, logout } from '../../redux/authSlice';
+import { getMentorProfile } from '../../services/mentorAPI'; 
+import { logout } from '../../redux/authSlice'; // Removed changeRole if not used
 import CustomHeader from './CustomHeader';
 
+// ==========================================
+// 1. Animated Menu Item Component
+// ==========================================
+const AnimatedMenuItem = ({ icon, title, subtitle, color, onPress, isDanger, index }) => {
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-// ==========================================
-// Reusable Animated Menu Item Component
-// ==========================================
-const MenuItem = ({ icon, title, subtitle, color, onPress, isDanger }) => {
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        delay: index * 100, // Staggered delay based on index
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        delay: index * 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [index]);
+
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.menuItem,
-        {
-          transform: [{ scale: pressed ? 0.98 : 1 }],
-          backgroundColor: pressed ? '#f0f0f0' : '#fff',
-        }
-      ]}
-    >
-      <View style={[styles.iconContainer, { backgroundColor: isDanger ? '#fee2e2' : `${color}20` }]}>
-        <Ionicons name={icon} size={22} color={isDanger ? '#ef4444' : color} />
-      </View>
-      <View style={styles.menuTextContainer}>
-        <Text style={[styles.menuTitle, isDanger && { color: '#ef4444' }]}>{title}</Text>
-        {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
-      </View>
-      <Ionicons name="chevron-forward-outline" size={20} color="#ccc" />
-    </Pressable>
+    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.menuItem,
+          {
+            transform: [{ scale: pressed ? 0.96 : 1 }],
+            backgroundColor: pressed ? '#F9FAFB' : '#FFFFFF',
+            borderColor: isDanger ? '#FEE2E2' : '#F3F4F6',
+          }
+        ]}
+      >
+        <View style={[styles.iconContainer, { backgroundColor: isDanger ? '#FEF2F2' : `${color}15` }]}>
+          <Ionicons name={icon} size={22} color={isDanger ? '#EF4444' : color} />
+        </View>
+        <View style={styles.menuTextContainer}>
+          <Text style={[styles.menuTitle, isDanger && { color: '#EF4444' }]}>{title}</Text>
+          {subtitle && <Text style={[styles.menuSubtitle, isDanger && { color: '#F87171' }]}>{subtitle}</Text>}
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={isDanger ? '#FCA5A5' : '#D1D5DB'} />
+      </Pressable>
+    </Animated.View>
   );
 };
 
 // ==========================================
-// Main Profile Component
+// 2. Main Profile Component
 // ==========================================
 export default function ProfileScreen() {
-
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
+  // Profile Section Animations
+  const profileFadeAnim = useRef(new Animated.Value(0)).current;
+  const profileSlideAnim = useRef(new Animated.Value(-20)).current;
+
   // 👉 Redux setup se role nikalna
-  const role = useSelector((state) => state.auth.role) || 'User';
+  const role = useSelector((state) => state.auth?.role) || 'User';
 
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 👉 2. Fetch data based on specific Role
+  // 👉 Fetch data based on specific Role
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setIsLoading(true);
         let response;
 
-        // API call based on Role
         if (role === 'Consultant') {
           response = await getConsultantProfile();
         } else if (role === 'Mentor') {
-          response = await getMentorProfile(); // Mentor Data Fetch
+          response = await getMentorProfile();
         } else {
           response = await getUserProfile();
         }
 
-        // Safe extraction approach
         const profileInfo = response?.user || response?.consultant || response?.mentor || response?.data || response;
+        if (profileInfo) setUserData(profileInfo);
 
-        if (profileInfo) {
-          setUserData(profileInfo);
-        }
+        // Start Profile Animation once data is mapped (or even while loading)
+        Animated.parallel([
+          Animated.timing(profileFadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+          Animated.spring(profileSlideAnim, { toValue: 0, tension: 50, friction: 7, useNativeDriver: true }),
+        ]).start();
+
       } catch (error) {
         console.error(`Error fetching ${role} profile:`, error);
       } finally {
@@ -93,7 +121,7 @@ export default function ProfileScreen() {
   function onLogout() {
     Alert.alert(
       "Confirm Logout",
-      "Are You Sure?",
+      "Are you sure you want to securely log out of your account?",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -114,7 +142,7 @@ export default function ProfileScreen() {
     );
   }
 
-  // 👉 3. Dynamic Theme Setup (3 Roles)
+  // 👉 Dynamic Theme Setup (3 Roles)
   let primaryColor = '#3B82F6'; // User: Blue
   let bgColor = '#EFF6FF';
 
@@ -132,270 +160,248 @@ export default function ProfileScreen() {
   };
 
   return (
-    <>
+    <View style={styles.mainContainer}>
       <CustomHeader routeName="Profile" />
 
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-            {/* --- 1. PROFILE AVATAR SECTION --- */}
-            <View style={styles.profileSection}>
-              <View style={styles.imageContainer}>
-                <Image
-                  source={{
-                    uri:
-                      userData?.profilePicture ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name)}&background=0D8ABC&color=fff` ,
-                  }}
-                  style={styles.profileImage}
-                />
-              </View>
+          {/* --- 1. ANIMATED PROFILE AVATAR SECTION --- */}
+          <Animated.View 
+            style={[
+              styles.profileCard, 
+              { opacity: profileFadeAnim, transform: [{ translateY: profileSlideAnim }] }
+            ]}
+          >
+            <View style={styles.imageContainer}>
+              <Image
+                source={{
+                  uri: userData?.profilePicture || 
+                       `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name || 'User')}&background=0D8ABC&color=fff` ,
+                }}
+                style={[styles.profileImage, { borderColor: theme.primary }]}
+              />
+              <View style={styles.onlineDot} />
+            </View>
 
-              <View style={styles.infoContainer}>
-                <Text style={styles.userName} numberOfLines={1}>
-                  {isLoading ? "Loading..." : userData?.name || "No Name"}
-                </Text>
+            <View style={styles.infoContainer}>
+              <Text style={styles.userName} numberOfLines={1}>
+                {isLoading ? "Loading..." : userData?.name || "Welcome!"}
+              </Text>
+              
+              <View style={styles.contactRow}>
+                <Ionicons name="mail" size={14} color="#9CA3AF" />
                 <Text style={styles.userEmail} numberOfLines={1}>
-                  {isLoading ? "Please wait" : userData?.email || "No Email"}
+                  {isLoading ? "Fetching details..." : userData?.email || "No Email"}
                 </Text>
-
-                {userData?.phone && (
-                  <Text style={[styles.userEmail, { marginTop: -5, fontSize: 12 }]}>
-                    +91 {userData.phone}
-                  </Text>
-                )}
-
-                <Pressable
-                  onPress={() => navigation.navigate("EditProfile")}
-                  style={({ pressed }) => [
-                    styles.roleTag,
-                    { backgroundColor: theme.background, transform: [{ scale: pressed ? 0.95 : 1 }] }
-                  ]}
-                >
-                  <Text style={[styles.roleText, { color: theme.primary }]}>
-                    Edit {role} Profile
-                  </Text>
-                </Pressable>
               </View>
+
+              {userData?.phone && (
+                <View style={styles.contactRow}>
+                  <Ionicons name="call" size={14} color="#9CA3AF" />
+                  <Text style={styles.userEmail}>+91 {userData.phone}</Text>
+                </View>
+              )}
+
+              <Pressable
+                onPress={() => navigation.navigate("EditProfile")}
+                style={({ pressed }) => [
+                  styles.roleTag,
+                  { backgroundColor: theme.background, transform: [{ scale: pressed ? 0.95 : 1 }] }
+                ]}
+              >
+                <Ionicons name="pencil" size={14} color={theme.primary} />
+                <Text style={[styles.roleText, { color: theme.primary }]}>
+                  Edit {role} Profile
+                </Text>
+              </Pressable>
             </View>
+          </Animated.View>
 
-            {/* --- 2. MENU SECTION --- */}
-            <View style={styles.menuSection}>
-              <Text style={styles.sectionTitle}>General</Text>
+          {/* --- 2. MENU SECTION --- */}
+          <View style={styles.menuSection}>
+            <Text style={styles.sectionTitle}>General Settings</Text>
 
-              {/* 👉 DYNAMIC MENU BASED ON ROLE */}
+            {/* CONSULTANT MENU */}
+            {role === 'Consultant' && (
+              <>
+                <AnimatedMenuItem index={1} icon="person" title="Profile Details" subtitle="View and edit personal info" color={theme.primary} onPress={() => navigation.navigate("ConsultProfileDetails")} />
+                <AnimatedMenuItem index={2} icon="document-text" title="Create KYC" subtitle="Submit your verification docs" color={theme.primary} onPress={() => navigation.navigate('KycScreen')} />
+                <AnimatedMenuItem index={3} icon="shield-checkmark" title="KYC Status" subtitle="Check your verification details" color={theme.primary} onPress={() => navigation.navigate("KycDetails")} />
+              </>
+            )}
 
-              {/* CONSULTANT MENU */}
-              {role === 'Consultant' && (
-                <>
-                  <MenuItem
-                    icon="person-outline"
-                    title="Profile Details"
-                    color={theme.primary}
-                    onPress={() => navigation.navigate("ConsultProfileDetails")}
-                  />
-                  <MenuItem
-                    icon="people-outline"
-                    title="Create KYC"
-                    subtitle="View and manage KYC"
-                    color={theme.primary}
-                    onPress={() => navigation.navigate('KycScreen')}
-                  />
-                  <MenuItem
-                    icon="wallet-outline"
-                    title="KYC Details"
-                    color={theme.primary}
-                    onPress={() => navigation.navigate("KycDetails")}
-                  />
-                </>
-              )}
+            {/* MENTOR MENU */}
+            {role === 'Mentor' && (
+              <>
+                <AnimatedMenuItem index={1} icon="person" title="Mentor Profile" subtitle="Update your mentoring details" color={theme.primary} onPress={() => navigation.navigate("MentorProfileDetails")} />
+                <AnimatedMenuItem index={2} icon="calendar" title="Manage Sessions" subtitle="View and manage your schedule" color={theme.primary} onPress={() => navigation.navigate("MentorSessions")} />
+                <AnimatedMenuItem index={3} icon="newspaper" title="My Blogs" subtitle="Write and manage articles" color={theme.primary} onPress={() => navigation.navigate("MentorBlog")} />
+              </>
+            )}
 
-              {/* MENTOR MENU */}
-              {role === 'Mentor' && (
-                <>
-                  <MenuItem
-                    icon="person-outline"
-                    title="Mentor Profile Details"
-                    color={theme.primary}
-                    onPress={() => navigation.navigate("MentorProfileDetails")} // Replace with actual route
-                  />
-                  <MenuItem
-                    icon="calendar-outline"
-                    title="Manage KYC"
-                    subtitle="view and manage KYC"
-                    color={theme.primary}
-                    onPress={() => navigation.navigate("MentorSessions")} // Replace with actual route
-                  />
-                  <MenuItem
-                    icon="image-outline"
-                    title="Blogs"
-                    color={theme.primary}
-                    onPress={() => navigation.navigate("MentorBlog")} // Replace with actual route
-                  />
-                </>
-              )}
+            {/* USER / STUDENT MENU */}
+            {role === 'User' && (
+              <>
+                <AnimatedMenuItem index={1} icon="person" title="Profile Details" subtitle="View your personal information" color={theme.primary} onPress={() => navigation.navigate("ProfileDetail")} />
+                <AnimatedMenuItem index={2} icon="lock-closed" title="Change Password" subtitle="Update your security key" color={theme.primary} onPress={() => navigation.navigate("ChangePassword")} />
+                <AnimatedMenuItem index={3} icon="chatbubbles" title="Chat with Mentor" subtitle="Continue your private sessions" color={theme.primary} onPress={() => navigation.navigate('MentorChatList')} />
+                <AnimatedMenuItem index={4} icon="cart" title="Cart Items" subtitle="Manage your pending purchases" color={theme.primary} onPress={() => navigation.navigate("CartScreen")} />
+              </>
+            )}
 
-              {/* USER / STUDENT MENU */}
-              {role === 'User' && (
-                <>
-                  <MenuItem
-                    icon="person-outline"
-                    title="Profile Details"
-                    subtitle={"view personal information"}
-                    color={theme.primary}
-                    onPress={() => navigation.navigate("ProfileDetail")}
-                  />
-                  <MenuItem
-                    icon="key-outline"
-                    title="Change Password"
-                    color={theme.primary}
-                    onPress={() => navigation.navigate("ChangePassword")}
-                  />
-                  <MenuItem
-                    icon="chatbubbles-outline"
-                    title="Chat with Mentor"
-                    subtitle="Start a private session"
-                    color={theme.primary}
-                    onPress={() => navigation.navigate('MentorChatList')}
-                  />
-                  <MenuItem
-                    icon="cart-outline"
-                    title="Cart Items"
-                    color={theme.primary}
-                    onPress={() => navigation.navigate("CartScreen")}
-                  />
-                </>
-              )}
-              <Text style={styles.sectionTitle}>Company</Text>
+            <Text style={styles.sectionTitle}>Support & About</Text>
 
-              <MenuItem
-                icon="document-text"
-                title="Legal Documents"
-                subtitle="View Terms and conditions"
-                color={theme.primary}
-                onPress={() => navigation.navigate("LegalScreen")}
-              />
+            <AnimatedMenuItem index={5} icon="shield-half" title="Legal Documents" subtitle="Terms, conditions & privacy policy" color={theme.primary} onPress={() => navigation.navigate("LegalScreen")} />
 
-              <Text style={styles.sectionTitle}>Account</Text>
+            <Text style={styles.sectionTitle}>Account Actions</Text>
 
-              <MenuItem
-                icon="log-out-outline"
-                title="Logout"
-                isDanger={true}
-                onPress={onLogout}
-              />
-            </View>
+            <AnimatedMenuItem index={6} icon="log-out" title="Logout" subtitle="Sign out of your account safely" isDanger={true} onPress={onLogout} />
+          </View>
 
-          </ScrollView>
-        </View>
+        </ScrollView>
       </SafeAreaView>
-    </>
+    </View>
   );
 }
 
 // ==========================================
-// Styles (Unchanged)
+// 3. Styles (Modern & Premium)
 // ==========================================
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#F9FAFB', // Light modern background
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
-    paddingTop: 20,
   },
-  container: {
-    flex: 1,
+  scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 10,
+    paddingBottom: 100,
+    paddingTop: 10,
   },
-  profileSection: {
+  
+  // Profile Card Styles
+  profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Platform.OS === "android" ? 0 : 20,
-    marginBottom: 0,
-    paddingHorizontal: 5,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 24,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 16 },
+      android: { elevation: 4 },
+    }),
   },
   imageContainer: {
     position: 'relative',
-    marginRight: 20,
+    marginRight: 18,
   },
   profileImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     borderWidth: 3,
-    borderColor: '#fff',
+    backgroundColor: '#F3F4F6',
+  },
+  onlineDot: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#10B981',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
   },
   infoContainer: {
     flex: 1,
     justifyContent: 'center',
   },
   userName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#111',
-    marginBottom: 2,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 6,
+    letterSpacing: -0.5,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   userEmail: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
+    fontSize: 13,
+    color: '#6B7280',
+    marginLeft: 6,
+    fontWeight: '500',
   },
   roleTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
+    marginTop: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 8,
   },
   roleText: {
     fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontWeight: '700',
+    marginLeft: 6,
   },
+
+  // Menu Styles
   menuSection: {
     marginTop: 0,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#888',
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#9CA3AF',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     marginTop: 20,
-    marginBottom: 10,
-    marginLeft: 5,
+    marginBottom: 12,
+    marginLeft: 8,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
-    borderRadius: 16,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    padding: 16,
+    borderRadius: 20,
+    marginBottom: 12,
+    borderWidth: 1,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8 },
+      android: { elevation: 1 },
+    }),
   },
   iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 46,
+    height: 46,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 16,
   },
   menuTextContainer: {
     flex: 1,
   },
   menuTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 2,
   },
   menuSubtitle: {
     fontSize: 12,
-    color: '#888',
-    marginTop: 2,
+    color: '#6B7280',
+    fontWeight: '500',
   },
 });

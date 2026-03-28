@@ -8,50 +8,68 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
 
-// 👉 API IMPORTS
-import { UpdateProfile } from '../../services/authAPI';
-import { UpdateConsultantProfile, updateConsultantProfilePicture } from '../../services/consultantAPI';
-import { UpdateMentorProfile, UpdateMentorProfilePic } from '../../services/mentorAPI';
-import { removeListener } from '@reduxjs/toolkit';
+// 👉 API IMPORTS (Yahan Get APIs bhi add karein)
+import { UpdateProfile, getUserProfile } from '../../services/authAPI';
+import { UpdateConsultantProfile, updateConsultantProfilePicture, getConsultantProfile } from '../../services/consultantAPI';
+import { UpdateMentorProfile, UpdateMentorProfilePic, getMentorProfile } from '../../services/mentorAPI';
 
 const EditProfileScreen = ({ route, navigation }) => {
-    // 👉 1. ROLE IDENTIFICATION
     const role = useSelector((state) => state.auth.role);
     const isCounselor = role === 'Consultant';
     const isMentor = role === 'Mentor';
     const isUser = role === 'User';
 
+    let themeColor = isCounselor ? '#10B981' : isMentor ? '#8B5CF6' : '#007BFF';
 
-    // 👉 2. DYNAMIC THEME COLOR
-    let themeColor = '#007BFF'; // Default User (Blue)
-    if (isCounselor) themeColor = '#10B981'; // Green
-    if (isMentor) themeColor = '#8B5CF6'; // Purple
-
-    const { existingProfile = {} } = route.params || {};
-
-    // --- SHARED FIELDS ---
-    const [name, setName] = useState(existingProfile.name || '');
-    const [phone, setPhone] = useState(existingProfile.phone || existingProfile.mobile || '');
-    const [currentPicture, setCurrentPicture] = useState(existingProfile.profilePicture || null);
+    // --- FORM STATES ---
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [currentPicture, setCurrentPicture] = useState(null);
     const [newLocalImage, setNewLocalImage] = useState(null);
+    const [neetScore, setNeetScore] = useState('');
+    const [address, setAddress] = useState('');
+    const [specialization, setSpecialization] = useState('');
+    const [experience, setExperience] = useState('');
+    const [bio, setBio] = useState('');
 
-    // --- USER SPECIFIC FIELDS ---
-    const [neetScore, setNeetScore] = useState(existingProfile.neetScore?.toString() || '');
-    const [address, setAddress] = useState(existingProfile.address || '');
-
-    // --- COUNSELOR & MENTOR SPECIFIC FIELDS ---
-    const [specialization, setSpecialization] = useState(existingProfile.specialization || existingProfile.subject || '');
-    const [experience, setExperience] = useState(existingProfile.experience?.toString() || '');
-    const [bio, setBio] = useState(existingProfile.bio || '');
-
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true); // Default loading true
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
+    // ⚡ 1. FETCH LATEST DATA ON MOUNT
     useEffect(() => {
-        Animated.timing(fadeAnim, {
-            toValue: 1, duration: 400, useNativeDriver: true,
-        }).start();
-    }, [fadeAnim]);
+        const fetchLatestProfile = async () => {
+            try {
+                setIsLoading(true);
+                let res;
+                if (isCounselor) res = await getConsultantProfile();
+                else if (isMentor) res = await getMentorProfile();
+                else res = await getUserProfile();
+
+                // Safe data extraction
+                const data = res?.user || res?.consultant || res?.mentor || res?.data || res;
+
+                if (data) {
+                    setName(data.name || '');
+                    setPhone(data.phone || data.mobile || '');
+                    setCurrentPicture(data.profilePicture || null);
+                    setNeetScore(data.neetScore?.toString() || '');
+                    setAddress(data.address || '');
+                    setSpecialization(data.specialization || data.subject || '');
+                    setExperience(data.experience?.toString() || '');
+                    setBio(data.bio || '');
+                }
+                
+                Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+            } catch (error) {
+                console.error("Fetch Profile Error:", error);
+                Alert.alert("Error", "Failed to fetch latest profile data.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchLatestProfile();
+    }, []);
 
     const pickImage = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -62,7 +80,7 @@ const EditProfileScreen = ({ route, navigation }) => {
 
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true, aspect: [1, 1], quality: 0.8,base64:true
+            allowsEditing: true, aspect: [1, 1], quality: 0.8,
         });
 
         if (!result.canceled) {
@@ -72,150 +90,70 @@ const EditProfileScreen = ({ route, navigation }) => {
 
     const handleSave = async () => {
         if (!name.trim() || !phone.trim()) {
-            Alert.alert('Validation Error', 'Name and Phone/Mobile number are required.');
+            Alert.alert('Validation Error', 'Name and Phone number are required.');
             return;
         }
 
         setIsLoading(true);
-
         try {
             if (isCounselor) {
-                // ==========================================
-                // 1. COUNSELOR UPDATE
-                // ==========================================
-                const textData = {
-                    name: name,
-                    mobile: phone,
-                    specialization: specialization,
-                    experience: experience,
-                    bio: bio
-                };
-
-                const textResponse = await UpdateConsultantProfile(textData);
-
-                if (!textResponse.success) {
-                    throw new Error(textResponse.message || "Failed to update details.");
-                }
+                const textResponse = await UpdateConsultantProfile({ name, mobile: phone, specialization, experience, bio });
+                if (!textResponse.success) throw new Error(textResponse.message);
 
                 if (newLocalImage) {
                     const imageFormData = new FormData();
                     const filename = newLocalImage.uri.split('/').pop();
                     const match = /\.(\w+)$/.exec(filename);
                     const type = match ? `image/${match[1]}` : `image`;
-
-                    imageFormData.append('profilePicture', {
-                        uri: newLocalImage.uri, name: filename, type: type,
-                    });
-
-                    // Inside your isMentor block...
-                    const imageResponse = await updateConsultantProfilePicture(imageFormData);
-                    if (!imageResponse.success) {
-                        // 👉 CHANGED: Now it will show the actual backend error message
-                        throw new Error(`Details updated, but image failed: ${imageResponse.message}`);
-                    }
+                    imageFormData.append('profilePicture', { uri: newLocalImage.uri, name: filename, type });
+                    await updateConsultantProfilePicture(imageFormData);
                 }
-                Alert.alert('Success', 'Consultant profile updated successfully!');
-                navigation.goBack();
-
             } else if (isMentor) {
-                // ==========================================
-                // 2. MENTOR UPDATE
-                // ==========================================
+                const textResponse = await UpdateMentorProfile({ name, phone, subject: specialization, experience, bio });
+                if (!textResponse.success) throw new Error(textResponse.message);
 
-                // Step A: Update Text Details (JSON)
-                const textData = {
-                    name: name,
-                    phone: phone,
-                    subject: specialization,
-                    experience: experience,
-                    bio: bio
-                };
-
-                const textResponse = await UpdateMentorProfile(textData);
-
-                if (!textResponse.success) {
-                    throw new Error(textResponse.message || 'Failed to update mentor profile');
-                }
-
-                // Step B: Update Image (FormData) ONLY if a new image was selected
-                // Inside your isMentor block, where you handle newLocalImage:
-
-                if (newLocalImage){
+                if (newLocalImage) {
                     const imageFormData = new FormData();
-
-
-                    // 👉 1. Normalize the URI for Android vs iOS
-                    const fileUri = Platform.OS === 'android' ? newLocalImage.uri : newLocalImage.uri.replace('file://', '');
-
-                    // 👉 2. Get filename and extension safely
-                    const filename = fileUri.split('/').pop() || 'profile.jpg';
-                    let match = /\.(\w+)$/.exec(filename);
-                    let type = match ? `image/${match[1]}` : `image/jpeg`;
-
-                    // Fix jpg/jpeg strictness
-                    if (type === 'image/jpg') type = 'image/jpeg';
-
-                    imageFormData.append('profilePicture', {
-                        uri: fileUri,
-                        name: filename,
-                        type: type,
-                    });
-
-                    console.log("Attempting to upload:", { uri: fileUri, name: filename, type: type }); // <-- Add this to see what's happening
-
-                    const imageResponse = await UpdateMentorProfilePic(imageFormData);
-
-                    if (!imageResponse) {
-                        throw new Error(`Image failed: ${imageResponse.message}`);
-                    }
+                    const filename = newLocalImage.uri.split('/').pop();
+                    const type = `image/${filename.split('.').pop()}`;
+                    imageFormData.append('profilePicture', { uri: newLocalImage.uri, name: filename, type });
+                    await UpdateMentorProfilePic(imageFormData);
                 }
-
-                Alert.alert('Success', 'Mentor profile updated successfully!');
-                navigation.goBack();
-
             } else {
-                // ==========================================
-                // 3. USER UPDATE
-                // ==========================================
                 const formData = new FormData();
                 formData.append('name', name);
                 formData.append('phone', phone);
                 formData.append('neetScore', neetScore);
                 formData.append('address', address);
-
                 if (newLocalImage) {
                     const filename = newLocalImage.uri.split('/').pop();
-                    const match = /\.(\w+)$/.exec(filename);
-                    const type = match ? `image/${match[1]}` : `image`;
-
-                    formData.append('profilePicture', {
-                        uri: newLocalImage.uri, name: filename, type: type,
-                    });
+                    formData.append('profilePicture', { uri: newLocalImage.uri, name: filename, type: 'image/jpeg' });
                 }
-
                 const response = await UpdateProfile(formData);
-
-                if (response.success) {
-                    Alert.alert('Success', 'Profile updated successfully!');
-                    navigation.goBack();
-                } else {
-                    throw new Error(response.message || 'Failed to update profile');
-                }
+                if (!response.success) throw new Error(response.message);
             }
+
+            Alert.alert('Success', 'Profile updated successfully!');
+            navigation.goBack();
         } catch (error) {
-            console.error('Update Error:', error);
-            Alert.alert('Error', error.message || 'Something went wrong while updating.');
+            Alert.alert('Error', error.message || 'Update failed.');
         } finally {
             setIsLoading(false);
         }
     };
 
+    if (isLoading && !name) {
+        return (
+            <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color={themeColor} />
+                <Text style={{ marginTop: 10 }}>Loading Latest Profile...</Text>
+            </View>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.safeArea}>
-            <KeyboardAvoidingView
-                style={styles.keyboardAvoid}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            >
+            <KeyboardAvoidingView style={styles.keyboardAvoid} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                 <View style={styles.headerContainer}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
                         <Ionicons name="chevron-back" size={24} color="#333" />
@@ -224,85 +162,37 @@ const EditProfileScreen = ({ route, navigation }) => {
                     <View style={styles.headerSpacer} />
                 </View>
 
-                <Animated.ScrollView
-                    style={[styles.container, { opacity: fadeAnim }]}
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                >
+                <Animated.ScrollView style={[styles.container, { opacity: fadeAnim }]} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     <View style={styles.imageSection}>
                         <View style={styles.imageContainer}>
                             <Image
-                                source={{
-                                    uri: newLocalImage ? newLocalImage.uri : (currentPicture || 'https://media.istockphoto.com/id/2151669184/vector/vector-flat-illustration-in-grayscale-avatar-user-profile-person-icon-gender-neutral.jpg?s=612x612&w=0&k=20&c=UEa7oHoOL30ynvmJzSCIPrwwopJdfqzBs0q69ezQoM8=')
-                                }}
+                                source={{ uri: newLocalImage ? newLocalImage.uri : (currentPicture || 'https://via.placeholder.com/150') }}
                                 style={styles.profileImage}
                             />
-                            <TouchableOpacity style={[styles.editBadge, { backgroundColor: themeColor }]} onPress={pickImage} activeOpacity={0.8}>
+                            <TouchableOpacity style={[styles.editBadge, { backgroundColor: themeColor }]} onPress={pickImage}>
                                 <Ionicons name="camera" size={18} color="#fff" />
                             </TouchableOpacity>
                         </View>
                     </View>
 
-                    {/* --- SHARED INPUTS --- */}
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Full Name</Text>
-                        <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Enter full name" />
-                    </View>
+                    <View style={styles.inputContainer}><Text style={styles.label}>Full Name</Text><TextInput style={styles.input} value={name} onChangeText={setName} /></View>
+                    <View style={styles.inputContainer}><Text style={styles.label}>Phone Number</Text><TextInput style={styles.input} value={phone} onChangeText={setPhone} keyboardType="phone-pad" /></View>
 
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.label}>{(isCounselor || isMentor) ? 'Mobile Number' : 'Phone Number'}</Text>
-                        <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Enter mobile number" keyboardType="phone-pad" />
-                    </View>
-
-                    {/* --- CONDITIONAL INPUTS --- */}
                     {(isCounselor || isMentor) ? (
                         <>
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>{isMentor ? 'Subject / Expertise' : 'Specialization'}</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    value={specialization}
-                                    onChangeText={setSpecialization}
-                                    placeholder={isMentor ? "e.g. Mathematics, Coding" : "e.g. Career Counseling"}
-                                />
-                            </View>
-
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Experience (Years)</Text>
-                                <TextInput style={styles.input} value={experience} onChangeText={setExperience} placeholder="e.g. 5" keyboardType="numeric" />
-                            </View>
-
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Bio</Text>
-                                <TextInput style={[styles.input, styles.textArea]} value={bio} onChangeText={setBio} placeholder="Tell us about your professional background" multiline numberOfLines={4} />
-                            </View>
+                            <View style={styles.inputContainer}><Text style={styles.label}>Specialization</Text><TextInput style={styles.input} value={specialization} onChangeText={setSpecialization} /></View>
+                            <View style={styles.inputContainer}><Text style={styles.label}>Experience</Text><TextInput style={styles.input} value={experience} onChangeText={setExperience} keyboardType="numeric" /></View>
+                            <View style={styles.inputContainer}><Text style={styles.label}>Bio</Text><TextInput style={[styles.input, styles.textArea]} value={bio} onChangeText={setBio} multiline /></View>
                         </>
                     ) : (
                         <>
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>NEET Score</Text>
-                                <TextInput style={styles.input} value={neetScore} onChangeText={setNeetScore} placeholder="Enter your NEET score" keyboardType="numeric" />
-                            </View>
-
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Address</Text>
-                                <TextInput style={[styles.input, styles.textArea]} value={address} onChangeText={setAddress} placeholder="Enter your full address" multiline numberOfLines={4} />
-                            </View>
+                            <View style={styles.inputContainer}><Text style={styles.label}>NEET Score</Text><TextInput style={styles.input} value={neetScore} onChangeText={setNeetScore} keyboardType="numeric" /></View>
+                            <View style={styles.inputContainer}><Text style={styles.label}>Address</Text><TextInput style={[styles.input, styles.textArea]} value={address} onChangeText={setAddress} multiline /></View>
                         </>
                     )}
 
-                    <TouchableOpacity
-                        style={[styles.saveButton, { backgroundColor: themeColor, shadowColor: themeColor }, isLoading && styles.saveButtonDisabled]}
-                        onPress={handleSave}
-                        disabled={isLoading}
-                        activeOpacity={0.8}
-                    >
-                        {isLoading ? (
-                            <ActivityIndicator color="#fff" size="small" />
-                        ) : (
-                            <Text style={styles.saveButtonText}>Update Profile</Text>
-                        )}
+                    <TouchableOpacity style={[styles.saveButton, { backgroundColor: themeColor }]} onPress={handleSave} disabled={isLoading}>
+                        {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Update Profile</Text>}
                     </TouchableOpacity>
                 </Animated.ScrollView>
             </KeyboardAvoidingView>
@@ -315,25 +205,20 @@ const styles = StyleSheet.create({
     keyboardAvoid: { flex: 1 },
     container: { flex: 1 },
     scrollContent: { padding: 20, paddingBottom: 40 },
-
-    headerContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 25, paddingVertical: 15, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F0F0F0', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 2 },
-    headerButton: { padding: 5 },
-    headerText: { fontSize: 18, fontWeight: '700', color: '#333', textTransform: 'capitalize' },
+    loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    headerContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+    headerText: { fontSize: 18, fontWeight: '700' },
     headerSpacer: { width: 34 },
-
-    imageSection: { alignItems: 'center', marginBottom: 30, marginTop: 10 },
-    imageContainer: { position: 'relative', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 5 },
-    profileImage: { width: 130, height: 130, borderRadius: 65, backgroundColor: '#E1E5EA' },
-    editBadge: { position: 'absolute', right: 0, bottom: 5, padding: 10, borderRadius: 20, borderWidth: 3, borderColor: '#fff', elevation: 4 },
-
-    inputContainer: { marginBottom: 20 },
-    label: { fontSize: 14, color: '#444', marginBottom: 8, fontWeight: '600' },
-    input: { borderWidth: 1.5, borderColor: '#E8E8E8', borderRadius: 10, padding: 14, fontSize: 16, color: '#333', backgroundColor: '#FAFAFA' },
-    textArea: { height: 100, textAlignVertical: 'top' },
-
-    saveButton: { paddingVertical: 16, borderRadius: 12, alignItems: 'center', marginTop: 15, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5, elevation: 6 },
-    saveButtonDisabled: { backgroundColor: '#D1D5DB', elevation: 0, shadowOpacity: 0 },
-    saveButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: 'bold', letterSpacing: 0.5 },
+    imageSection: { alignItems: 'center', marginBottom: 30 },
+    imageContainer: { position: 'relative' },
+    profileImage: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#EEE' },
+    editBadge: { position: 'absolute', right: 0, bottom: 0, padding: 8, borderRadius: 20, borderWidth: 2, borderColor: '#fff' },
+    inputContainer: { marginBottom: 15 },
+    label: { fontSize: 14, color: '#444', marginBottom: 5, fontWeight: '600' },
+    input: { borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#F9F9F9' },
+    textArea: { height: 80, textAlignVertical: 'top' },
+    saveButton: { paddingVertical: 15, borderRadius: 10, alignItems: 'center', marginTop: 10 },
+    saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });
 
 export default EditProfileScreen;

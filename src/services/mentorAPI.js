@@ -24,6 +24,9 @@ export const getMentorProfile = async () => {
     }
 };
 
+
+
+
 export const UpdateMentorProfile = async (payload) => {
     try {
         const res = await Axios.put("/mentor/update-profile", payload);
@@ -34,17 +37,19 @@ export const UpdateMentorProfile = async (payload) => {
         return { success: false, message: errorMsg};
     }
 }
-// Make sure to import your config/baseURL if you have one!
 
 
 export const UpdateMentorProfilePic = async (payload) => {
     try {
-        const res = await Axios.put("/mentor/update-profile-picture", payload);
-        return { success: true, data: res.data }
+        const response = await Axios.put("/mentor/update-profile-picture", payload, {
+            headers: {
+                'Content-Type': 'multipart/form-data', // THIS IS MANDATORY FOR FILES
+            },
+        })
+        return { success: response.ok, data: response.data }
     } catch (err) {
-        console.log("API ERR", err);
-        const errorMsg = err.response?.data?.message || err.message || "update profile pic failed";
-        return { success: false, message: errorMsg};
+        console.log("Fetch Network Error:", err);
+        return { success: false, message: err.message };
     }
 }
 

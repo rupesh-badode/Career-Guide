@@ -25,7 +25,7 @@ export default function BookingSuccess({ navigation }) {
         <TouchableOpacity
           style={styles.primaryButton}
           activeOpacity={0.8}
-          onPress={navigation.navigate("Home")}
+          onPress={ () => navigation.navigate("MainTabs")}
         >
           <Text style={styles.primaryButtonText}>Back to Dashboard</Text>
         </TouchableOpacity>

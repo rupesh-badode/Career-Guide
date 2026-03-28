@@ -1,43 +1,70 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView,
-  Animated, Dimensions, Platform
+  Dimensions, Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const { height } = Dimensions.get('window');
 
-// 👉 Filter Categories and Options Data
+// 👉 NAYA FILTER DATA (Aapke API response ke according)
 const FILTER_DATA = [
   {
-    id: 'instituteType',
-    title: 'Institute Type',
-    options: ['AIIMS', 'Central Universities', 'Deemed Universities', 'Government', 'Private']
+    id: 'specialization',
+    title: 'Specialization',
+    // Ye list aap dynamic bhi kar sakte ho backend se aane wale unique specializations ke basis pe
+    options: ['Btech', 'Mtech', 'BCA', 'MCA', 'Management', 'Medical'] 
   },
   {
-    id: 'managementType',
-    title: 'Management Type',
-    options: ['Government Quota', 'Management Quota', 'NRI Quota', 'Jain Minority', 'Muslim Minority']
+    id: 'status',
+    title: 'Booking Status',
+    options: ['Confirmed', 'Pending', 'Cancelled', 'Completed']
   },
   {
-    id: 'state',
-    title: 'State',
-    options: ['Maharashtra', 'Delhi', 'Karnataka', 'Uttar Pradesh', 'Rajasthan', 'Gujarat', 'Tamil Nadu']
+    id: 'paymentStatus',
+    title: 'Payment Status',
+    options: ['Paid', 'Pending', 'Failed']
   },
   {
-    id: 'university',
-    title: 'University',
-    options: ['Delhi University (DU)', 'MUHS Nashik', 'KGMU Lucknow', 'RGUHS Bangalore']
+    id: 'experience',
+    title: 'Experience',
+    options: ['0-2 Years', '3-5 Years', '6-10 Years', '10+ Years']
+  },
+  {
+    id: 'rating',
+    title: 'Rating',
+    options: ['4.5 & Above', '4.0 & Above', '3.0 & Above', 'Top Rated Only']
+  },
+  {
+    id: 'amount',
+    title: 'Price Range',
+    options: ['Free', 'Under ₹500', '₹500 - ₹1000', 'Above ₹1000']
+  },
+  {
+    id: 'duration',
+    title: 'Duration',
+    options: ['10 mins', '15 mins', '30 mins', '60 mins']
+  },
+  {
+    id: 'time',
+    title: 'Session Time',
+    options: ['Morning (6 AM - 12 PM)', 'Afternoon (12 PM - 4 PM)', 'Evening (4 PM - 8 PM)', 'Night (8 PM Onwards)']
   }
 ];
 
 export default function FilterBottomSheet({ visible, onClose, onApply }) {
-  const [activeTab, setActiveTab] = useState(FILTER_DATA[0].id); // Default pehla tab open rahega
+  const [activeTab, setActiveTab] = useState(FILTER_DATA[0].id); // Pehla tab default open
+
+  // 👉 Naya State based on new data
   const [selectedFilters, setSelectedFilters] = useState({
-    instituteType: [],
-    managementType: [],
-    state: [],
-    university: []
+    specialization: [],
+    status: [],
+    paymentStatus: [],
+    experience: [],
+    rating: [],
+    amount: [],
+    duration: [],
+    time: []
   });
 
   // 👉 Checkbox toggle logic
@@ -45,10 +72,10 @@ export default function FilterBottomSheet({ visible, onClose, onApply }) {
     setSelectedFilters(prev => {
       const currentCategoryList = prev[categoryId];
       if (currentCategoryList.includes(option)) {
-        // Agar pehle se selected hai, toh hatao
+        // Remove if already selected
         return { ...prev, [categoryId]: currentCategoryList.filter(item => item !== option) };
       } else {
-        // Naya select karo
+        // Add new selection
         return { ...prev, [categoryId]: [...currentCategoryList, option] };
       }
     });
@@ -57,19 +84,23 @@ export default function FilterBottomSheet({ visible, onClose, onApply }) {
   // 👉 Clear All Logic
   const clearAllFilters = () => {
     setSelectedFilters({
-      instituteType: [],
-      managementType: [],
-      state: [],
-      university: []
+      specialization: [],
+      status: [],
+      paymentStatus: [],
+      experience: [],
+      rating: [],
+      amount: [],
+      duration: [],
+      time: []
     });
   };
 
-  // 👉 Get total selected count
+  // 👉 Total selected count (Sirf button pe dikhane ke liye)
   const getTotalSelectedCount = () => {
     return Object.values(selectedFilters).reduce((total, arr) => total + arr.length, 0);
   };
 
-  // Right side ke options render karne ke liye
+  // 👉 Right side ke options render
   const renderRightContent = () => {
     const activeCategoryData = FILTER_DATA.find(cat => cat.id === activeTab);
     if (!activeCategoryData) return null;
@@ -113,25 +144,25 @@ export default function FilterBottomSheet({ visible, onClose, onApply }) {
         {/* 👉 Bottom Sheet Container */}
         <View style={styles.bottomSheetContainer}>
           
-          {/* Top Handle / Pull Bar */}
+          {/* Top Handle */}
           <View style={styles.pullBarContainer}>
             <View style={styles.pullBar} />
           </View>
 
-          {/* Header (Title & Clear All) */}
+          {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Filters</Text>
+            <Text style={styles.headerTitle}>Filter Bookings</Text>
             <TouchableOpacity onPress={clearAllFilters}>
               <Text style={styles.clearAllText}>Clear All</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Main Content (Left Sidebar & Right Options) */}
+          {/* Body */}
           <View style={styles.body}>
             
             {/* Left Sidebar */}
             <View style={styles.leftSidebar}>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
                 {FILTER_DATA.map((item) => {
                   const isActive = activeTab === item.id;
                   const selectedCount = selectedFilters[item.id].length;
@@ -144,7 +175,6 @@ export default function FilterBottomSheet({ visible, onClose, onApply }) {
                       <Text style={[styles.sidebarTabText, isActive && styles.activeSidebarTabText]}>
                         {item.title}
                       </Text>
-                      {/* Show count badge if items are selected in this category */}
                       {selectedCount > 0 && (
                         <View style={styles.badge}>
                           <Text style={styles.badgeText}>{selectedCount}</Text>
@@ -183,10 +213,11 @@ export default function FilterBottomSheet({ visible, onClose, onApply }) {
   );
 }
 
+// STYLES 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dark transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
     justifyContent: 'flex-end',
   },
   dismissArea: {
@@ -194,7 +225,7 @@ const styles = StyleSheet.create({
   },
   bottomSheetContainer: {
     backgroundColor: '#FFFFFF',
-    height: height * 0.75, // Screen ka 75% height lega
+    height: height * 0.75, 
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: 'hidden',
@@ -226,14 +257,14 @@ const styles = StyleSheet.create({
   clearAllText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#EF4444', // Red color for clear action
+    color: '#EF4444', 
   },
   body: {
     flex: 1,
     flexDirection: 'row',
   },
   leftSidebar: {
-    width: '35%',
+    width: '38%', // Thoda badhaya hai taaki bade titles (Payment Status) fit ho jaye
     backgroundColor: '#F9FAFB',
     borderRightWidth: 1,
     borderRightColor: '#F3F4F6',
@@ -248,10 +279,10 @@ const styles = StyleSheet.create({
   activeSidebarTab: {
     backgroundColor: '#FFFFFF',
     borderLeftWidth: 4,
-    borderLeftColor: '#4F46E5', // Indigo primary color
+    borderLeftColor: '#4F46E5', 
   },
   sidebarTabText: {
-    fontSize: 14,
+    fontSize: 13, // Thoda font size adjust kiya
     color: '#4B5563',
     fontWeight: '500',
     flex: 1,
@@ -275,14 +306,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   rightContent: {
-    width: '65%',
+    width: '62%',
     backgroundColor: '#FFFFFF',
     padding: 15,
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14, // Thoda touch area badhaya
   },
   checkboxText: {
     fontSize: 15,
@@ -299,7 +330,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
     backgroundColor: '#FFFFFF',
-    paddingBottom: Platform.OS === 'ios' ? 30 : 36, // iOS safe area padding
+    paddingBottom: Platform.OS === 'ios' ? 30 : 20, 
   },
   applyButton: {
     backgroundColor: '#4F46E5',

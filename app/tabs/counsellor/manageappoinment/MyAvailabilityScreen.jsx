@@ -17,8 +17,9 @@ const AvailabilityModal = ({
   onDeleteDate
 }) => {
 
-  const renderSlot = (slot, availabilityId) => (
-    <View style={styles.slotBox}>
+  // 👉 NAYA: index receive kiya aur View mein key add ki
+  const renderSlot = (slot, availabilityId, index) => (
+    <View style={styles.slotBox} key={slot._id || index}> 
       <Text style={styles.slotText}>{slot.time}</Text>
 
       <TouchableOpacity
@@ -36,8 +37,7 @@ const AvailabilityModal = ({
   );
 
   const renderItem = ({ item }) => (
-    <View style={styles.card} key={item._id} >
-
+    <View style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={styles.date}>
           {new Date(item.date).toDateString()}
@@ -52,8 +52,9 @@ const AvailabilityModal = ({
         </TouchableOpacity>
       </View>
 
-      {item.slots.map((slot) =>
-        renderSlot(slot, item._id)
+      {/* 👉 NAYA: map function se index pass kiya */}
+      {item.slots.map((slot, index) =>
+        renderSlot(slot, item._id, index)
       )}
 
     </View>
@@ -85,19 +86,16 @@ const AvailabilityModal = ({
 export default AvailabilityModal;
 
 const styles = StyleSheet.create({
-
   loader: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center"
   },
-
   empty: {
     textAlign: "center",
     marginTop: 40,
     color: "#6B7280"
   },
-
   card: {
     backgroundColor: "white",
     padding: 14,
@@ -105,23 +103,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     elevation: 2
   },
-
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 10
   },
-
   date: {
     fontWeight: "600",
     fontSize: 15
   },
-
   deleteDate: {
     color: "red",
     fontWeight: "500"
   },
-
   slotBox: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -131,21 +125,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 6
   },
-
   slotText: {
     fontWeight: "500"
   },
-
   deleteBtn: {
     backgroundColor: "red",
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 6
   },
-
   deleteText: {
     color: "white",
     fontSize: 12
   }
-
 });

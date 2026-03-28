@@ -19,6 +19,7 @@ export default function BookingScreen({ route, navigation }) {
   const { consultantId = "1", consultantName = "Expert Consultant", amount = 499 } = route.params || {};
 
   const [isLoading, setIsLoading] = useState(false);
+  
 
   // Calendar ke liye strict YYYY-MM-DD format chahiye
   const todayStr = new Date().toISOString().split('T')[0];
@@ -44,8 +45,8 @@ export default function BookingScreen({ route, navigation }) {
           response.slots.forEach(dayRecord => {
             if (!dayRecord.date) return;
 
-            // Date ko strict YYYY-MM-DD format mein nikalna
             const recordDateStr = dayRecord.date.split('T')[0];
+            const availabilityId = dayRecord._id; // Parent ID
 
             if (!cleanData[recordDateStr]) {
               cleanData[recordDateStr] = [];
@@ -54,15 +55,28 @@ export default function BookingScreen({ route, navigation }) {
             if (dayRecord.slots && Array.isArray(dayRecord.slots)) {
               dayRecord.slots.forEach(slotItem => {
                 if (!slotItem.isBooked) {
-                  cleanData[recordDateStr].push(slotItem.time);
+                  // Pura object save karein IDs ke sath
+                  cleanData[recordDateStr].push({
+                    time: slotItem.time,
+                    slotId: slotItem._id,
+                    availabilityId: availabilityId
+                  });
                 }
               });
             }
           });
 
-          // Duplicates hatana
+          // Duplicates hatana (Agar jarurat ho object based)
           Object.keys(cleanData).forEach(dateKey => {
-            cleanData[dateKey] = [...new Set(cleanData[dateKey])];
+            const uniqueSlots = [];
+            const map = new Map();
+            for (const item of cleanData[dateKey]) {
+              if (!map.has(item.slotId)) {
+                map.set(item.slotId, true);
+                uniqueSlots.push(item);
+              }
+            }
+            cleanData[dateKey] = uniqueSlots;
           });
 
           setAllSlotsData(cleanData);
@@ -159,11 +173,11 @@ export default function BookingScreen({ route, navigation }) {
 
     setIsLoading(true);
     try {
+      // 1. Order Create Karein
       const orderResponse = await createBooking({
-        consultantId,
-        date: selectedDate,
-        time: selectedTime,
-        amount
+        consultantId: consultantId,
+        availabilityId: selectedTime.availabilityId,
+        slotId: selectedTime.slotId,
       });
 
       if (!orderResponse.success) {
@@ -172,28 +186,44 @@ export default function BookingScreen({ route, navigation }) {
         return;
       }
 
+      // 2. Razorpay Options
       const options = {
         description: `Consultation with ${consultantName}`,
-        image: Image.resolveAssetSource(
-          require('../../../../assets/aastroneet.png')
-        ).uri,
+        image: "https://www.nopcommerce.com/images/thumbs/0021293_razorpay-payment.png",
         currency: 'INR',
         key: key_id,
         amount: orderResponse.order.amount,
         name: 'Aastroneet',
         order_id: orderResponse.order.id,
         theme: { color: '#4F46E5' },
-        prefill: { email: 'user@example.com', contact: '9999999999', name: 'John Doe' }
+        prefill: { email: 'user@example.com', contact: '9999999999', name: 'User' }
       };
 
+      // 3. Razorpay Checkout Open Karein
       RazorpayCheckout.open(options).then(async (data) => {
-        const verification = await verifyBookingPayment({ ...data, bookingId: orderResponse.bookingId });
+        
+        // ✅ NEW: Backend ki requirement ke hisaab se Verification Payload banaya
+        const verificationPayload = {
+          razorpay_order_id: data.razorpay_order_id,
+          razorpay_payment_id: data.razorpay_payment_id,
+          razorpay_signature: data.razorpay_signature,
+          consultantId: consultantId,
+          availabilityId: selectedTime.availabilityId,
+          slotId: selectedTime.slotId
+        };
+
+        // Verification API call karein
+        const verification = await verifyBookingPayment(verificationPayload);
+        
         if (verification.success) {
           navigation.navigate("BookingSuccess");
+        } else {
+          Alert.alert("Payment Failed", "Could not verify payment from backend.");
         }
+
       }).catch(err => {
         console.log("Payment Error:", err);
-        Alert.alert("Payment Cancelled");
+        Alert.alert("Payment Cancelled", "You cancelled the payment process.");
       });
 
     } catch (error) {
@@ -258,25 +288,26 @@ export default function BookingScreen({ route, navigation }) {
             <ActivityIndicator size="large" color="#4F46E5" style={{ marginVertical: 20 }} />
           ) : availableSlotsForDate.length > 0 ? (
             <View style={styles.grid}>
-              {availableSlotsForDate.map((slot, index) => (
+              {availableSlotsForDate.map((slotObj, index) => (
                 <TouchableOpacity
                   key={index}
-                  onPress={() => setSelectedTime(slot)}
+                  onPress={() => setSelectedTime(slotObj)} // Pura object set kar rahe hain
                   style={[
                     styles.slotCard,
-                    selectedTime === slot && styles.activeSlotCard
+                    selectedTime?.slotId === slotObj.slotId && styles.activeSlotCard
                   ]}
                 >
                   <Text style={[
                     styles.slotText,
-                    selectedTime === slot && styles.activeText
+                    selectedTime?.slotId === slotObj.slotId && styles.activeText
                   ]}>
-                    {slot}
+                    {slotObj.time} {/* Sirf time display kar rahe hain */}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
           ) : (
+            // ... no slots view
             <View style={styles.noSlotContainer}>
               <Ionicons name="calendar-clear-outline" size={32} color="#94A3B8" />
               <Text style={styles.noSlotText}>No slots available for this date.</Text>

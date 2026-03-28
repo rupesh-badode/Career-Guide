@@ -87,7 +87,7 @@ export default function CustomHeader({
     actionIcn = 'calendar-outline';
   } else if (isMentor) {
     primaryColor = '#8B5CF6';
-    greetingText = 'Welcome, Mentor ';
+    greetingText = 'Welcome,';
     subTextMsg = 'Check your upcoming classes';
     actionIcn = 'calendar-outline';
   }
@@ -254,7 +254,9 @@ export default function CustomHeader({
           )}
           {!isSearching && (
             <View style={styles.rightIconsContainer}>
-              <HeaderIconButton icon={theme.actionIcon} color="#333" onPress={onActionPress} />
+              <HeaderIconButton icon={theme.actionIcon} color="#333" onPress={() => toggleSearch(true)} />
+              <View style={{ width: 10 }} />
+              <HeaderIconButton icon="filter-outline" color="#333" onPress={() => onFilterPress && onFilterPress()} />
             </View>
           )}
         </View>
@@ -284,6 +286,35 @@ export default function CustomHeader({
           {!isSearching && (
             <View style={styles.rightIconsContainer}>
                <HeaderIconButton icon="search-outline" color="#333" onPress={() => toggleSearch(true)} />
+               <View style={{ width: 10 }} />
+               <HeaderIconButton icon={theme.actionIcon} color="#333" onPress={onActionPress} />
+            </View>
+          )}
+        </View>
+      );
+    }
+    // 4. COUNSELLOR CHAT SCREEN
+    if (routeName === "CounsutantAppoinment") {
+      return (
+        <View style={[styles.contentContainer, { justifyContent: 'space-between' }]}>
+          {isSearching ? renderSearchBar() : (
+            <Pressable
+              style={({ pressed }) => [styles.leftSection, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}
+              onPress={() => setProfileDropdownVisible(true)}
+            >
+              <Image source={{ uri: displayAvatar }} style={[styles.avatar, { borderColor: theme.primary }]} />
+              <View style={styles.textContainer}>
+                <Text style={styles.greetingText}>
+                  {theme.greeting}
+                  <Text style={styles.nameText}>{displayName}</Text>
+                </Text>
+                <Text style={styles.subText}>{theme.subText}</Text>
+              </View>
+            </Pressable>
+          )}
+
+          {!isSearching && (
+            <View style={styles.rightIconsContainer}>
                <View style={{ width: 10 }} />
                <HeaderIconButton icon={theme.actionIcon} color="#333" onPress={onActionPress} />
             </View>

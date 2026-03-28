@@ -12,6 +12,18 @@ Notifications.setNotificationHandler({
   }),
 });
 
+
+const triggerLocalNotification = async (bookingDate, bookingTime) => {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "🎉 New Booking Confirmed!",
+      body: `You have a new session scheduled on ${bookingDate} at ${bookingTime}.`,
+      data: { route: 'BookingDetails' }, // Notification pe click karne pe kahan jana hai
+    },
+    trigger: null, // null matlab turant bhejo
+  });
+};
+
 export async function registerForPushNotificationsAsync() {
   let token;
 

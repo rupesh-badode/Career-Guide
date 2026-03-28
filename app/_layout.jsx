@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -18,7 +18,6 @@ import { backendConfig } from '../src/constants/MainContent';
 
 // --- SCREEN IMPORTS ---
 import CounselorProfile from '../src/components/common/CounselorProfile';
-
 import RegisterScreen from './auth/SignUp';
 import SplashScreen from './SplashScreen';
 import OtpVerification from './auth/OtpVerification';
@@ -32,7 +31,6 @@ import BookingScreen from './tabs/user/razor pay/BookingScreen';
 import BookingSuccess from './tabs/user/razor pay/BookingSuccess';
 import KycScreen from './tabs/counsellor/profile/KycScreen';
 import KycDetailsScreen from './tabs/counsellor/profile/KycDetails';
-
 import BlogScreen from './tabs/user/blog/BlogScreen';
 import ChatScreen from '../src/components/common/ChatScreen';
 import StudentProfile from './tabs/counsellor/chat/StudentProfile';
@@ -51,28 +49,32 @@ import WelcomeScreen from './WelcomeScreen';
 import ChangePasswordScreen from './auth/ChangePasswordScreen';
 import AudioCallScreen from '../src/components/common/AudioCallScreen';
 import CheckoutButton from './tabs/user/profile.jsx/CheckoutButton';
+import IncomingCallModal from '../src/components/common/IncomingCallModal';
+import MentorProfileDetails from './tabs/mentor/profile/MentorProfileDetails';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 const SOCKET_URL = backendConfig.origin;
-let globalSocket; // Bahar declare kiya taaki reference maintained rahe
+let globalSocket; 
+
+// 👉 1. GLOBAL NAVIGATION REF BANAYI HAI
+export const navigationRef = createNavigationContainerRef();
 
 // ==============================
-// 3. MAIN APP NAVIGATOR (With Auth Guard & Global Sockets)
+// 3. MAIN APP NAVIGATOR
 // ==============================
 function AppNavigator() {
   const dispatch = useDispatch();
   
-  // REDUX STATES
+  const [incomingCall, setIncomingCall] = useState(null);
   const authState = useSelector((state) => state.auth);
   const isAuthenticated = authState.isAuthenticated;
   const myUserId = authState?.userData?._id || authState?.consultantData?._id || authState?._id; 
 
-  // LOCAL SPLASH STATE
   const [isSplashReady, setIsSplashReady] = useState(true);
 
-  // ⚡ 1. CHECK LOGIN SESSION
+  // ⚡ CHECK LOGIN SESSION
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -92,44 +94,31 @@ function AppNavigator() {
     checkLoginStatus();
   }, [dispatch]);
 
-  // ⚡ 2. GLOBAL SOCKET CONNECTION FOR NOTIFICATIONS
+  // ⚡ GLOBAL SOCKET CONNECTION FOR NOTIFICATIONS & CALLS
   useEffect(() => {
-    if (!myUserId) return; // Bina login connect mat karo
+    if (!myUserId) return; 
 
-    // Init Socket
     globalSocket = io(SOCKET_URL, { transports: ['websocket'] });
 
     globalSocket.on('connect', () => {
-      console.log("🌍 Global Socket Connected for Push Notifications!");
-      // Apne global room me join ho jao notification receive karne ke liye
+      console.log("🌍 Global Socket Connected!");
       globalSocket.emit('joinUserRoom', myUserId); 
     });
 
-    // 🛎️ Listener: New Booking Received
     globalSocket.on('new_booking_received', (bookingData) => {
-      console.log("🔔 Socket Alert: New Booking!", bookingData);
-      
-      // Confirm aane pe hi bajao
       if (bookingData.status === 'confirmed') {
-        const studentName = bookingData?.studentId?.name || "A Student";
-        const time = bookingData?.time || "TBA";
-
         Notifications.scheduleNotificationAsync({
           content: {
             title: "Session Confirmed! ✅",
-            body: `${studentName} is scheduled for ${time}.`,
+            body: "You have a new scheduled session.",
             sound: true,
-            data: { route: 'Appointments' } 
           },
           trigger: null,
         });
       }
     });
 
-    // 💬 Listener: New Chat Message Received (Global alert)
     globalSocket.on('new_message_received', (messageData) => {
-      console.log("💬 Socket Alert: New Chat Message!");
-      
       Notifications.scheduleNotificationAsync({
         content: {
           title: "New Message 📩",
@@ -140,7 +129,17 @@ function AppNavigator() {
       });
     });
 
-    // Cleanup: Jab user logout hoga
+    // 🔥 INCOMING CALL LISTENER
+    globalSocket.on("incoming-call", (data) => {
+      setIncomingCall({
+        visible: true,
+        callerName: data.callerName,
+        callerAvatar: data.avatar,
+        callType: data.type,
+        roomName: data.roomName
+      });
+    });
+
     return () => {
       if (globalSocket) {
         globalSocket.disconnect();
@@ -148,63 +147,91 @@ function AppNavigator() {
     };
   }, [myUserId]);
 
+  // 👉 2. HANDLERS KO USEEFFECT SE BAHAR NIKALA
+  const handleAcceptCall = () => {
+    const callData = { ...incomingCall };
+    setIncomingCall(null);
+
+    // Global navigation ref se navigate karenge
+    if (navigationRef.isReady()) {
+      navigationRef.navigate(callData.callType === 'audio' ? 'AudioCall' : 'VideoCall', { 
+        roomName: callData.roomName 
+      });
+    }
+  };
+
+  const handleRejectCall = () => {
+    setIncomingCall(null);
+    if (globalSocket) {
+      globalSocket.emit("reject-call", { roomName: incomingCall?.roomName });
+    }
+  };
+
   // ==============================
   // UI RENDER
   // ==============================
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <>
+      {/* 👉 NavigationContainer me ref pass kiya */}
+      <NavigationContainer ref={navigationRef}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {isSplashReady ? (
+            <Stack.Screen name="Splash" component={SplashScreen} />
+          ) : !isAuthenticated ? (
+            <>
+              <Stack.Screen name='WelcomeScreen' component={WelcomeScreen} />
+              <Stack.Screen name='Login' component={LoginScreen} />
+              <Stack.Screen name="Register" component={RegisterScreen} />
+              <Stack.Screen name='OtpVerification' component={OtpVerification} />
+              <Stack.Screen name='ForgetPassword' component={ForgotPassword} />
+              <Stack.Screen name='ResetPassword' component={ResetPassword} />
+            </>
+          ) : (
+            <>
+              <Stack.Screen name="MainTabs" component={TabNavigatorGroup} />
+              <Stack.Screen name="CounselorProfile" component={CounselorProfile} />
+              <Stack.Screen name='ChatScreen' component={ChatScreen} />
+              <Stack.Screen name='EditProfile' component={EditProfileScreen} />
+              <Stack.Screen name="ProfileDetail" component={ProfileDetailsList} />
+              <Stack.Screen name='ConsultProfileDetails' component={ConsultProfileDetails} />
+              <Stack.Screen name='StudentProfile' component={StudentProfile} />
+              <Stack.Screen name='BookingScreen' component={BookingScreen} />
+              <Stack.Screen name="BookingSuccess" component={BookingSuccess} header={{ headerShown: false }} />
+              <Stack.Screen name='VideoCall' component={VideoCallScreen} />
+              <Stack.Screen name='AudioCall' component={AudioCallScreen} />
+              <Stack.Screen name='KycScreen' component={KycScreen} />
+              <Stack.Screen name='KycDetails' component={KycDetailsScreen} />
+              <Stack.Screen name='LegalScreen' component={LegalScreen} />
+              <Stack.Screen name='AllBooks' component={MyBooksList} />
+              <Stack.Screen name='SingleBook' component={SingleBookScreen} />
+              <Stack.Screen name='CartScreen' component={CartScreen} />
+              <Stack.Screen name='AddAddress' component={AddAddress} />
+              <Stack.Screen name='AllMentor' component={AllMentorsScreen} />
+              <Stack.Screen name='MentorChatList' component={MentorChatList} />
+              <Stack.Screen name="Blogs" component={BlogScreen} />
+              <Stack.Screen name='BlogDetails' component={BlogDetails} />
+              <Stack.Screen name='MentorBlog' component={MentorBlog} />
+              <Stack.Screen name='ChangePassword' component={ChangePasswordScreen} />
+              <Stack.Screen name='CheckoutButton' component={CheckoutButton} />
+              <Stack.Screen name='MentorProfileDetails' component={MentorProfileDetails} />
 
-        {/* Condition 1: Splash Screen */}
-        {isSplashReady ? (
-          <Stack.Screen name="Splash" component={SplashScreen} />
-        ) :
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
 
-        /* Condition 2: Not Logged In */
-        !isAuthenticated ? (
-          <>
-            <Stack.Screen name='WelcomeScreen' component={WelcomeScreen} />
-            <Stack.Screen name='Login' component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name='OtpVerification' component={OtpVerification} />
-            <Stack.Screen name='ForgetPassword' component={ForgotPassword} />
-            <Stack.Screen name='ResetPassword' component={ResetPassword} />
-          </>
-        ) :
-        
-        /* Condition 3: Logged In */
-        (
-          <>
-            <Stack.Screen name="MainTabs" component={TabNavigatorGroup} />
-            <Stack.Screen name="CounselorProfile" component={CounselorProfile} />
-            <Stack.Screen name='ChatScreen' component={ChatScreen} />
-            <Stack.Screen name='EditProfile' component={EditProfileScreen} />
-            <Stack.Screen name="ProfileDetail" component={ProfileDetailsList} />
-            <Stack.Screen name='ConsultProfileDetails' component={ConsultProfileDetails} />
-            <Stack.Screen name='StudentProfile' component={StudentProfile} />
-            <Stack.Screen name='BookingScreen' component={BookingScreen} />
-            <Stack.Screen name="BookingSuccess" component={BookingSuccess} header={{ headerShown: false }} />
-            <Stack.Screen name='VideoCall' component={VideoCallScreen} />
-            <Stack.Screen name='AudioCall' component={AudioCallScreen} />
-            <Stack.Screen name='KycScreen' component={KycScreen} />
-            <Stack.Screen name='KycDetails' component={KycDetailsScreen} />
-            <Stack.Screen name='LegalScreen' component={LegalScreen} />
-            <Stack.Screen name='AllBooks' component={MyBooksList} />
-            <Stack.Screen name='SingleBook' component={SingleBookScreen} />
-            <Stack.Screen name='CartScreen' component={CartScreen} />
-            <Stack.Screen name='AddAddress' component={AddAddress} />
-            <Stack.Screen name='AllMentor' component={AllMentorsScreen} />
-            <Stack.Screen name='MentorChatList' component={MentorChatList} />
-            <Stack.Screen name="Blogs" component={BlogScreen} />
-            <Stack.Screen name='BlogDetails' component={BlogDetails} />
-            <Stack.Screen name='MentorBlog' component={MentorBlog} />
-            <Stack.Screen name='ChangePassword' component={ChangePasswordScreen} />
-            <Stack.Screen name='CheckoutButton' component={CheckoutButton} />
-          </>
-        )}
-
-      </Stack.Navigator>
-    </NavigationContainer>
+      {/* 👉 3. MODAL KO APP NAVIGATOR KE ANDAR RAKHA */}
+      {incomingCall && (
+        <IncomingCallModal
+          visible={incomingCall.visible}
+          callerName={incomingCall.callerName}
+          callerAvatar={incomingCall.callerAvatar}
+          callType={incomingCall.callType}
+          onAccept={handleAcceptCall}
+          onReject={handleRejectCall}
+        />
+      )}
+    </>
   );
 }
 
