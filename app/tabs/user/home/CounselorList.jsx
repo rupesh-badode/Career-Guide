@@ -10,42 +10,37 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 // 👉 UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
 import { AllConsultant } from '../../../../src/services/user';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = 160;
+const CARD_WIDTH = 175; // Thoda bada kiya premium look ke liye
 const SPACING = 16;
+const FULL_ITEM_WIDTH = CARD_WIDTH + SPACING;
 
 // --- ✨ SKELETON LOADER COMPONENT ✨ ---
 const SkeletonCard = () => {
-  const pulseAnim = useRef(new Animated.Value(0.5)).current;
+  const pulseAnim = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 0.5, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.4, duration: 800, useNativeDriver: true }),
       ])
     ).start();
   }, [pulseAnim]);
 
   return (
     <Animated.View style={[styles.card, { opacity: pulseAnim }]}>
-      {/* Rating Badge Skeleton */}
       <View style={[styles.skeletonBlock, styles.skeletonBadge]} />
-      
-      {/* Profile Avatar Skeleton */}
       <View style={[styles.skeletonBlock, styles.skeletonAvatar]} />
-      
-      {/* Text Skeletons */}
-      <View style={[styles.skeletonBlock, { width: 100, height: 16, marginBottom: 8, borderRadius: 4 }]} />
-      <View style={[styles.skeletonBlock, { width: 70, height: 12, marginBottom: 20, borderRadius: 4 }]} />
-      
-      {/* Button Skeleton */}
+      <View style={[styles.skeletonBlock, { width: 110, height: 16, marginBottom: 8, borderRadius: 4 }]} />
+      <View style={[styles.skeletonBlock, { width: 80, height: 12, marginBottom: 15, borderRadius: 4 }]} />
+      <View style={[styles.skeletonBlock, { width: 60, height: 14, marginBottom: 20, borderRadius: 4 }]} />
       <View style={[styles.skeletonBlock, styles.skeletonButton]} />
     </Animated.View>
   );
@@ -76,27 +71,28 @@ export default function CounselorList() {
 
   // --- Render Single Animated Card ---
   const renderItem = ({ item, index }) => {
-    const profileImage = item.image || item.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=0D8ABC&color=fff` ;
+    const profileImage = item.image || item.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=F59E0B&color=fff&bold=true`;
     const subtitle = item.subtitle || item.specialization || item.role || 'Expert Consultant';
     const isOnline = item.isOnline !== undefined ? item.isOnline : true; 
     const rating = item.rating || "4.8"; 
+    const price = item.price || 500; // Default price
 
-    // 🔥 Card Animation Logic
+    // 🔥 Card Animation Logic - Active card thoda bada dikhega
     const inputRange = [
-      (index - 2) * (CARD_WIDTH + SPACING),
-      index * (CARD_WIDTH + SPACING),
-      (index + 2) * (CARD_WIDTH + SPACING),
+      (index - 1) * FULL_ITEM_WIDTH,
+      index * FULL_ITEM_WIDTH,
+      (index + 1) * FULL_ITEM_WIDTH,
     ];
 
     const scale = scrollX.interpolate({
       inputRange,
-      outputRange: [0.95, 1, 0.95],
+      outputRange: [0.92, 1, 0.92],
       extrapolate: 'clamp',
     });
 
     const opacity = scrollX.interpolate({
       inputRange,
-      outputRange: [0.7, 1, 0.7],
+      outputRange: [0.6, 1, 0.6],
       extrapolate: 'clamp',
     });
 
@@ -113,20 +109,31 @@ export default function CounselorList() {
               <Ionicons name="star" size={12} color="#F59E0B" />
               <Text style={styles.ratingText}>{rating}</Text>
             </View>
-            {/* <TouchableOpacity style={styles.likeButton}>
-              <Ionicons name="heart-outline" size={16} color="#9CA3AF" />
-            </TouchableOpacity> */}
+            <View style={styles.experienceBadge}>
+                <MaterialCommunityIcons name="check-decagram" size={14} color="#10B981" />
+            </View>
           </View>
 
           {/* Profile Image & Online Status */}
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: profileImage }} style={styles.profileImage} />
-            {isOnline && <View style={styles.onlineBadge} />}
+          <View style={styles.avatarWrapper}>
+            <View style={styles.imageRing}>
+              <Image source={{ uri: profileImage }} style={styles.profileImage} />
+            </View>
+            {isOnline && (
+              <View style={styles.onlineBadgeContainer}>
+                <View style={styles.onlineBadge} />
+              </View>
+            )}
           </View>
 
           {/* User Info */}
           <Text style={styles.nameText} numberOfLines={1}>{item.name}</Text>
           <Text style={styles.subtitleText} numberOfLines={1}>{subtitle}</Text>
+
+          {/* Price Section */}
+          <Text style={styles.priceText}>
+            ₹{price} <Text style={styles.priceSub}>/ session</Text>
+          </Text>
 
           {/* Action Button */}
           <TouchableOpacity
@@ -137,12 +144,12 @@ export default function CounselorList() {
               navigation.navigate("BookingScreen", {
                 consultantId: item._id,
                 consultantName: item.name,
-                amount: item.price || 500
+                amount: price
               });
             }}
           >
             <Text style={styles.chatButtonText}>Book Now</Text>
-            <Ionicons name="arrow-forward" size={14} color="#FFFFFF" style={{marginLeft: 4}} />
+            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{marginLeft: 4, marginTop: 1}} />
           </TouchableOpacity>
         </TouchableOpacity>
       </Animated.View>
@@ -154,8 +161,8 @@ export default function CounselorList() {
       {/* Header Section */}
       <View style={styles.headerRow}>
         <View>
-          <Text style={styles.sectionTitle}>Top Counsellors</Text>
-          <Text style={styles.sectionSubtitle}>Find your perfect match</Text>
+          <Text style={styles.sectionTitle}>Top Consultants</Text>
+          <Text style={styles.sectionSubtitle}>Guiding your path forward</Text>
         </View>
         <TouchableOpacity 
           activeOpacity={0.6} 
@@ -163,13 +170,12 @@ export default function CounselorList() {
           onPress={() => navigation.navigate("Appointments")}
         > 
           <Text style={styles.viewAllText}>View All</Text>
-          <Ionicons name="chevron-forward" size={14} color="#4F46E5" />
+          <Ionicons name="arrow-forward" size={14} color="#F59E0B" />
         </TouchableOpacity>
       </View>
 
       {/* Content Rendering */}
       {isLoading ? (
-        // ✨ Rendering Skeleton List
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
@@ -181,7 +187,9 @@ export default function CounselorList() {
         </ScrollView>
       ) : counselors.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="people-outline" size={40} color="#D1D5DB" />
+          <View style={styles.emptyIconCircle}>
+            <Ionicons name="people" size={32} color="#D1D5DB" />
+          </View>
           <Text style={styles.emptyText}>No experts available right now.</Text>
         </View>
       ) : (
@@ -192,7 +200,7 @@ export default function CounselorList() {
           keyExtractor={(item) => item._id}
           renderItem={renderItem}
           contentContainerStyle={styles.listPadding}
-          snapToInterval={CARD_WIDTH + SPACING}
+          snapToInterval={FULL_ITEM_WIDTH}
           decelerationRate="fast"
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { x: scrollX } } }],
@@ -207,9 +215,9 @@ export default function CounselorList() {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 15,
-    backgroundColor: '#FAFAFA', // Slight background to make white cards pop
-    paddingVertical: 10,
+    marginVertical: 10,
+    backgroundColor: '#FAFAFA', 
+    paddingVertical: 15,
   },
   headerRow: {
     flexDirection: 'row',
@@ -220,50 +228,57 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 22,
-    fontWeight: '800',
-    color: '#111827',
-    letterSpacing: 0.3,
+    fontWeight: '900',
+    color: '#0F172A', // Slate 900
+    letterSpacing: 0.5,
   },
   sectionSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 4,
+    fontSize: 13,
+    color: '#64748B', // Slate 500
+    marginTop: 2,
     fontWeight: '500',
   },
   viewAllBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF2FF',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
   viewAllText: {
     fontSize: 13,
-    color: '#4F46E5',
+    color: '#D97706', // Dark Amber
     fontWeight: '700',
     marginRight: 4,
   },
   emptyContainer: {
-    height: 180,
+    height: 220,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     marginHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     borderStyle: 'dashed',
   },
+  emptyIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   emptyText: {
-    marginTop: 12,
-    color: '#9CA3AF',
-    fontSize: 14,
+    color: '#6B7280',
+    fontSize: 15,
     fontWeight: '500',
   },
   listPadding: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 25, // Extra padding shadows ke liye
   },
   
   // --- CARD STYLES ---
@@ -274,19 +289,18 @@ const styles = StyleSheet.create({
     padding: 16,
     marginRight: SPACING,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    // 🔥 Soft, elegant shadow
     ...Platform.select({
-      ios: { shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.08, shadowRadius: 12 },
-      android: { elevation: 6 },
-      web: { boxShadow: '0px 8px 24px rgba(79, 70, 229, 0.08)' },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 15 },
+      android: { elevation: 5 },
+      web: { boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.05)' },
     }),
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   ratingBadge: {
     flexDirection: 'row',
@@ -296,80 +310,108 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FEF3C7',
+    borderColor: '#FDE68A',
   },
   ratingText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#D97706',
+    color: '#B45309', // Darkest Amber
     marginLeft: 4,
   },
-  likeButton: {
-    padding: 4,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
+  experienceBadge: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  imageContainer: {
+  avatarWrapper: {
     position: 'relative',
     marginBottom: 16,
   },
+  imageRing: {
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FDE68A', // Outer amber ring
+    borderStyle: 'dashed', // Thoda astrological/premium vibe
+  },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: '#F3F4F6',
-    borderWidth: 3,
-    borderColor: '#EEF2FF',
+  },
+  onlineBadgeContainer: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF', // White cutout effect
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   onlineBadge: {
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#10B981',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#10B981', // Emerald Green
   },
   nameText: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '800',
-    color: '#111827',
+    color: '#0F172A',
     marginBottom: 4,
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   subtitleText: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 16,
+    fontSize: 13,
+    color: '#64748B',
+    marginBottom: 12,
     textAlign: 'center',
+    fontWeight: '500',
+  },
+  priceText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#F59E0B',
+    marginBottom: 16,
+  },
+  priceSub: {
+    fontSize: 11,
     fontWeight: '600',
+    color: '#9CA3AF',
   },
   chatButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4F46E5',
-    paddingVertical: 12,
+    backgroundColor: '#F59E0B',
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 14, 
+    borderRadius: 30, // Pill shape for modern look
     width: '100%',
+    // 🔥 Glowing Button Shadow
     ...Platform.select({
-      ios: { shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 6 },
-      android: { elevation: 4 },
+      ios: { shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 8 },
+      android: { elevation: 6, shadowColor: '#F59E0B' },
+      web: { boxShadow: '0px 6px 15px rgba(245, 158, 11, 0.3)' },
     }),
   },
   chatButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 0.5,
   },
 
   // --- SKELETON STYLES ---
   skeletonBlock: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#F3F4F6',
   },
   skeletonBadge: {
     width: 50,
@@ -379,14 +421,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   skeletonAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 86,
+    height: 86,
+    borderRadius: 43,
     marginBottom: 16,
   },
   skeletonButton: {
     width: '100%',
-    height: 40,
-    borderRadius: 14,
+    height: 48, // Matches new pill shape height
+    borderRadius: 24,
   },
 });

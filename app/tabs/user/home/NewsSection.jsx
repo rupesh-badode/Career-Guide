@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getWHONews } from '../../../../src/services/user'; 
 import { useNavigation } from '@react-navigation/native';
 
-const PRIMARY_COLOR = '#4F46E5';
+const PRIMARY_COLOR = '#F59E0B';
 const DEFAULT_NEWS_IMAGE = 'https://images.unsplash.com/photo-1504443914801-b544321b14e5?q=80&w=200&auto=format&fit=crop'; // Ek default health/news image kyunki API image nahi bhej rahi
 
 // 🔥 NAYA: Premium Skeleton Loader Component

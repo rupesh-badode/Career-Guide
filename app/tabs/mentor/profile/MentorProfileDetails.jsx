@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { getMentorProfile } from '../../../../src/services/mentorAPI';
 
-const PURPLE_THEME = '#8B5CF6';
+const PURPLE_THEME = '#F27A21';
 
 const InfoCard = ({ icon, label, value, color = PURPLE_THEME }) => (
   <View style={styles.infoCard}>

@@ -15,7 +15,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
-const PRIMARY_COLOR = '#4F46E5';
+const PRIMARY_COLOR = '#F27A21';
 
 export default function BlogDetails() {
   const navigation = useNavigation();

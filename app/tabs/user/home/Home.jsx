@@ -16,11 +16,15 @@ import { useNavigation } from "@react-navigation/native";
 // import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
 // import { logout } from "../../../../src/redux/authSlice";
+import { BlurView } from "expo-blur";
+import ServicesSection from "./ServicesSection";
+import PromoBanner from "./PromoBanner";
 
 export default function Index() {
     const insets = useSafeAreaInsets();
-    const HEADER_HEIGHT = insets.top + 60; // Apne header ke hisaab se adjust karein
+    const HEADER_HEIGHT = insets.top + 70; // Apne header ke hisaab se adjust karein
     const navigation = useNavigation();
+    const STATUS_BAR_HEIGHT = insets.top;
 
     const dispatch = useDispatch();
 
@@ -33,7 +37,14 @@ export default function Index() {
         outputRange: [1, 0], // 1 = Pura dikhega, 0 = Wahin par gayab ho jayega
     });
 
-    
+    const blurOpacity = scrollY.interpolate({
+        inputRange: [0, 50],
+        outputRange: [0, 1], // Shuru me hidden, scroll pe visible
+        extrapolate: 'clamp',
+    });
+
+
+    const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 
     return (
@@ -53,14 +64,27 @@ export default function Index() {
             >
                 <OnboardingScreen />
                 <ImageCarousel />
+                <ServicesSection/>
                 <CounselorList />
-                <WhyLoveAastroneet/>
-                <TopMentorsOverview/>
+                {/* <TopMentorsOverview/> */}
                 {/* <SmartTools/> */}
-                <Blog />
+                {/* <Blog /> */}
+                <PromoBanner/>
                 <FeaturedBooks />
+                <WhyLoveAastroneet/>
                 <NewsSection />
             </Animated.ScrollView>
+
+
+            {/* 🔥 BLUR EFFECT FOR STATUS BAR */}
+            <AnimatedBlurView
+                intensity={80} // Blur ki takat
+                tint="light"   // Ya "dark" agar app dark mode hai
+                style={[
+                    styles.statusBarBlur, 
+                    { height: STATUS_BAR_HEIGHT, opacity: blurOpacity }
+                ]}
+            />
 
             {/* 2. Header ko absolute rakha aur opacity lagayi */}
             <Animated.View style={[

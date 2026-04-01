@@ -19,7 +19,7 @@ const EditProfileScreen = ({ route, navigation }) => {
     const isMentor = role === 'Mentor';
     const isUser = role === 'User';
 
-    let themeColor = isCounselor ? '#10B981' : isMentor ? '#8B5CF6' : '#007BFF';
+    let themeColor = isCounselor ? '#F27A21' : isMentor ? '#F27A21' : '##F27A21';
 
     // --- FORM STATES ---
     const [name, setName] = useState('');

@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  Image, 
-  TouchableOpacity, 
-  ActivityIndicator, 
-  SafeAreaView, 
-  Platform, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  SafeAreaView,
+  Platform,
   StatusBar,
-  Animated 
+  Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 // 1. CHANGE THIS IMPORT
-import { useNavigation } from '@react-navigation/native'; 
+import { useNavigation } from '@react-navigation/native';
 import { getBlogs } from '../../../../src/services/mentorAPI';
 
 
@@ -28,8 +28,8 @@ const AnimatedBlogCard = ({ item, index }) => {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 400,
-        delay: index * 100, 
-        useNativeDriver: true, 
+        delay: index * 100,
+        useNativeDriver: true,
       }),
       Animated.timing(translateY, {
         toValue: 0,
@@ -41,18 +41,18 @@ const AnimatedBlogCard = ({ item, index }) => {
   }, [fadeAnim, translateY, index]);
 
   return (
-    <Animated.View 
+    <Animated.View
       style={[
-        styles.cardContainer, 
-        { 
-          opacity: fadeAnim, 
-          transform: [{ translateY: translateY }] 
+        styles.cardContainer,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: translateY }]
         }
       ]}
     >
-      <TouchableOpacity activeOpacity={0.8} style={styles.card} 
-      // Corrected code
-onPress={() => navigation.navigate("BlogDetails", { blog: item })}
+      <TouchableOpacity activeOpacity={0.8} style={styles.card}
+        // Corrected code
+        onPress={() => navigation.navigate("BlogDetails", { blog: item })}
       >
         {item.image ? (
           <Image source={{ uri: item.image }} style={styles.image} />
@@ -72,8 +72,8 @@ onPress={() => navigation.navigate("BlogDetails", { blog: item })}
           <View style={styles.cardFooter}>
             <Text style={styles.footerText}>{item.author || 'Admin'}</Text>
             <Text style={styles.footerText}>
-              {item.createdAt 
-                ? new Date(item.createdAt).toLocaleDateString() 
+              {item.createdAt
+                ? new Date(item.createdAt).toLocaleDateString()
                 : 'Recently updated'}
             </Text>
           </View>
@@ -87,7 +87,7 @@ const MentorBlog = () => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // 2. CHANGE THIS HOOK
   const navigation = useNavigation();
 
@@ -95,7 +95,7 @@ const MentorBlog = () => {
     setLoading(true);
     setError('');
     const result = await getBlogs();
-    
+
     if (result.success) {
       // FIX: Directly target result.data.data where your array lives
       const blogArray = result.data?.data || [];
@@ -121,21 +121,21 @@ const MentorBlog = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={handleGoBack} 
+        <TouchableOpacity
+          onPress={handleGoBack}
           style={styles.backButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="chevron-back" size={28} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Read Our Blogs</Text>
-        <View style={styles.headerSpacer} /> 
+        <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.container}>
         {loading ? (
           <View style={styles.centerContent}>
-            <ActivityIndicator size="large" color="#007AFF" />
+            <ActivityIndicator size="large" color="#F27A21" />
           </View>
         ) : error ? (
           <View style={styles.centerContent}>
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
   headerSpacer: {
-    width: 28, 
+    width: 28,
   },
   container: {
     flex: 1,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
-    elevation: 3, 
+    elevation: 3,
   },
   image: {
     width: '100%',
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   category: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#007AFF',
+    color: '#F27A21',
     textTransform: 'uppercase',
     marginBottom: 8,
   },

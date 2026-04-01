@@ -14,12 +14,15 @@ import { getBanners } from '../../../../src/services/user';
 
 const { width } = Dimensions.get('window');
 
-// Responsive & Full Width settings
-const CONTAINER_WIDTH = width;
-const ITEM_WIDTH = width; // 🔥 Full width kar diya hai
-const CAROUSEL_HEIGHT = Platform.OS === 'web' ? 400 : 250; // Thodi height badhayi hai premium look ke liye
+// Responsive settings
+const ITEM_WIDTH = width; 
+const CARD_WIDTH = width * 0.92; // Thoda chota kiya taaki shadow dikhe
+const CAROUSEL_HEIGHT = Platform.OS === 'web' ? 400 : 260; // Thodi height aur badhayi
 
-const BG_COLORS = ['#EEF2FF', '#ECFDF5', '#FFFBEB', '#FDF2F8'];
+// Premium Yellow Theme Colors
+const YELLOW_PRIMARY = '#F59E0B'; // Premium Amber/Gold
+const YELLOW_LIGHT = '#FEF3C7';
+const SHADOW_COLOR = '#D97706';   // Dark yellow for rich shadow
 
 // --- Premium Skeleton Loader Component ---
 const SkeletonLoader = () => {
@@ -43,11 +46,13 @@ const SkeletonLoader = () => {
   }, [pulseAnim]);
 
   return (
-    <View style={styles.skeletonContainer}>
-      <Animated.View style={[styles.skeletonImage, { opacity: pulseAnim }]} />
-      <View style={styles.skeletonTextWrapper}>
-        <Animated.View style={[styles.skeletonText, { opacity: pulseAnim, width: '70%' }]} />
-        <Animated.View style={[styles.skeletonText, { opacity: pulseAnim, width: '40%', marginTop: 8 }]} />
+    <View style={styles.cardContainer}>
+      <View style={styles.card}>
+        <Animated.View style={[styles.skeletonImage, { opacity: pulseAnim }]} />
+        <View style={styles.skeletonTextWrapper}>
+          <Animated.View style={[styles.skeletonText, { opacity: pulseAnim, width: '70%' }]} />
+          <Animated.View style={[styles.skeletonText, { opacity: pulseAnim, width: '40%', marginTop: 8 }]} />
+        </View>
       </View>
     </View>
   );
@@ -112,35 +117,43 @@ export default function ImageCarousel() {
 
   // --- UI Components ---
   const renderItem = ({ item, index }) => {
-    const itemBgColor = BG_COLORS[index % BG_COLORS.length];
-
-    // 🔥 ANIMATION: Sirf fade effect rakha hai kyunki full width par scale ajeeb lagta hai
     const inputRange = [
       (index - 1) * ITEM_WIDTH,
       index * ITEM_WIDTH,
       (index + 1) * ITEM_WIDTH,
     ];
 
+    // Card scale animation for 3D effect
+    const scale = scrollX.interpolate({
+      inputRange,
+      outputRange: [0.9, 1, 0.9],
+      extrapolate: 'clamp',
+    });
+
     const opacity = scrollX.interpolate({
       inputRange,
-      outputRange: [0.3, 1, 0.3],
+      outputRange: [0.5, 1, 0.5],
       extrapolate: 'clamp',
     });
 
     return (
       <View style={styles.cardContainer}>
-        <Animated.View style={[styles.card, { opacity }]}>
+        <Animated.View style={[styles.card, { opacity, transform: [{ scale }] }]}>
           
-          <View style={[styles.imageWrapper, { backgroundColor: itemBgColor }]}>
+          <View style={styles.imageWrapper}>
             <Image 
               source={{ uri: item.image }} 
               style={styles.image}
-              resizeMode="cover" // Cover zyada premium edge-to-edge feel deta hai
+              resizeMode="cover" 
             />
           </View>
           
           <View style={styles.textWrapper}>
-            <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+            {/* Premium Yellow Accent Line */}
+            <View style={styles.accentLine} />
+            <View style={styles.textInner}>
+              <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+            </View>
           </View>
           
         </Animated.View>
@@ -162,13 +175,13 @@ export default function ImageCarousel() {
 
           const dotWidth = scrollX.interpolate({
             inputRange,
-            outputRange: [6, 20, 6], 
+            outputRange: [8, 24, 8], // Dots thode bade aur stretch hone wale banaye
             extrapolate: 'clamp',
           });
 
           const backgroundColor = scrollX.interpolate({
             inputRange,
-            outputRange: ['rgba(255, 255, 255, 0.5)', '#FFFFFF', 'rgba(255, 255, 255, 0.5)'], 
+            outputRange: ['#E5E7EB', YELLOW_PRIMARY, '#E5E7EB'], // Inactive Gray, Active Premium Yellow
             extrapolate: 'clamp',
           });
 
@@ -217,7 +230,8 @@ export default function ImageCarousel() {
         viewabilityConfig={viewabilityConfig}
         onScrollToIndexFailed={() => {}} 
       />
-      {/* Dots ko list ke upar absolute position kiya hai */}
+      
+      {/* Dots List ke theek niche aayenge */}
       <View style={styles.paginationOverlay}>
         <PaginationDots />
       </View>
@@ -227,89 +241,112 @@ export default function ImageCarousel() {
 
 const styles = StyleSheet.create({
   mainContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAFAFA', // Off-white background taaki shadow pop kare
     position: 'relative',
+    paddingVertical: 15,
   },
   cardContainer: {
     width: ITEM_WIDTH,
     alignItems: 'center', 
+    justifyContent: 'center',
   },
   card: {
-    width: ITEM_WIDTH,
+    width: CARD_WIDTH,
     height: CAROUSEL_HEIGHT,
     backgroundColor: '#FFFFFF',
-    // Border radius hata diya hai full width (edge-to-edge) ke liye
+    borderRadius: 20, // Rounded corners for premium look
+    marginBottom: 10,
+    // 🔥 TAGDA SHADOW (Yellow / Amber tone me)
+    ...Platform.select({
+      ios: { 
+        shadowColor: SHADOW_COLOR, 
+        shadowOffset: { width: 0, height: 10 }, 
+        shadowOpacity: 0.25, 
+        shadowRadius: 15 
+      },
+      android: { 
+        elevation: 12, // Android me heavy elevation
+        shadowColor: SHADOW_COLOR,
+      }, 
+      web: { boxShadow: '0px 10px 25px rgba(217, 119, 6, 0.2)' },
+    }),
   },
   imageWrapper: {
-    flex: 4, // Image ko zyada space diya hai
+    flex: 3.5, 
     width: '100%',
+    backgroundColor: YELLOW_LIGHT,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden', // Image ko border radius ke bahar jane se rokne ke liye
   },
   image: {
     width: '100%',
     height: '100%',
   },
   textWrapper: {
-    flex: 1.2, 
-    paddingHorizontal: 20,
-    justifyContent: 'center',
+    flex: 1.5, 
+    flexDirection: 'row',
     backgroundColor: '#FFFFFF', 
-    ...Platform.select({
-      ios: { 
-        shadowColor: '#000', 
-        shadowOffset: { width: 0, height: -3 }, 
-        shadowOpacity: 0.05, 
-        shadowRadius: 5 
-      },
-      android: { elevation: 4 }, // Text container ko halka shadow diya upar ki taraf
-      web: { boxShadow: '0px -4px 10px rgba(0, 0, 0, 0.03)' },
-    }),
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    overflow: 'hidden',
+  },
+  accentLine: {
+    width: 6,
+    backgroundColor: YELLOW_PRIMARY, // Left side me ek tagdi yellow line
+    height: '100%',
+  },
+  textInner: {
+    flex: 1,
+    paddingHorizontal: 15,
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1F2937',
     letterSpacing: 0.5, 
   },
   paginationOverlay: {
-    position: 'absolute',
-    bottom: 60, // Text box ke theek upar image par dots aayenge
-    left: 0,
-    right: 0,
+    marginTop: 15, // Image ke niche dots
     alignItems: 'center',
+    justifyContent: 'center',
   },
   paginationContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     height: 10,
-    backgroundColor: 'rgba(0,0,0,0.2)', // Halka dark background dots ke peeche visibility ke liye
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
   },
   dot: {
-    height: 6,
-    borderRadius: 3,
-    marginHorizontal: 4,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 5,
+    // Active Dot par bhi yellow glow shadow
+    shadowColor: YELLOW_PRIMARY,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 3,
   },
   
-  // Skeleton Styles
-  skeletonContainer: {
-    width: ITEM_WIDTH,
-    height: CAROUSEL_HEIGHT,
-    backgroundColor: '#FFFFFF',
-  },
+  // Skeleton Styles Matches New Card
   skeletonImage: {
-    flex: 4,
-    backgroundColor: '#E5E7EB',
+    flex: 3.5,
+    backgroundColor: '#F3F4F6',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   skeletonTextWrapper: {
-    flex: 1.2,
+    flex: 1.5,
     paddingHorizontal: 20,
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   skeletonText: {
     height: 14,
     backgroundColor: '#E5E7EB',
-    borderRadius: 4,
+    borderRadius: 6,
   }
 });

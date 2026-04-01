@@ -143,9 +143,9 @@ export default function TabNavigatorGroup() {
     const insets = useSafeAreaInsets();
 
     // 👉 Dynamic Theme Colors
-    let activeTabColor = '#3B82F6'; // User (Blue)
-    if (role === 'Consultant') activeTabColor = '#10B981'; // Counselor (Green)
-    if (role === 'Mentor') activeTabColor = '#8B5CF6'; // Mentor (Purple)
+    let activeTabColor = '#F59E0B'; // User (Blue)
+    if (role === 'Consultant') activeTabColor = '#F59E0B'; // Counselor (Green)
+    if (role === 'Mentor') activeTabColor = '#F59E0B'; // Mentor (Purple)
 
     return (
         <Tab.Navigator
@@ -158,7 +158,7 @@ export default function TabNavigatorGroup() {
                     <Tab.Screen name="Home" component={Index} />
                     <Tab.Screen name="Appointments" component={AppointmentSreen} />
                     <Tab.Screen name="Chat" component={Chat} />
-                    <Tab.Screen name='News' component={NewsScreen} />
+                    {/* <Tab.Screen name='News' component={NewsScreen} /> */}
                 </>
             )}
 

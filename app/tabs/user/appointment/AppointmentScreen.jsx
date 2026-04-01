@@ -15,7 +15,7 @@ export default function AppointmentScreen() {
     const [isFilterVisible, setIsFilterVisible] = useState(false);
     const [activeFilters, setActiveFilters] = useState(null);
 
-    const HEADER_HEIGHT = insets.top + 45; 
+    const HEADER_HEIGHT = insets.top + 55; 
 
     const scrollY = useRef(new Animated.Value(0)).current;
     const scrollYClamped = Animated.diffClamp(scrollY, 0, HEADER_HEIGHT);

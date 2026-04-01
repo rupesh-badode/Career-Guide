@@ -122,7 +122,7 @@ const MentorBookingsScreen = () => {
 
             {isLoading ? (
                 <View style={styles.loaderContainer}>
-                    <ActivityIndicator size="large" color="#8B5CF6" />
+                    <ActivityIndicator size="large" color="#F27A21" />
                 </View>
             ) : (
                 <FlatList
@@ -133,7 +133,7 @@ const MentorBookingsScreen = () => {
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={renderEmptyState}
                     refreshControl={
-                        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#8B5CF6']} />
+                        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#F27A21']} />
                     }
                 />
             )}

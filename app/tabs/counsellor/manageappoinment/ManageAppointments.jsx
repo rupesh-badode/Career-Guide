@@ -15,7 +15,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const THEME_COLOR = '#10B981'; // Emerald Green
+const THEME_COLOR = '#F59E0B'; // Emerald Green
 const TEXT_DARK = '#111827';
 const TEXT_MUTED = '#6B7280';
 

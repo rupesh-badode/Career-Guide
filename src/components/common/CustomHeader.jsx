@@ -21,16 +21,18 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const HeaderIconButton = ({ icon, onPress, color, badgeCount }) => {
+// ✨ Premium Icon Button with Shadow & Glow
+const HeaderIconButton = ({ icon, onPress, color, badgeCount, isPremium }) => {
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.iconButton,
-        { transform: [{ scale: pressed ? 0.85 : 1 }] }
+        isPremium && styles.premiumIconButton, // Amber specific styling
+        { transform: [{ scale: pressed ? 0.9 : 1 }] }
       ]}
     >
-      <Ionicons name={icon} size={24} color={color} />
+      <Ionicons name={icon} size={22} color={isPremium ? '#FFFFFF' : color} />
       {badgeCount > 0 ? (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{badgeCount > 99 ? '99+' : badgeCount}</Text>
@@ -75,7 +77,7 @@ export default function CustomHeader({
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  let primaryColor = '#4F46E5';
+  let primaryColor = '#F59E0B'; // Your Amber
   let greetingText = 'Hi, ';
   let subTextMsg = 'How are you feeling?';
   let actionIcn = 'search-outline';
@@ -183,14 +185,14 @@ export default function CustomHeader({
   const displayAvatar = userData?.profilePicture || profilePic;
   const displayName = userData?.name || userName;
 
-  // ✨ Helper function to avoid duplicating the search bar UI 4 times
+  // ✨ Premium Search Bar Design
   const renderSearchBar = () => (
     <View style={styles.searchBarContainer}>
-      <Ionicons name="search" size={20} color="#888" />
+      <Ionicons name="search" size={20} color="#F59E0B" />
       <TextInput
         style={styles.searchInput}
-        placeholder="Search by name..."
-        placeholderTextColor="#999"
+        placeholder="Search experts, mentors..."
+        placeholderTextColor="#9CA3AF"
         value={searchText}
         autoFocus
         onChangeText={(text) => {
@@ -198,8 +200,8 @@ export default function CustomHeader({
           onSearchChange && onSearchChange(text);
         }}
       />
-      <TouchableOpacity onPress={() => toggleSearch(false)} style={{ padding: 4 }}>
-        <Ionicons name="close-circle" size={22} color="#888" />
+      <TouchableOpacity onPress={() => toggleSearch(false)} style={styles.closeSearchBtn}>
+        <Ionicons name="close-circle" size={20} color="#9CA3AF" />
       </TouchableOpacity>
     </View>
   );
@@ -209,62 +211,39 @@ export default function CustomHeader({
     // 1. PROFILE SCREEN
     if (routeName === 'Profile') {
       return (
-        <View style={styles.contentContainer}>
+        <View style={[styles.contentContainer, { justifyContent: 'center' }]}>
           <Text style={styles.profileHeaderTitle}>Profile & Settings</Text>
         </View>
       );
     }
 
-    // 2. CHAT & SESSIONS SCREENS
-    if (routeName === 'Chat' || routeName === 'Sessions') {
-      const headerTitle = routeName === 'Chat' ? 'Messages' : 'Sessions';
+    // 2. CHAT / SESSIONS / APPOINTMENTS
+    if (routeName === 'Chat' || routeName === 'Sessions' || routeName === 'Appointment' || routeName === 'Appoinment') {
+      const headerTitle = routeName === 'Chat' ? 'Messages' : routeName === 'Sessions' ? 'Sessions' : 'Appointments';
       return (
         <View style={[styles.contentContainer, { justifyContent: 'space-between' }]}>
           {isSearching ? renderSearchBar() : (
             <View style={styles.leftSection}>
               <Pressable onPress={() => setProfileDropdownVisible(true)}>
-                <Image source={{ uri: displayAvatar }} style={[styles.avatar, { borderColor: theme.primary }]} />
+                <View style={styles.avatarRing}>
+                  <Image source={{ uri: displayAvatar }} style={styles.avatar} />
+                </View>
               </Pressable>
               <Text style={styles.chatHeaderTitle}>{headerTitle}</Text>
             </View>
           )}
           {!isSearching && (
             <View style={styles.rightIconsContainer}>
-              <HeaderIconButton icon={theme.actionIcon} color="#333" onPress={() => toggleSearch(true)} />
-              <View style={{ width: 10 }} />
-              <HeaderIconButton icon="filter-outline" color="#333" onPress={() => onFilterPress && onFilterPress()} />
+              <HeaderIconButton icon={theme.actionIcon} color="#4B5563" onPress={() => toggleSearch(true)} />
+              <HeaderIconButton icon="filter" color="#4B5563" onPress={() => onFilterPress && onFilterPress()} />
             </View>
           )}
         </View>
       );
     }
 
-    // 3. APPOINTMENTS SCREEN
-    if (routeName === "Appointment" || routeName === "Appoinment") {
-      const headerTitle = "Appointments";
-      return (
-        <View style={[styles.contentContainer, { justifyContent: 'space-between' }]}>
-          {isSearching ? renderSearchBar() : (
-            <View style={styles.leftSection}>
-              <Pressable onPress={() => setProfileDropdownVisible(true)}>
-                <Image source={{ uri: displayAvatar }} style={[styles.avatar, { borderColor: theme.primary }]} />
-              </Pressable>
-              <Text style={styles.chatHeaderTitle}>{headerTitle}</Text>
-            </View>
-          )}
-          {!isSearching && (
-            <View style={styles.rightIconsContainer}>
-              <HeaderIconButton icon={theme.actionIcon} color="#333" onPress={() => toggleSearch(true)} />
-              <View style={{ width: 10 }} />
-              <HeaderIconButton icon="filter-outline" color="#333" onPress={() => onFilterPress && onFilterPress()} />
-            </View>
-          )}
-        </View>
-      );
-    }
-
-    // 4. COUNSELLOR CHAT SCREEN
-    if (routeName === "CounsellorChat") {
+    // 3. COUNSELLOR CHAT SCREEN
+    if (routeName === "CounsellorChat" || routeName === "CounsutantAppoinment") {
       return (
         <View style={[styles.contentContainer, { justifyContent: 'space-between' }]}>
           {isSearching ? renderSearchBar() : (
@@ -272,7 +251,9 @@ export default function CustomHeader({
               style={({ pressed }) => [styles.leftSection, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}
               onPress={() => setProfileDropdownVisible(true)}
             >
-              <Image source={{ uri: displayAvatar }} style={[styles.avatar, { borderColor: theme.primary }]} />
+              <View style={styles.avatarRing}>
+                <Image source={{ uri: displayAvatar }} style={styles.avatar} />
+              </View>
               <View style={styles.textContainer}>
                 <Text style={styles.greetingText}>
                   {theme.greeting}
@@ -285,53 +266,27 @@ export default function CustomHeader({
 
           {!isSearching && (
             <View style={styles.rightIconsContainer}>
-               <HeaderIconButton icon="search-outline" color="#333" onPress={() => toggleSearch(true)} />
-               <View style={{ width: 10 }} />
-               <HeaderIconButton icon={theme.actionIcon} color="#333" onPress={onActionPress} />
-            </View>
-          )}
-        </View>
-      );
-    }
-    // 4. COUNSELLOR CHAT SCREEN
-    if (routeName === "CounsutantAppoinment") {
-      return (
-        <View style={[styles.contentContainer, { justifyContent: 'space-between' }]}>
-          {isSearching ? renderSearchBar() : (
-            <Pressable
-              style={({ pressed }) => [styles.leftSection, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}
-              onPress={() => setProfileDropdownVisible(true)}
-            >
-              <Image source={{ uri: displayAvatar }} style={[styles.avatar, { borderColor: theme.primary }]} />
-              <View style={styles.textContainer}>
-                <Text style={styles.greetingText}>
-                  {theme.greeting}
-                  <Text style={styles.nameText}>{displayName}</Text>
-                </Text>
-                <Text style={styles.subText}>{theme.subText}</Text>
-              </View>
-            </Pressable>
-          )}
-
-          {!isSearching && (
-            <View style={styles.rightIconsContainer}>
-               <View style={{ width: 10 }} />
-               <HeaderIconButton icon={theme.actionIcon} color="#333" onPress={onActionPress} />
+               {routeName === "CounsellorChat" && (
+                 <HeaderIconButton icon="search-outline" color="#4B5563" onPress={() => toggleSearch(true)} />
+               )}
+               <HeaderIconButton icon={theme.actionIcon} color="#4B5563" onPress={onActionPress} />
             </View>
           )}
         </View>
       );
     }
 
-    // 5. HOME & DASHBOARD (OR DEFAULT FALLBACK)
-    // 👉 Note: Fixed the broken structural bugs from your original code here
+    // 4. HOME & DASHBOARD (OR DEFAULT FALLBACK)
     return (
       <View style={styles.contentContainer}>
+        {/* Left Profile Section */}
         <Pressable
           style={({ pressed }) => [styles.leftSection, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}
           onPress={() => setProfileDropdownVisible(true)}
         >
-          <Image source={{ uri: displayAvatar }} style={[styles.avatar, { borderColor: theme.primary }]} />
+          <View style={styles.avatarRing}>
+            <Image source={{ uri: displayAvatar }} style={styles.avatar} />
+          </View>
           <View style={styles.textContainer}>
             <Text style={styles.greetingText}>
               {theme.greeting}
@@ -341,25 +296,27 @@ export default function CustomHeader({
           </View>
         </Pressable>
 
+        {/* Right Icons Section */}
         <View style={styles.rightIconsContainer}>
-          {isUser ? (
+          {isUser && (
             <HeaderIconButton 
-              icon="cart-outline" 
-              color="#333" 
+              icon="cart" 
+              color="#4B5563" 
               badgeCount={cartCount} 
               onPress={() => navigation.navigate("CartScreen")} 
             />
-          ) : null}
-          {(isConsultant || isMentor) ? (
-            <HeaderIconButton 
-              icon="notifications-outline" 
-              color="#333" 
-              badgeCount={notificationCount} 
-              onPress={onNotificationPress || (() => console.log("Notif pressed"))} 
-            />
-          ) : null}
+          )}
+          
+          <HeaderIconButton 
+            icon="notifications" 
+            color="#FFFFFF" 
+            isPremium={true} 
+            badgeCount={notificationCount} 
+            onPress={onNotificationPress || (() => console.log("Notif pressed"))} 
+          />
+          
           {(!isUser && !isConsultant && !isMentor) && (
-             <HeaderIconButton icon={theme.actionIcon} color="#333" onPress={onActionPress} />
+             <HeaderIconButton icon={theme.actionIcon} color="#4B5563" onPress={onActionPress} />
           )}
         </View>
       </View>
@@ -368,8 +325,9 @@ export default function CustomHeader({
 
   return (
     <View style={{ zIndex: 1000 }}>
+      {/* Background Blur layer */}
       <BlurView
-        intensity={90}
+        intensity={95}
         tint="light"
         style={{
           position: 'absolute',
@@ -379,13 +337,14 @@ export default function CustomHeader({
         }}
       />
 
+      {/* Main Header Container with Drop Shadow */}
       <AnimatedBlurView
-        intensity={85}
+        intensity={90}
         tint="light"
         style={[
           styles.blurWrapper,
           {
-            paddingTop: (insets?.top || 40) + 10,
+            paddingTop: (insets?.top || 40) + 12, // slightly more padding
             transform: [{ translateY: translateY || 0 }]
           }
         ]}
@@ -393,17 +352,24 @@ export default function CustomHeader({
         {renderHeaderContent()}
       </AnimatedBlurView>
 
+      {/* Profile Modal */}
       <Modal transparent={true} visible={isProfileDropdownVisible} animationType="fade" onRequestClose={() => setProfileDropdownVisible(false)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setProfileDropdownVisible(false)}>
-          <View style={[styles.dropdownContainerLeft, { top: insets.top + 60 }]}>
+          <View style={[styles.dropdownContainerLeft, { top: insets.top + 65 }]}>
             <TouchableOpacity style={styles.dropdownItem} onPress={() => handleProfileMenuSelect('profile')}>
-              <Ionicons name="person-circle-outline" size={22} color="#4B5563" />
+              <View style={styles.dropdownIconWrapper}>
+                 <Ionicons name="person" size={18} color="#F59E0B" />
+              </View>
               <Text style={styles.dropdownText}>My Profile</Text>
             </TouchableOpacity>
+            
             <View style={styles.divider} />
+            
             <TouchableOpacity style={styles.dropdownItem} onPress={() => handleProfileMenuSelect('logout')}>
-              <Ionicons name="log-out-outline" size={22} color="#EF4444" />
-              <Text style={[styles.dropdownText, { color: '#EF4444', fontWeight: '600' }]}>Log Out</Text>
+              <View style={[styles.dropdownIconWrapper, { backgroundColor: '#FEE2E2' }]}>
+                 <Ionicons name="log-out" size={18} color="#EF4444" />
+              </View>
+              <Text style={[styles.dropdownText, { color: '#EF4444', fontWeight: '700' }]}>Log Out</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -413,25 +379,135 @@ export default function CustomHeader({
 }
 
 const styles = StyleSheet.create({
-  blurWrapper: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(0,0,0,0.1)' },
-  contentContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 15 },
+  blurWrapper: { 
+    // Tagda Bottom Shadow for Header
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderBottomWidth: 0, 
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 10 },
+      android: { elevation: 8 },
+      web: { boxShadow: '0px 6px 15px rgba(0,0,0,0.06)' }
+    })
+  },
+  contentContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 20, 
+    paddingBottom: 16 
+  },
+  
+  // Left Side / Profile
   leftSection: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  avatar: { width: 44, height: 44, borderRadius: 22, borderWidth: 2, marginRight: 12 },
+  avatarRing: {
+    width: 50, 
+    height: 50, 
+    borderRadius: 25, 
+    padding: 2, 
+    backgroundColor: '#FFFFFF', // inner white border
+    borderWidth: 2, 
+    borderColor: '#F59E0B', // Amber outer ring
+    marginRight: 12,
+    // Avatar Shadow
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  avatar: { width: '100%', height: '100%', borderRadius: 20 },
   textContainer: { justifyContent: 'center' },
-  greetingText: { fontSize: 14, color: '#4B5563' },
-  nameText: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  subText: { fontSize: 12, color: '#6B7280', marginTop: 2, fontWeight: '500' },
-  rightIconsContainer: { flexDirection: 'row', alignItems: 'center' },
-  iconButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255, 255, 255, 0.6)', justifyContent: 'center', alignItems: 'center' },
-  badge: { position: 'absolute', top: -2, right: -2, backgroundColor: '#EF4444', minWidth: 18, height: 18, borderRadius: 9, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: '#FFF' },
-  badgeText: { color: '#FFF', fontSize: 10, fontWeight: 'bold', paddingHorizontal: 4 },
-  profileHeaderTitle: { fontSize: 20, fontWeight: '700', color: '#111', letterSpacing: 0.5, textAlign: 'center', flex: 1 },
-  chatHeaderTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  searchBarContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.05)', borderRadius: 16, paddingHorizontal: 15, paddingVertical: 10, marginRight: 10 },
-  searchInput: { flex: 1, marginLeft: 8, fontSize: 16, color: '#111' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.15)' },
-  dropdownContainerLeft: { position: 'absolute', left: 20, backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 8, width: 200, elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.1, shadowRadius: 12 },
+  greetingText: { fontSize: 13, color: '#6B7280', letterSpacing: 0.2 },
+  nameText: { fontSize: 16, fontWeight: '800', color: '#111827', letterSpacing: -0.2 },
+  subText: { fontSize: 12, color: '#9CA3AF', marginTop: 2, fontWeight: '600' },
+  
+  // Right Side / Icons
+  rightIconsContainer: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  iconButton: { 
+    width: 42, 
+    height: 42, 
+    borderRadius: 21, 
+    backgroundColor: '#F3F4F6', // Light grey for standard buttons
+    justifyContent: 'center', 
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  premiumIconButton: {
+    backgroundColor: '#F59E0B', // Amber color for primary action (Notification)
+    borderWidth: 0,
+    // Amber Glow Shadow
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  badge: { 
+    position: 'absolute', 
+    top: -4, 
+    right: -4, 
+    backgroundColor: '#EF4444', 
+    minWidth: 20, 
+    height: 20, 
+    borderRadius: 10, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    borderWidth: 2, 
+    borderColor: '#FFF' 
+  },
+  badgeText: { color: '#FFF', fontSize: 10, fontWeight: '900', paddingHorizontal: 4 },
+  
+  // Typography for alternate screens
+  profileHeaderTitle: { fontSize: 20, fontWeight: '800', color: '#111827', letterSpacing: 0.5 },
+  chatHeaderTitle: { fontSize: 20, fontWeight: '800', color: '#111827', marginLeft: 4 },
+  
+  // Search Bar
+  searchBarContainer: { 
+    flex: 1, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#FFFBEB', // Very light amber tint
+    borderRadius: 20, 
+    paddingHorizontal: 16, 
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    marginRight: 10,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  searchInput: { flex: 1, marginLeft: 10, fontSize: 15, color: '#111827', fontWeight: '500' },
+  closeSearchBtn: { padding: 4 },
+  
+  // Modal Dropdown
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.2)' },
+  dropdownContainerLeft: { 
+    position: 'absolute', 
+    left: 20, 
+    backgroundColor: '#FFFFFF', 
+    borderRadius: 20, 
+    paddingVertical: 10, 
+    width: 220, 
+    // Dropdown Shadow
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 10 }, 
+    shadowOpacity: 0.15, 
+    shadowRadius: 20,
+    elevation: 10,
+  },
   dropdownItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16 },
-  dropdownText: { fontSize: 15, color: '#4B5563', marginLeft: 12, fontWeight: '500' },
-  divider: { height: StyleSheet.hairlineWidth, backgroundColor: '#E5E7EB', marginVertical: 4, marginHorizontal: 16 },
+  dropdownIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#FFFBEB', // Light amber background for icon
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownText: { fontSize: 15, color: '#374151', marginLeft: 14, fontWeight: '600' },
+  divider: { height: 1, backgroundColor: '#F3F4F6', marginVertical: 4, marginHorizontal: 16 },
 });

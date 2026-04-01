@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Career-Guide",
-    "slug": "Career-Guide",
+    "name": "Astroneet",
+    "slug": "Astroneet",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -51,7 +51,8 @@
           "microphonePermission": "Allow Career Guide to access your microphone for audio calls."
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-font"
     ]
   }
 }

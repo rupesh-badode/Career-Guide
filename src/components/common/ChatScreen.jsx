@@ -11,8 +11,10 @@ import { useSelector } from 'react-redux';
 import { chatHistory } from '../../services/user';
 import { ConsultantchatHistory } from '../../services/consultantAPI';
 import { backendConfig } from '../../constants/MainContent';
+import { TouchableOpacity } from 'react-native';
+import EmojiPicker, { EmojiKeyboard } from 'rn-emoji-keyboard';
 
-const SOCKET_URL = backendConfig.origin; 
+const SOCKET_URL = backendConfig.origin;
 
 const AnimatedIcon = ({ name, size = 24, color = '#333', onPress, style }) => (
   <Pressable
@@ -25,13 +27,39 @@ const AnimatedIcon = ({ name, size = 24, color = '#333', onPress, style }) => (
 
 export default function ChatScreen({ navigation, route }) {
   const { receiverId, receiverName, receiverAvatar, consultationId, senderId } = route?.params || {};
-  
+
+
+  const [inputText, setInputText] = useState('');
+  const [showEmojis, setShowEmojis] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+
+  // Basic emoji list (Aap ise badha sakte hain ya 'react-native-emoji-selector' package use kar sakte hain)
+  // const emojis = ['😀', '😂', '😍', '🙏', '🔥', '👍', '🎉', '❤️'];
+
+  const handleEmojiSelect = (emojiObject) => {
+    // emojiObject.emoji mein actual emoji character hota hai
+    setInputText((prevText) => prevText + emojiObject.emoji);
+  };
+
+
+  const handleMicPress = () => {
+    if (isRecording) {
+      // Yahan recording stop karne ka logic aayega
+      console.log('Recording stopped...');
+      setIsRecording(false);
+    } else {
+      // Yahan recording start karne ka logic aayega
+      console.log('Recording started...');
+      setIsRecording(true);
+    }
+  };
+
+
   // 👉 Redux state
   const authState = useSelector((state) => state.auth);
 
   // States
   const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,9 +67,9 @@ export default function ChatScreen({ navigation, route }) {
   const flatListRef = useRef(null);
 
   // 👉 Sahi ID Mapping (Konsi ID mil rahi hai, ab console me dikhega)
-  const myUserRole = authState?.userData?.role || authState?.role; 
+  const myUserRole = authState?.userData?.role || authState?.role;
 
-const myUserId = authState?.userData?._id || authState?.consultantData?._id || authState?._id || senderId;
+  const myUserId = authState?.userData?._id || authState?.consultantData?._id || authState?._id || senderId;
   const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(receiverName || 'User')}&background=0D8ABC&color=fff`;
   const chatUser = {
     name: receiverName || "User",
@@ -53,6 +81,7 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
   // 🐛 1. INITIAL MOUNT LOGS
   // ==============================
   useEffect(() => {
+    console.log("🌍 DEBUG: SOCKET_URL is ->", SOCKET_URL);
     console.log("🛠️ --- CHAT SCREEN MOUNTED ---");
     console.log("🟡 DEBUG: authState Object Keys ->", Object.keys(authState || {}));
     console.log("🟡 DEBUG: myUserRole extracted ->", myUserRole);
@@ -67,6 +96,7 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
   // 2. FETCH CHAT HISTORY
   // ==============================
   useEffect(() => {
+    console.log("🔌 DEBUG: msg history setup initiated.");
     const fetchHistory = async () => {
       if (!consultationId) return;
       setIsLoading(true);
@@ -80,7 +110,7 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
 
         const historyData = res?.data?.chats || res?.chats || res?.data || [];
         console.log("✅ DEBUG: History Fetched. Total Messages:", historyData.length);
-        
+
         if (historyData.length > 0) {
           setMessages(historyData);
           scrollToBottom();
@@ -101,30 +131,40 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
   useEffect(() => {
     console.log("🔌 DEBUG: Socket setup initiated.");
     if (!myUserId || !consultationId) {
-       console.log("🔴 DEBUG: Socket aborted! Missing myUserId or consultationId.");
-       return;
+      console.log("🔴 DEBUG: Socket aborted! Missing myUserId or consultationId.");
+      return;
     }
 
     if (!socketRef.current) {
-      socketRef.current = io(SOCKET_URL, { transports: ['websocket'] });
+      socketRef.current = io(SOCKET_URL, {
+        transports: ['polling', 'websocket'] // 👈 यहाँ बदलाव किया है
+      });
     }
 
     const socket = socketRef.current;
 
     // Agar pehle se connect ho chuka hai fast render me
     if (socket.connected) {
-        console.log("🟢 DEBUG: Socket was already connected!");
-        setIsConnected(true);
+      console.log("🟢 DEBUG: Socket was already connected!");
+      setIsConnected(true);
+      socket.emit('joinRoom', { consultationId, userId: myUserId });
     }
 
     socket.on('connect', () => {
-        console.log("🟢 DEBUG: Socket Officially Connected! ID:", socket.id);
-        setIsConnected(true);
+      console.log("🟢 DEBUG: Socket Officially Connected! ID:", socket.id);
+      setIsConnected(true);
+
+      console.log(`🔗 DEBUG: Emitting joinRoom for ID: ${consultationId} by user: ${myUserId}`);
+      socket.emit('joinRoom', { consultationId, userId: myUserId });
+    });
+
+    socket.on('connect_error', (err) => {
+      console.log("🔴 DEBUG: Socket Connection ERROR ->", err.message);
     });
 
     socket.on('disconnect', () => {
-        console.log("🔴 DEBUG: Socket Disconnected!");
-        setIsConnected(false);
+      console.log("🔴 DEBUG: Socket Disconnected!");
+      setIsConnected(false);
     });
 
     console.log(`🔗 DEBUG: Emitting joinRoom for ID: ${consultationId} by user: ${myUserId}`);
@@ -136,10 +176,9 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
 
       // 🔥 THE FIX: Agar sender ki ID meri ID se match karti hai, toh list me dobara add mat karo
       if (String(incomingMessage.senderId) === String(myUserId)) {
-          console.log("🛑 DEBUG: Ignored my own message (Echo stopped)");
-          return; // Yahan se wapas laut jao, message add mat karo
+        console.log("🛑 DEBUG: Ignored my own message (Echo stopped)");
+        return;
       }
-
       setMessages(prev => [...prev, incomingMessage]);
       scrollToBottom();
     });
@@ -148,6 +187,7 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
       socket.off('receiveMessage');
       socket.off('connect');
       socket.off('disconnect');
+      socket.off('connect_error');
     };
   }, [consultationId, myUserId]);
 
@@ -159,14 +199,17 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
     console.log("🔵 DEBUG: Input Text ->", inputText);
     console.log("🔵 DEBUG: myUserId ->", myUserId);
 
+
+    setShowEmojis(false);
+
     if (inputText.trim() === '') {
-        console.log("🔴 DEBUG: Send Blocked! Message is empty.");
-        return;
+      console.log("🔴 DEBUG: Send Blocked! Message is empty.");
+      return;
     }
 
     if (!myUserId) {
-        console.log("🔴 DEBUG: Send Blocked! myUserId is NULL or UNDEFINED.");
-        return;
+      console.log("🔴 DEBUG: Send Blocked! myUserId is NULL or UNDEFINED.");
+      return;
     }
 
     const safeSenderType = myUserRole ? myUserRole.toLowerCase() : "user";
@@ -175,7 +218,7 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
       consultationId: consultationId,
       message: inputText,
       senderId: myUserId,
-      receiverId: receiverId, 
+      receiverId: receiverId,
       senderType: safeSenderType,
     };
 
@@ -186,11 +229,11 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
       _id: Date.now().toString(),
       createdAt: new Date().toISOString()
     };
-    
+
     setMessages(prev => {
-        const newArray = [...(prev || []), localMessage];
-        console.log("🟢 DEBUG: State Updated! New message count:", newArray.length);
-        return newArray;
+      const newArray = [...(prev || []), localMessage];
+      console.log("🟢 DEBUG: State Updated! New message count:", newArray.length);
+      return newArray;
     });
 
     if (socketRef.current) {
@@ -215,7 +258,7 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
   const renderMessage = ({ item }) => {
     // String matching just in case object IDs act weird
     const isMe = String(item.senderId) === String(myUserId);
-    
+
     let displayTime = '';
     if (item.createdAt) {
       const dateObj = new Date(item.createdAt);
@@ -237,11 +280,11 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        
+
         {/* --- 1. CHAT HEADER --- */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <AnimatedIcon name="arrow-back" size={24} color="#333" onPress={() => navigation.goBack()} style={styles.backIcon} />
+            <AnimatedIcon name="chevron-back" size={24} color="#333" onPress={() => navigation.goBack()} style={styles.backIcon} />
 
             <View style={styles.avatarContainer}>
               <Image source={{ uri: chatUser.avatar }} style={styles.avatar} />
@@ -256,59 +299,111 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
             </View>
           </View>
 
-          <View style={styles.headerRight}>
+          {/* <View style={styles.headerRight}>
             <AnimatedIcon name="call-outline" size={22} color="#3B82F6" style={styles.headerIcon} />
             <AnimatedIcon name="videocam-outline" size={24} color="#3B82F6" />
-          </View>
+          </View> */}
         </View>
-        
+
         {/* --- 2. MESSAGE LIST --- */}
         {isLoading ? (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#3B82F6" />
-                <Text style={{ marginTop: 10, color: '#6B7280' }}>Loading chat...</Text>
-            </View>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#3B82F6" />
+            <Text style={{ marginTop: 10, color: '#6B7280' }}>Loading chat...</Text>
+          </View>
         ) : (
-            <FlatList
-              ref={flatListRef}
-              data={messages}
-              keyExtractor={(item, index) => item._id || index.toString()}
-              renderItem={renderMessage}
-              contentContainerStyle={styles.messageList}
-              showsVerticalScrollIndicator={false}
-              onContentSizeChange={scrollToBottom}
-            />
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item, index) => item._id || index.toString()}
+            renderItem={renderMessage}
+            contentContainerStyle={styles.messageList}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={scrollToBottom}
+          />
         )}
 
+
+        <EmojiPicker
+          open={showEmojis}
+          onClose={() => setShowEmojis(false)}
+          onEmojiSelected={handleEmojiSelect}
+          // Aap chahain toh isko customize bhi kar sakte hain
+          theme={{
+            backdrop: '#16161888',
+            knob: '#766dfc',
+            container: '#ffffff',
+            header: '#000000',
+            skinIndicators: '#d3d3d3',
+            keysAmount: 8, // Ek row mein kitne emoji dikhane hain
+            key: '#000000',
+          }}
+        />
+
         {/* --- 3. INPUT AREA --- */}
-        <View style={styles.inputContainer}>
-          <AnimatedIcon name="add-circle-outline" size={28} color="#888" style={styles.inputIcon} />
+        <View>
+          {/* Emoji Picker Popup */}
+          {/* {showEmojis && (
+            <View style={styles.emojiPickerContainer}>
+              {emojis.map((emoji, index) => (
+                <TouchableOpacity key={index} onPress={() => handleEmojiSelect(emoji)}>
+                  <Text style={styles.emojiText}>{emoji}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )} */}
 
-          <View style={styles.textInputWrapper}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Type a message..."
-              placeholderTextColor="#999"
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-            />
-            <AnimatedIcon name="document-attach-outline" size={22} color="#888" style={styles.attachIcon} />
+          {/* --- 3. INPUT AREA --- */}
+          <View style={styles.inputContainer}>
+            <View style={styles.textInputWrapper}>
+              <TextInput
+                style={styles.textInput}
+                placeholder={isRecording ? "Recording audio..." : "Type a message..."}
+                placeholderTextColor="#999"
+                value={inputText}
+                onChangeText={setInputText}
+                multiline
+                editable={!isRecording} // Recording ke time typing disable karein
+              />
+
+              {/* Document Attach replaced with Emoji Icon */}
+              <Pressable onPress={() => setShowEmojis(true)}>
+                <AnimatedIcon
+                  name={showEmojis ? "close-outline" : "happy-outline"}
+                  size={24}
+                  color="#888"
+                  style={styles.attachIcon}
+                />
+              </Pressable>
+            </View>
+
+            {inputText.trim().length > 0 ? (
+              <Pressable
+                onPress={handleSendMessage}
+                style={({ pressed }) => [
+                  styles.sendButton,
+                  { transform: [{ scale: pressed ? 0.9 : 1 }] }
+                ]}
+              >
+                <Ionicons name="send" size={18} color="#fff" style={styles.sendIconFix} />
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={handleMicPress}
+                style={({ pressed }) => [
+                  styles.micButton,
+                  isRecording && styles.micRecordingStyle, // Recording start hone pe style change
+                  { transform: [{ scale: pressed ? 0.9 : 1 }] }
+                ]}
+              >
+                <AnimatedIcon
+                  name="mic-outline"
+                  size={24}
+                  color={isRecording ? "#fff" : "#888"}
+                />
+              </Pressable>
+            )}
           </View>
-
-          {inputText.trim().length > 0 ? (
-            <Pressable
-              onPress={handleSendMessage}
-              style={({ pressed }) => [
-                styles.sendButton,
-                { transform: [{ scale: pressed ? 0.9 : 1 }] }
-              ]}
-            >
-              <Ionicons name="send" size={18} color="#fff" style={styles.sendIconFix} />
-            </Pressable>
-          ) : (
-            <AnimatedIcon name="mic-outline" size={28} color="#888" style={styles.micIcon} />
-          )}
         </View>
 
       </KeyboardAvoidingView>
@@ -317,7 +412,7 @@ const myUserId = authState?.userData?._id || authState?.consultantData?._id || a
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff', paddingTop: Platform.OS === 'android' ? 30 : 0 },
+  safeArea: { flex: 1, backgroundColor: '#fff', paddingTop: Platform.OS === 'android' ? 20 : 0 },
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
@@ -348,5 +443,30 @@ const styles = StyleSheet.create({
   sendButton: { width: 44, height: 44, backgroundColor: '#3B82F6', borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
   sendIconFix: { marginLeft: 4 },
   micIcon: { marginLeft: 4 },
-  backIcon: { marginRight: 5 }
+  backIcon: { marginRight: 5 },
+  emojiPickerContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 20,
+    marginBottom: 10,
+    justifyContent: 'space-around',
+    elevation: 2, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+  },
+  emojiText: {
+    fontSize: 24,
+  },
+  micButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 20,
+  },
+  micRecordingStyle: {
+    backgroundColor: '#ff4444', // Red color jab recording chalu ho
+  },
 });

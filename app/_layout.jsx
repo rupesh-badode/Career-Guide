@@ -51,6 +51,7 @@ import AudioCallScreen from '../src/components/common/AudioCallScreen';
 import CheckoutButton from './tabs/user/profile.jsx/CheckoutButton';
 import IncomingCallModal from '../src/components/common/IncomingCallModal';
 import MentorProfileDetails from './tabs/mentor/profile/MentorProfileDetails';
+import NewsScreen from './tabs/user/news/NewsList';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -214,6 +215,7 @@ function AppNavigator() {
               <Stack.Screen name='ChangePassword' component={ChangePasswordScreen} />
               <Stack.Screen name='CheckoutButton' component={CheckoutButton} />
               <Stack.Screen name='MentorProfileDetails' component={MentorProfileDetails} />
+              <Stack.Screen name='News' component={NewsScreen} />
 
             </>
           )}

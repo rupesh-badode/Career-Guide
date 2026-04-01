@@ -317,7 +317,7 @@ export default function TopMentorsOverview() {
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: { marginTop: 25, marginBottom: 15 },
+  sectionContainer: { marginTop: 25, marginBottom: 5, },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 15 },
   sectionTitle: { fontSize: 22, fontWeight: 'bold', color: '#111827' },
   
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   listContent: { paddingLeft: 20, paddingRight: 5 },
   cardContainer: {
     width: CARD_WIDTH, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginRight: 15,
-    borderWidth: 1, borderColor: '#F3F4F6',
+    borderWidth: 1, borderColor: '#F3F4F6',marginBottom: 2,
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 },
       android: { elevation: 3 },

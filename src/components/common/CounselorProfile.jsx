@@ -125,7 +125,7 @@ export default function CounselorProfile({ route, navigation }) {
         contentContainerStyle={styles.scrollContent}
       >
         {isLoading && !profileData && (
-          <ActivityIndicator size="small" color="#4F46E5" style={{ marginBottom: 15 }} />
+          <ActivityIndicator size="small" color="#F59E0B" style={{ marginBottom: 15 }} />
         )}
 
         {/* ==========================================
@@ -207,7 +207,7 @@ export default function CounselorProfile({ route, navigation }) {
               activeOpacity={0.7}
               onPress={() => setIsRatingModalVisible(true)}
             >
-              <Ionicons name="create-outline" size={16} color="#4F46E5" />
+              <Ionicons name="create-outline" size={16} color="#F59E0B" />
               <Text style={styles.writeReviewText}>Write a Review</Text>
             </TouchableOpacity>
           </View>
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
   writeReviewText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#4F46E5', 
+    color: '#F59E0B', 
     marginLeft: 4,
   },
   reviewCard: {
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   callBtn: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#F59E0B',
   },
   callBtnText: {
     color: '#FFFFFF',

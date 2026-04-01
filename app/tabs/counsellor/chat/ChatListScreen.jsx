@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { myBooking } from '../../../../src/services/consultantAPI'; // Ensure path is correct
 import { useNavigation } from '@react-navigation/native';
 
-const THEME_COLOR = '#10B981';
+const THEME_COLOR = '#F59E0B';
 
 // ==========================================
 // ANIMATED LARGE CARD COMPONENT
@@ -62,7 +62,7 @@ const ChatListItem = ({ item, index, onPressChat, onPressVideoCall, onPressAudio
   const formattedDate = bookingDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
   const isConfirmed = item.status === 'confirmed';
-  const statusColor = isConfirmed ? THEME_COLOR : '#F59E0B';
+  const statusColor = isConfirmed ? THEME_COLOR : '#00ff15';
   const statusBg = isConfirmed ? '#ECFDF5' : '#FEF3C7';
 
   return (

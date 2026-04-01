@@ -141,17 +141,18 @@ export default function ProfileScreen() {
       ]
     );
   }
+  
 
   // 👉 Dynamic Theme Setup (3 Roles)
-  let primaryColor = '#3B82F6'; // User: Blue
+  let primaryColor = '#F59E0B'; // User: Blue
   let bgColor = '#EFF6FF';
 
   if (role === 'Consultant') {
-    primaryColor = '#10B981'; // Consultant: Green
-    bgColor = '#ECFDF5';
+    primaryColor = '#F59E0B'; // Consultant: Green
+    bgColor = '#EFF6FF';
   } else if (role === 'Mentor') {
-    primaryColor = '#8B5CF6'; // Mentor: Purple
-    bgColor = '#EDE9FE';
+    primaryColor = '#F59E0B'; // Mentor: Purple
+    bgColor = '#EFF6FF';
   }
 
   const theme = {
@@ -236,7 +237,7 @@ export default function ProfileScreen() {
               <>
                 <AnimatedMenuItem index={1} icon="person" title="Mentor Profile" subtitle="Update your mentoring details" color={theme.primary} onPress={() => navigation.navigate("MentorProfileDetails")} />
                 <AnimatedMenuItem index={2} icon="calendar" title="Manage Sessions" subtitle="View and manage your schedule" color={theme.primary} onPress={() => navigation.navigate("MentorSessions")} />
-                <AnimatedMenuItem index={3} icon="newspaper" title="My Blogs" subtitle="Write and manage articles" color={theme.primary} onPress={() => navigation.navigate("MentorBlog")} />
+                {/* <AnimatedMenuItem index={3} icon="newspaper" title="My Blogs" subtitle="Write and manage articles" color={theme.primary} onPress={() => navigation.navigate("MentorBlog")} /> */}
               </>
             )}
 
@@ -253,7 +254,8 @@ export default function ProfileScreen() {
             <Text style={styles.sectionTitle}>Support & About</Text>
 
             <AnimatedMenuItem index={5} icon="shield-half" title="Legal Documents" subtitle="Terms, conditions & privacy policy" color={theme.primary} onPress={() => navigation.navigate("LegalScreen")} />
-
+            <AnimatedMenuItem index={5} icon="videocam" title="Blogs" subtitle="Read our blogs" color={theme.primary} onPress={() => navigation.navigate("Blogs")} />
+            
             <Text style={styles.sectionTitle}>Account Actions</Text>
 
             <AnimatedMenuItem index={6} icon="log-out" title="Logout" subtitle="Sign out of your account safely" isDanger={true} onPress={onLogout} />

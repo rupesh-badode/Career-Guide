@@ -19,8 +19,8 @@ const ITEM_WIDTH = width;
 const CAROUSEL_HEIGHT = Platform.OS === 'web' ? 400 : 250; 
 
 // 🔥 Mentor Theme Colors (Soft Purples & Indigo tints)
-const MENTOR_PRIMARY = '#8B5CF6';
-const BG_COLORS = ['#F5F3FF', '#EDE9FE', '#F3E8FF', '#FAF5FF'];
+const MENTOR_PRIMARY = '#F27A21';
+const BG_COLORS = ['#ffefe2', '#fde7d7', '#ffe7d5', 'rgb(254, 226, 204)'];
 
 // --- Premium Mentor Skeleton Loader ---
 const SkeletonLoader = () => {

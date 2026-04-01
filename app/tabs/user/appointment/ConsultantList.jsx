@@ -194,8 +194,8 @@ const ConsultantList = ({ contentPaddingTop = 20, onScroll, searchQuery, activeF
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            tintColor="#3B82F6" // iOS Spinner Color
-            colors={['#3B82F6']} // Android Spinner Color
+            tintColor="#F59E0B" // iOS Spinner Color
+            colors={['#F59E0B']} // Android Spinner Color
           />
         }
       />

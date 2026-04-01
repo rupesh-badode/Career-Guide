@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 12,
-    color: '#4F46E5',
+    color: '#F59E0B',
     fontWeight: '700',
     textTransform: 'uppercase',
     marginBottom: 4,
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: '#F59E0B',
     marginBottom: 4,
   },
   author: {
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     marginTop: 'auto', // Pushes the button to the bottom
   },
   addToCartBtn: {
-    backgroundColor: '#0f172a', // Dark black/blue for add to cart
+    backgroundColor: '#F59E0B', // Premium Amber for add to cart
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',

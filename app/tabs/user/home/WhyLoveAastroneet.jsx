@@ -63,9 +63,9 @@ const WhyLoveAastroneet = () => {
         <View style={styles.quoteIcon}>
           {/* <Ionicons name="quote" size={30} color="rgba(16, 185, 129, 0.2)" /> */}
         </View>
-        
+
         <Text style={styles.message}>"{item.msg}"</Text>
-        
+
         <View style={styles.profileRow}>
           <Image source={{ uri: item.img }} style={styles.avatar} />
           <View style={styles.info}>
@@ -85,8 +85,16 @@ const WhyLoveAastroneet = () => {
     <View style={styles.container}>
       {/* Header Section */}
       <View style={styles.header}>
-        <Text style={styles.title}>Why Users <Text style={{color: '#4F46E5'}}>Love</Text> Aastroneet?</Text>
-        <Text style={styles.subtitle}>Hazaro log hum par bharosa karte hain apni growth ke liye.</Text>
+        <Text style={styles.badge}>⭐ Trusted by Thousands</Text>
+
+        <Text style={styles.title}>
+          Why Users <Text style={styles.highlight}>Love</Text> Aastroneet
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Empowering students with expert guidance, mentorship,
+          and career clarity for a brighter future.
+        </Text>
       </View>
 
       {/* Animated Carousel */}
@@ -159,7 +167,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f1f5f9',
     elevation: 5,
-    shadowColor: '#4F46E5',
+    shadowColor: '#F59E0B',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
     shadowRadius: 15,
@@ -197,7 +205,7 @@ const styles = StyleSheet.create({
   },
   role: {
     fontSize: 12,
-    color: '#4F46E5',
+    color: '#F59E0B',
     fontWeight: '600',
   },
   ratingBox: {
@@ -222,9 +230,44 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#F59E0B',
     marginHorizontal: 4,
   },
+  header: {
+  alignItems: "center",
+  paddingHorizontal: 20,
+  marginBottom: 25,
+},
+
+badge: {
+  backgroundColor: "rgba(245,158,11,0.15)",
+  color: "#F59E0B",
+  paddingHorizontal: 12,
+  paddingVertical: 4,
+  borderRadius: 20,
+  fontSize: 12,
+  fontWeight: "600",
+  marginBottom: 8,
+},
+
+title: {
+  fontSize: 24,
+  fontWeight: "800",
+  color: "#111827",
+  textAlign: "center",
+},
+
+highlight: {
+  color: "#F59E0B",
+},
+
+subtitle: {
+  marginTop: 8,
+  fontSize: 14,
+  color: "#6B7280",
+  textAlign: "center",
+  lineHeight: 20,
+}
 });
 
 export default WhyLoveAastroneet;

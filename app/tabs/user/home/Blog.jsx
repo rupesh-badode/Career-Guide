@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 20,
     marginTop: 16,
-    marginBottom: 8
+    marginBottom: 8,
   },
   header: {
     flexDirection: 'row',
@@ -162,6 +162,7 @@ const styles = StyleSheet.create({
     marginRight: 20,
     overflow: 'hidden',
     borderWidth: 1,
+    marginBottom: 5,
     borderColor: '#F3F4F6',
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.1, shadowRadius: 10 },

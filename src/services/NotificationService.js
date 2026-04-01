@@ -63,3 +63,42 @@ export async function registerForPushNotificationsAsync() {
 
   return token;
 }
+
+
+
+
+export const scheduleMeetingReminder = async (bookingData) => {
+  try {
+    // 1. Notification Permission Check karna
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') {
+      console.log('Notification permission denied!');
+      return;
+    }
+
+    // 2. Exact Meeting ka Time nikalna
+    const meetingDate = getMeetingDateTime(bookingData.date, bookingData.time);
+    
+    // 3. Meeting se 10 minute (10 * 60 * 1000 ms) pehle ka time calculate karna
+    const reminderTime = new Date(meetingDate.getTime() - 10 * 60 * 1000);
+
+    // 4. Check karna ki ye reminder time past mein toh nahi chala gaya
+    if (reminderTime > new Date()) {
+      const id = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "⏳ Meeting Starting in 10 Minutes!",
+          body: `Be ready! Your consultation is scheduled at ${bookingData.time}. Tap to open meeting link.`,
+          data: { meetingLink: bookingData.meetingLink }, // User tap karega toh ye link app me mil jayega
+        },
+        trigger: {
+          date: reminderTime, // Notification is exact time par aayega
+        },
+      });
+      console.log("✅ Reminder set successfully for:", reminderTime, "Notification ID:", id);
+    } else {
+      console.log("⚠️ Meeting time is too close, cannot set 10 min reminder.");
+    }
+  } catch (error) {
+    console.log("❌ Error scheduling notification:", error);
+  }
+};

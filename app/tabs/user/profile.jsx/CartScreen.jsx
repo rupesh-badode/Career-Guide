@@ -61,7 +61,7 @@ const CartScreen = ({ navigation }) => {
 
   // --- SKELETON COMPONENTS ---
   const CartItemSkeleton = () => (
-    <Animated.View style={[styles.card, { opacity }]}>
+    <Animated.View style={[styles.card,]}>
       <View style={[styles.coverImage, { backgroundColor: '#e2e8f0' }]} />
       <View style={styles.detailsContainer}>
         <View style={{ height: 16, width: '80%', backgroundColor: '#e2e8f0', borderRadius: 4, marginBottom: 8 }} />
@@ -76,7 +76,7 @@ const CartScreen = ({ navigation }) => {
   );
 
   const AddressItemSkeleton = () => (
-    <Animated.View style={[styles.addressCard, { opacity, borderStyle: 'solid' }]}>
+    <Animated.View style={[styles.addressCard, {  borderStyle: 'solid' }]}>
       <View style={{ flex: 1 }}>
         <View style={{ height: 14, width: '30%', backgroundColor: '#e2e8f0', borderRadius: 4, marginBottom: 8 }} />
         <View style={{ height: 12, width: '90%', backgroundColor: '#e2e8f0', borderRadius: 4, marginBottom: 4 }} />
@@ -152,7 +152,7 @@ const CartScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}><Ionicons name="chevron-back" size={24} /></TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.goBack()}><Ionicons name="chevron-back" size={24} color="#111" /></TouchableOpacity>
         <Text style={styles.headerTitle}>My Cart</Text>
         <View style={{ width: 40 }} />
       </View>
@@ -284,8 +284,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc', paddingTop: Platform.OS === 'android' ? 35 : 0 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   flexContainer: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff' },
-  headerTitle: { fontSize: 18, fontWeight: 'bold' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 20, backgroundColor: '#fff' },
+  headerTitle: { fontSize: 18, fontWeight: 'bold',color: '#111' },
   listContainer: { padding: 16 },
   card: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 16, elevation: 2 },
   coverImage: { width: 85, height: 120, borderRadius: 8 },
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   typeBadge: { alignSelf: 'flex-start', backgroundColor: '#f1f5f9', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   typeText: { fontSize: 10, fontWeight: 'bold' },
   bottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  price: { fontSize: 18, fontWeight: 'bold', color: '#2563eb' },
+  price: { fontSize: 18, fontWeight: 'bold', color: '#F59E0B' },
   quantityContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', borderRadius: 8, borderWidth: 1, borderColor: '#e2e8f0' },
   qtyBtn: { width: 32, height: 32, justifyContent: 'center', alignItems: 'center' },
   qtyBtnText: { fontSize: 18 },
@@ -305,14 +305,14 @@ const styles = StyleSheet.create({
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   summaryText: { fontSize: 16, color: '#64748b' },
   totalPrice: { fontSize: 22, fontWeight: 'bold' },
-  checkoutBtn: { backgroundColor: '#2563eb', paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
+  checkoutBtn: { backgroundColor: '#F59E0B', paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
   checkoutBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   bottomSheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '85%' },
   sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   sheetTitle: { fontSize: 18, fontWeight: 'bold' },
   addressCard: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, marginBottom: 12, flexDirection: 'row' },
-  selectedAddressCard: { borderColor: '#2563eb', backgroundColor: '#eff6ff', borderWidth: 2 },
+  selectedAddressCard: { borderColor: '#F59E0B', backgroundColor: '#fff9db', borderWidth: 2 },
   defaultAddressBg: { backgroundColor: '#f0fdf4' },
   addressHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   addressType: { fontSize: 14, fontWeight: 'bold', marginRight: 8 },
@@ -320,11 +320,11 @@ const styles = StyleSheet.create({
   defaultBadge: { backgroundColor: '#dcfce7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   defaultBadgeText: { color: '#16a34a', fontSize: 10, fontWeight: 'bold' },
   addAddressBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginBottom: 16, borderStyle: 'dashed', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 12 },
-  addAddressText: { color: '#2563eb', fontWeight: 'bold', marginLeft: 8 },
+  addAddressText: { color: '#F59E0B', fontWeight: 'bold', marginLeft: 8 },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   emptyEmoji: { fontSize: 64, marginBottom: 10 },
   emptyTitle: { fontSize: 20, fontWeight: 'bold' },
-  exploreBtn: { backgroundColor: '#2563eb', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, marginTop: 10 },
+  exploreBtn: { backgroundColor: '#F59E0B', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, marginTop: 10 },
   exploreBtnText: { color: '#fff', fontWeight: 'bold' },
   emptyListText: { textAlign: 'center', marginTop: 20, color: '#94a3b8' },
 });

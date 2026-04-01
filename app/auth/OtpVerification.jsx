@@ -6,9 +6,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
 import { login } from '../../src/redux/authSlice'; // Redux Login Action
+import { otpVerify } from '../../src/services/authAPI';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 👉 YAHAN APNI VERIFY OTP API IMPORT KAREIN
-import { verifyOtp } from '../../src/services/user'; 
 
 export default function OtpVerification({ route, navigation }) {
   const dispatch = useDispatch();
@@ -24,11 +25,21 @@ export default function OtpVerification({ route, navigation }) {
       Alert.alert("Invalid", "Please enter a valid OTP.");
       return;
     }
-
     setIsLoading(true);
     try {
       // Backend object pass karna -> { email, otp }
-      await verifyOtp({ email, otp });
+       const res = await otpVerify({ email, otp });
+        if (!res.success) {
+        throw new Error(res.message || "OTP Verification failed");
+        }
+        const token = res?.token || res?.data?.token;
+        const userDataToSave = { ...(res?.user || res?.data?.user), role: 'User' };
+
+        if (token) {
+        await AsyncStorage.setItem('userToken', token);
+        await AsyncStorage.setItem('userData', JSON.stringify(userDataToSave));
+        dispatch(login(userDataToSave));
+      }
       
       Alert.alert("Success!", "Account created successfully.");
       
@@ -36,6 +47,8 @@ export default function OtpVerification({ route, navigation }) {
       dispatch(login()); 
 
     } catch (error) {
+      // Alert.alert("Verification Failed", error.message || "Invalid OTP");
+      console.log("OTP Verification Error:", error);
       Alert.alert("Verification Failed", error.message || "Invalid OTP");
     } finally {
       setIsLoading(false);
@@ -45,9 +58,12 @@ export default function OtpVerification({ route, navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.crossBtn}>
+          <Ionicons name="close-circle-outline" size={32} color="#F27A21" />
+        </TouchableOpacity>
         
         <View style={styles.iconCircle}>
-          <Ionicons name="mail-open-outline" size={40} color="#3B82F6" />
+          <Ionicons name="mail-open-outline" size={40} color="#F27A21" />
         </View>
         
         <Text style={styles.title}>Verify Your Email</Text>
@@ -90,7 +106,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: 'bold', color: '#111827', marginBottom: 10 },
   subtitle: { fontSize: 15, color: '#6B7280', textAlign: 'center', marginBottom: 30, lineHeight: 22 },
   otpInput: { width: '100%', height: 60, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, fontSize: 24, letterSpacing: 8, color: '#3B82F6', fontWeight: 'bold', marginBottom: 20 },
-  verifyBtn: { width: '100%', backgroundColor: '#3B82F6', height: 55, borderRadius: 12, justifyContent: 'center', alignItems: 'center', shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 4 },
-  verifyBtnDisabled: { backgroundColor: '#93C5FD', elevation: 0 },
+  verifyBtn: { width: '100%', backgroundColor: '#F27A21', height: 55, borderRadius: 12, justifyContent: 'center', alignItems: 'center', shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 4 },
+  verifyBtnDisabled: { backgroundColor: '#edc2a1', elevation: 0 },
   verifyBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }
 });

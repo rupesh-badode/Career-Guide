@@ -4,11 +4,14 @@ import { DeviceEventEmitter } from "react-native";
 
 export const backendConfig = {
 
-  // base: "http://172.20.10.12:8089/api",
-  // origin: "http://172.20.10.12:8089",
+  // base: "https://api.astroneet.com/api",
+  // origin: "https://api.astroneet.com/",
 
   base: "http://192.168.29.89:8089/api",
   origin: "http://192.168.29.89:8089",
+
+  // base: "http://172.20.10.3:8089/api",
+  // origin: "http://172.20.10.3:8089",
 
   // base:"https://wjrr9w10-8089.inc1.devtunnels.ms/api",
   // origin:"https://wjrr9w10-8089.inc1.devtunnels.ms/",

@@ -6,12 +6,19 @@ import AnimatedDashboard from "./AnimatedDashboard";
 import MentorBenefits from "./Mentorbenifts";
 import MentorBlogsOverview from "./MentorBlogsOverview";
 import MentorImageCarousel from "./MentorImageCarousel";
+import { BlurView } from "expo-blur";
+
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 export default function MentorDashboard() {
     const insets = useSafeAreaInsets();
+
+
+    const STATUS_BAR_HEIGHT = insets.top;
+    const HEADER_HEIGHT = STATUS_BAR_HEIGHT + 70;
+    
     
     // 1. Header height definition (Top Inset + Content Height)
-    const HEADER_HEIGHT = insets.top + 60; 
 
     // 2. Scroll tracking value
     const scrollY = useRef(new Animated.Value(0)).current;
@@ -21,6 +28,13 @@ export default function MentorDashboard() {
     const headerOpacity = scrollY.interpolate({
         inputRange: [0, HEADER_HEIGHT], 
         outputRange: [1, 0], 
+        extrapolate: 'clamp',
+    });
+
+
+    const blurOpacity = scrollY.interpolate({
+        inputRange: [0, HEADER_HEIGHT], 
+        outputRange: [0, 1], // Scroll karne par blur dikhega
         extrapolate: 'clamp',
     });
 
@@ -45,6 +59,20 @@ export default function MentorDashboard() {
               <MentorBlogsOverview/>
                {/* <AnimatedDashboard /> */}
             </Animated.ScrollView>
+
+            {/* 👉 4. Status Bar Blur Effect Container */}
+            <AnimatedBlurView
+                tint="light" // Agar dark mode app hai toh "dark" kar dena
+                intensity={80} // Blur ki strength
+                style={[
+                    styles.statusBarBlur,
+                    {
+                        height: STATUS_BAR_HEIGHT,
+                        opacity: blurOpacity, // Scroll hone par active hoga
+                    }
+                ]}
+                pointerEvents="none" // Touch events block na kare
+            />
 
             {/* Fixed Header: Sirf opacity animate hogi, position nahi */}
             <Animated.View 

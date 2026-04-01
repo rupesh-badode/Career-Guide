@@ -18,7 +18,7 @@ import { getBlogs } from '../../../../src/services/mentorAPI';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.75; // Next card thoda sa dikhega
-const MENTOR_PRIMARY = '#8B5CF6';
+const MENTOR_PRIMARY = '#F27A21';
 
 // --- Premium Skeleton Loader for Blogs ---
 const BlogSkeletonCard = () => {
@@ -208,6 +208,7 @@ const styles = StyleSheet.create({
     marginRight: 15, // Space between cards
     borderWidth: 1,
     borderColor: '#F3F4F6',
+    marginBottom:5,
     overflow: 'hidden', // Ensures image stays within rounded corners
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 },
@@ -241,7 +242,7 @@ const styles = StyleSheet.create({
     color: MENTOR_PRIMARY,
   },
   cardContent: {
-    padding: 15,
+    padding: 25,
   },
   blogTitle: {
     fontSize: 15,

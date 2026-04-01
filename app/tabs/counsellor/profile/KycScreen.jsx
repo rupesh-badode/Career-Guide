@@ -19,7 +19,7 @@ import { CreateKYC, UpdatedKYC } from '../../../../src/services/consultantAPI';
 
 // ⚠️ API IMPORT: Update this path to where you saved CreateKYC and UpdatedKYC
 
-const PRIMARY_COLOR = '#10B981';
+const PRIMARY_COLOR = '#F59E0B';
 
 export default function KycScreen({ route, navigation }) {
   const existingData = route?.params?.kycData || null;

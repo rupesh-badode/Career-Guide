@@ -281,7 +281,7 @@ export default function AudioCallScreen({ route }) {
             <Text style={styles.subText}>
               {myRole === "User" ? "Calling..." : "Waiting for Call..."}
             </Text>
-            <ActivityIndicator size="small" color="#059669" style={{ marginTop: 10 }} />
+            <ActivityIndicator size="small" color="#F27A21" style={{ marginTop: 10 }} />
           </View>
         )}
       </View>

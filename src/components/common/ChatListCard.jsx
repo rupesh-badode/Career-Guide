@@ -76,7 +76,7 @@ export const SkeletonCard = () => {
 // ==========================================
 // 2. REAL BOOKING CARD COMPONENT
 // ==========================================
-export const BookingCard = ({ item, themeColor = "#3B82F6", onActionPress, onCardPress }) => {
+export const BookingCard = ({ item, themeColor = "#F59E0B", onActionPress, onCardPress }) => {
   const consultant = item?.consultantId;
   const bookingDate = item?.date ? new Date(item.date).toLocaleDateString('en-GB', {
     day: 'numeric', month: 'short', year: 'numeric'
@@ -236,7 +236,7 @@ export default function ChatListCard({
   const role = useSelector((state) => state.auth?.role);
   const [searchText, setSearchText] = useState('');
   const [filteredData, setFilteredData] = useState(data);
-  const primaryColor = customThemeColor || (role === 'Consultant' ? '#10B981' : '#3B82F6');
+  const primaryColor = customThemeColor || (role === 'Consultant' ? '#F59E0B' : '#F59E0B');
 
   useEffect(() => {
     if (!searchText) {

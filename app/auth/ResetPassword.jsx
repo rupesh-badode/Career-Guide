@@ -54,7 +54,7 @@ export default function ResetPassword({ route, navigation }) {
 
           <View style={styles.headerContainer}>
             <View style={styles.logoCircle}>
-              <Ionicons name="key" size={40} color="#3B82F6" />
+              <Ionicons name="key" size={40} color="#F27A21" />
             </View>
             <Text style={styles.title}>Reset Password</Text>
             <Text style={styles.subtitle}>Enter the OTP sent to <Text style={{fontWeight: 'bold'}}>{email}</Text> and your new password.</Text>
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: '#6B7280', textAlign: 'center', paddingHorizontal: 10, lineHeight: 20 },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, marginBottom: 16, paddingHorizontal: 15, height: 55 },
   input: { flex: 1, color: '#111827', fontSize: 16, height: '100%' },
-  btn: { backgroundColor: '#3B82F6', height: 55, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10, shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 4 },
-  btnDisabled: { backgroundColor: '#93C5FD', elevation: 0 },
+  btn: { backgroundColor: '#F27A21', height: 55, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10, shadowColor: '#F27A21', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 4 },
+  btnDisabled: { backgroundColor: '#F27A21', elevation: 0 },
   btnText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold', letterSpacing: 0.5 },
 });

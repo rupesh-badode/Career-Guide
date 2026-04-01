@@ -23,7 +23,7 @@ import { allMentor, BookMentor, verifyMentorbooking } from '../../../../src/serv
 import SlotSelectionModal from './SlotSelectionModal'; 
 import { key_id } from '../../../../src/constants/MainContent';
 
-const THEME_COLOR = '#4F46E5'; 
+const THEME_COLOR = '#F59E0B'; 
 
 // --- Vertical Skeleton Loader ---
 const SkeletonListCard = () => {

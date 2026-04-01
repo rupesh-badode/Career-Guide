@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getMentorBooking } from '../../../../src/services/user'; 
 import { useNavigation } from '@react-navigation/native';
 
-const THEME_COLOR = '#4F46E5'; // Premium Indigo
+const THEME_COLOR = '#F59E0B'; // Premium Amber#
 
 // --- Horizontal Chat Skeleton Loader ---
 const ChatSkeletonItem = () => {

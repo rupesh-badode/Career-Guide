@@ -9,7 +9,7 @@ import { getConsultantProfile } from '../../../../src/services/consultantAPI';
 const ListItem = ({ icon, label, value, isBio }) => (
   <View style={[styles.listItem, isBio && { alignItems: 'flex-start' }]}>
     <View style={styles.iconContainer}>
-      <Ionicons name={icon} size={20} color="#10B981" />
+      <Ionicons name={icon} size={20} color="#F59E0B" />
     </View>
     <View style={styles.textContainer}>
       <Text style={styles.label}>{label}</Text>
@@ -46,7 +46,7 @@ const ConsultProfileDetails = ({ navigation }) => {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#10B981" />
+        <ActivityIndicator size="large" color="#F59E0B" />
         <Text style={{ marginTop: 10, color: '#666' }}>Loading Profile...</Text>
       </View>
     );

@@ -12,6 +12,7 @@ import { Calendar } from 'react-native-calendars';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getSlots } from '../../../../src/services/user';
 import { logo } from "../../../../assets/icon.png"
+import { scheduleMeetingReminder } from '../../../../src/services/NotificationService';
 
 const { width } = Dimensions.get('window');
 
@@ -19,7 +20,7 @@ export default function BookingScreen({ route, navigation }) {
   const { consultantId = "1", consultantName = "Expert Consultant", amount = 499 } = route.params || {};
 
   const [isLoading, setIsLoading] = useState(false);
-  
+
 
   // Calendar ke liye strict YYYY-MM-DD format chahiye
   const todayStr = new Date().toISOString().split('T')[0];
@@ -54,8 +55,8 @@ export default function BookingScreen({ route, navigation }) {
 
             if (dayRecord.slots && Array.isArray(dayRecord.slots)) {
               dayRecord.slots.forEach(slotItem => {
-                if (!slotItem.isBooked) {
-                  // Pura object save karein IDs ke sath
+                // 👈 कंडीशन अपडेट की गई: सिर्फ तभी ऐड करो जब slotItem.time मौजूद हो
+                if (!slotItem.isBooked && slotItem.time) {
                   cleanData[recordDateStr].push({
                     time: slotItem.time,
                     slotId: slotItem._id,
@@ -64,6 +65,9 @@ export default function BookingScreen({ route, navigation }) {
                 }
               });
             }
+
+
+
           });
 
           // Duplicates hatana (Agar jarurat ho object based)
@@ -176,8 +180,9 @@ export default function BookingScreen({ route, navigation }) {
       // 1. Order Create Karein
       const orderResponse = await createBooking({
         consultantId: consultantId,
-        availabilityId: selectedTime.availabilityId,
-        slotId: selectedTime.slotId,
+        availabilityId: selectedTime?.availabilityId || null,
+        slotId: selectedTime?.slotId || null,
+        bookingDate: selectedDate
       });
 
       if (!orderResponse.success) {
@@ -189,7 +194,7 @@ export default function BookingScreen({ route, navigation }) {
       // 2. Razorpay Options
       const options = {
         description: `Consultation with ${consultantName}`,
-        image: "https://www.nopcommerce.com/images/thumbs/0021293_razorpay-payment.png",
+        image: "https://your-logo-url.png",
         currency: 'INR',
         key: key_id,
         amount: orderResponse.order.amount,
@@ -201,29 +206,44 @@ export default function BookingScreen({ route, navigation }) {
 
       // 3. Razorpay Checkout Open Karein
       RazorpayCheckout.open(options).then(async (data) => {
-        
-        // ✅ NEW: Backend ki requirement ke hisaab se Verification Payload banaya
+
+
+
+        // ✅ EXACT PAYLOAD FOR BACKEND VERIFICATION
         const verificationPayload = {
-          razorpay_order_id: data.razorpay_order_id,
+          razorpay_order_id: data.razorpay_order_id,      // Ye miss ho raha tha
           razorpay_payment_id: data.razorpay_payment_id,
-          razorpay_signature: data.razorpay_signature,
-          consultantId: consultantId,
-          availabilityId: selectedTime.availabilityId,
-          slotId: selectedTime.slotId
+          razorpay_signature: data.razorpay_signature,    // Ye miss ho raha tha
+          consultantId: consultantId,                     // Aapke log me mentorId tha, backend check kar lena
+          availabilityId: selectedTime?.availabilityId || "",
+          slotId: selectedTime?.slotId || "",
+          date: selectedDate,
+          time: typeof selectedTime === 'string' ? selectedTime : selectedTime.time
         };
 
-        // Verification API call karein
+        console.log("Sending Payload:", verificationPayload); // Check karne ke liye
+
+        // Verification API call
         const verification = await verifyBookingPayment(verificationPayload);
-        
+
         if (verification.success) {
+          const currentBooking = verification.data[0];
+
+          if (currentBooking) {
+            // Reminder Schedule karna
+            await scheduleMeetingReminder(currentBooking);
+          }
+
           navigation.navigate("BookingSuccess");
+
+
         } else {
-          Alert.alert("Payment Failed", "Could not verify payment from backend.");
+          Alert.alert("Payment Failed", "Backend could not verify signature.");
         }
 
       }).catch(err => {
         console.log("Payment Error:", err);
-        Alert.alert("Payment Cancelled", "You cancelled the payment process.");
+        Alert.alert("Payment Cancelled", "Transaction not completed.");
       });
 
     } catch (error) {

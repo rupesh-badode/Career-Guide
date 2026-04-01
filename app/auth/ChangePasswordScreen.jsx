@@ -247,24 +247,24 @@ const styles = StyleSheet.create({
         backgroundColor: '#f9fafb',
     },
     topHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 50 : 40, // Adjusts for the status bar
-    paddingBottom: 16,
-    backgroundColor: '#f9fafb',
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-  },
-  topHeaderTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-  },
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingTop: Platform.OS === 'ios' ? 50 : 40, // Adjusts for the status bar
+        paddingBottom: 16,
+        backgroundColor: '#f9fafb',
+    },
+    backButton: {
+        padding: 8,
+        borderRadius: 8,
+        backgroundColor: '#f3f4f6',
+    },
+    topHeaderTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#111827',
+    },
     inner: {
         flex: 1,
         padding: 24,
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
         padding: 12,
     },
     button: {
-        backgroundColor: '#2563eb',
+        backgroundColor: '#F59E0B',
         paddingVertical: 14,
         borderRadius: 8,
         alignItems: 'center',
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     buttonDisabled: {
-        backgroundColor: '#93c5fd',
+        backgroundColor: '#f4c678',
     },
     buttonText: {
         color: '#ffffff',

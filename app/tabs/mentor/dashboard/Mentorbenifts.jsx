@@ -12,18 +12,18 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
-const THEME_COLOR = '#8B5CF6'; // Royal Purple
+const THEME_COLOR = '#F27A21'; // Royal Purple
 
 // ==========================================
 // DATA: MENTOR BENEFITS
 // ==========================================
 const BENEFITS = [
-  { id: '1', title: 'Earn per session', icon: 'wallet', color: '#8B5CF6' },
-  { id: '2', title: 'Flexible timing', icon: 'time', color: '#A855F7' },
-  { id: '3', title: 'Work from home', icon: 'home', color: '#C084FC' },
-  { id: '4', title: '1-1 mentoring', icon: 'people', color: '#D8B4FE' },
-  { id: '5', title: 'Chat & Video call', icon: 'videocam', color: '#9333EA' },
-  { id: '6', title: 'Build personal brand', icon: 'star', color: '#7E22CE' },
+  { id: '1', title: 'Earn per session', icon: 'wallet', color: '#F27A21' },
+  { id: '2', title: 'Flexible timing', icon: 'time', color: '#F27A21' },
+  { id: '3', title: 'Work from home', icon: 'home', color: '#F27A21' },
+  { id: '4', title: '1-1 mentoring', icon: 'people', color: '#F27A21' },
+  { id: '5', title: 'Chat & Video call', icon: 'videocam', color: '#F27A21' },
+  { id: '6', title: 'Build personal brand', icon: 'star', color: '#F27A21' },
 ];
 
 // ==========================================

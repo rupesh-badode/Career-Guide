@@ -18,9 +18,9 @@ const LegalScreen = ({ navigation }) => {
   const role = useSelector((state) => state.auth.role) || 'User';
   const insets = useSafeAreaInsets();
 
-  let themeColor = '#3B82F6'; // Default User (Blue)
-  if (role === 'Consultant') themeColor = '#10B981'; // Green
-  if (role === 'Mentor') themeColor = '#8B5CF6'; // Purple
+  let themeColor = '#F59E0B'; // Default User (Blue)
+  if (role === 'Consultant') themeColor = '#F59E0B'; // Green
+  if (role === 'Mentor') themeColor = '#F59E0B'; // Purple
 
   const [legalDoc, setLegalDoc] = useState(null);
   const [loading, setLoading] = useState(true);

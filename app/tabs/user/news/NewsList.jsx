@@ -14,7 +14,7 @@ import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getWHONews } from '../../../../src/services/user';
 
-const PRIMARY_COLOR = '#10B981';
+const PRIMARY_COLOR = '#F59E0B';
 
 // 🎨 Helper: Alag-alag NewsType ke liye colors set karta hai
 const getBadgeStyles = (type) => {
@@ -173,9 +173,9 @@ export default function NewsScreen({ navigation }) {
       
       {/* HEADER */}
       <View style={styles.headerContainer}>
-        {/* <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <MaterialIcons name="arrow-back-ios" size={24} color="#111827" />
-        </TouchableOpacity> */}
+        </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Latest Updates</Text>
           <Text style={styles.headerSubtitle}>Global health news & releases</Text>

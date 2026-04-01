@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { getMyKYC } from '../../../../src/services/consultantAPI'; // Ensure this path is correct
 
-const PRIMARY_COLOR = '#10B981';
+const PRIMARY_COLOR = '#F59E0B';
 
 export default function KycDetailsScreen({ navigation }) {
   const insets = useSafeAreaInsets();

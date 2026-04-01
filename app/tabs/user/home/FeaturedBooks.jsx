@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  FlatList, 
-  ActivityIndicator, 
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
   TouchableOpacity,
   Dimensions
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 // Make sure this path is perfectly pointing to your API file
-import { getBooks } from '../../../../src/services/publicAPI'; 
+import { getBooks } from '../../../../src/services/publicAPI';
+
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -27,18 +29,18 @@ const FeaturedBooks = () => {
       try {
         setLoading(true);
         const response = await getBooks();
-        
 
-        const booksArray = response?.data||response?.data?.data || response|| [];
-                // Filter only active books and pick top 3
+
+        const booksArray = response?.data || response?.data?.data || response || [];
+        // Filter only active books and pick top 3
         const activeFeaturedBooks = booksArray
           .filter(book => book.isActive)
           .slice(0, 3);
-          
+
         setBooks(activeFeaturedBooks);
       } catch (err) {
         setError("Failed to load books. Please try again.");
-        console.log("err",err)
+        console.log("err", err)
       } finally {
         setLoading(false);
       }
@@ -50,7 +52,7 @@ const FeaturedBooks = () => {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+        <ActivityIndicator size="large" color="#F59E0B" />
       </View>
     );
   }
@@ -68,20 +70,20 @@ const FeaturedBooks = () => {
     const hasDiscount = item.discountPrice && item.discountPrice < item.price;
 
     return (
-      <TouchableOpacity 
-        activeOpacity={0.9} 
+      <TouchableOpacity
+        activeOpacity={0.9}
         style={styles.card}
         // Passing the ID to the next screen
         onPress={() => navigation.navigate("SingleBook", { id: item._id })}
       >
         <View style={styles.imageContainer}>
-          <Image 
+          <Image
             // Fallback image added in case coverImage is empty
-            source={{ uri: item.coverImage || 'https://via.placeholder.com/400x600?text=No+Cover' }} 
-            style={styles.coverImage} 
+            source={{ uri: item.coverImage || 'https://via.placeholder.com/400x600?text=No+Cover' }}
+            style={styles.coverImage}
             resizeMode="cover"
           />
-          
+
           {item.category ? (
             <View style={styles.categoryBadge}>
               <Text style={styles.badgeText}>{item.category}</Text>
@@ -98,7 +100,7 @@ const FeaturedBooks = () => {
         <View style={styles.detailsContainer}>
           <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
           <Text style={styles.author} numberOfLines={1}>By {item.author}</Text>
-          
+
           <View style={styles.priceRow}>
             {hasDiscount ? (
               <View style={styles.priceContainer}>
@@ -121,9 +123,14 @@ const FeaturedBooks = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.sectionTitle}>Book Bazaar</Text>
-          <Text style={styles.sectionSubtitle}>Top picks for you</Text>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.sectionTitle}>
+            Book <Text style={styles.highlightText}>Bazaar</Text>
+          </Text>
+          <View style={styles.subtitleRow}>
+            <Ionicons name="sparkles" size={14} color="#F59E0B" />
+            <Text style={styles.sectionSubtitle}>Top picks for you</Text>
+          </View>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('AllBooks')}>
           <Text style={styles.showAllText}>Show All</Text>
@@ -194,7 +201,7 @@ const styles = StyleSheet.create({
   showAllText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4F46E5', // Updated to match your theme button color
+    color: '#F59E0B', // Updated to match your theme button color
     marginBottom: 4,
   },
   listContainer: {
@@ -204,6 +211,7 @@ const styles = StyleSheet.create({
     width: 250,
     backgroundColor: '#ffffff',
     borderRadius: 12,
+    marginBottom: 2,
     marginHorizontal: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -235,7 +243,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#F59E0B',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -289,7 +297,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   button: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#F59E0B',
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
@@ -298,6 +306,31 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  headerTitleContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  sectionTitle: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#0F172A', // Agar Dark Mode hai toh ise '#FFFFFF' kar dena
+    letterSpacing: 0.5,
+  },
+  highlightText: {
+    color: '#F59E0B', // Premium Amber
+    fontStyle: 'italic', // Thoda dynamic look dene ke liye
+  },
+  subtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#64748B', // Agar Dark Mode hai toh ise '#94A3B8' kar dena
+    fontWeight: '600',
+    marginLeft: 6, // Icon aur text ke beech thoda gap
   },
 });
 
