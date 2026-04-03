@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet,
-    Image, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Animated
+    Image, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Animated, ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -26,8 +26,16 @@ const EditProfileScreen = ({ route, navigation }) => {
     const [phone, setPhone] = useState('');
     const [currentPicture, setCurrentPicture] = useState(null);
     const [newLocalImage, setNewLocalImage] = useState(null);
+    
+    // User Specific States
     const [neetScore, setNeetScore] = useState('');
-    const [address, setAddress] = useState('');
+    const [addressLine1, setAddressLine1] = useState('');
+    const [addressLine2, setAddressLine2] = useState('');
+    const [city, setCity] = useState('');
+    const [stateName, setStateName] = useState('');
+    const [zipCode, setZipCode] = useState('');
+
+    // Consultant/Mentor Specific States
     const [specialization, setSpecialization] = useState('');
     const [experience, setExperience] = useState('');
     const [bio, setBio] = useState('');
@@ -52,11 +60,23 @@ const EditProfileScreen = ({ route, navigation }) => {
                     setName(data.name || '');
                     setPhone(data.phone || data.mobile || '');
                     setCurrentPicture(data.profilePicture || null);
-                    setNeetScore(data.neetScore?.toString() || '');
-                    setAddress(data.address || '');
+                    
+                    // Handle Consultant/Mentor fields
                     setSpecialization(data.specialization || data.subject || '');
                     setExperience(data.experience?.toString() || '');
                     setBio(data.bio || '');
+
+                    // Handle User fields
+                    setNeetScore(data.neetScore?.toString() || '');
+                    
+                    // 👉 FIXED: Handle Address Object properly
+                    if (data.address && typeof data.address === 'object') {
+                        setAddressLine1(data.address.addressLine1 || '');
+                        setAddressLine2(data.address.addressLine2 || '');
+                        setCity(data.address.city || '');
+                        setStateName(data.address.state || '');
+                        setZipCode(data.address.zipCode || '');
+                    }
                 }
 
                 Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
@@ -69,7 +89,7 @@ const EditProfileScreen = ({ route, navigation }) => {
         };
 
         fetchLatestProfile();
-    }, []);
+    }, [isCounselor, isMentor]);
 
     const pickImage = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -97,7 +117,6 @@ const EditProfileScreen = ({ route, navigation }) => {
         const match = /\.(\w+)$/.exec(filename);
         let type = match ? `image/${match[1]}` : `image/jpeg`;
         
-        // React Native specific fix: 'image/jpg' can cause network errors, force it to 'image/jpeg'
         if (type === 'image/jpg') type = 'image/jpeg';
 
         return {
@@ -134,8 +153,20 @@ const EditProfileScreen = ({ route, navigation }) => {
                     await UpdateMentorProfilePic(imageFormData);
                 }
             } else {
-
-                const textResponse = await UpdateProfile({ name, phone, subject: specialization, experience, bio });
+                // 👉 FIXED: Passed the correctly structured address object and neetScore to User Update
+                const textResponse = await UpdateProfile({ 
+                    name, 
+                    phone, 
+                    neetScore: Number(neetScore), 
+                    address: {
+                        addressLine1,
+                        addressLine2,
+                        city,
+                        state: stateName,
+                        zipCode
+                    }
+                });
+                
                 if (!textResponse?.success) throw new Error(textResponse?.message || "Failed to update profile details.");
 
                 if (newLocalImage) {
@@ -194,13 +225,24 @@ const EditProfileScreen = ({ route, navigation }) => {
                     {(isCounselor || isMentor) ? (
                         <>
                             <View style={styles.inputContainer}><Text style={styles.label}>Specialization</Text><TextInput style={styles.input} value={specialization} onChangeText={setSpecialization} /></View>
-                            <View style={styles.inputContainer}><Text style={styles.label}>Experience</Text><TextInput style={styles.input} value={experience} onChangeText={setExperience} keyboardType="numeric" /></View>
+                            <View style={styles.inputContainer}><Text style={styles.label}>Experience (Years)</Text><TextInput style={styles.input} value={experience} onChangeText={setExperience} keyboardType="numeric" /></View>
                             <View style={styles.inputContainer}><Text style={styles.label}>Bio</Text><TextInput style={[styles.input, styles.textArea]} value={bio} onChangeText={setBio} multiline /></View>
                         </>
                     ) : (
                         <>
                             <View style={styles.inputContainer}><Text style={styles.label}>NEET Score</Text><TextInput style={styles.input} value={neetScore} onChangeText={setNeetScore} keyboardType="numeric" /></View>
-                            <View style={styles.inputContainer}><Text style={styles.label}>Address</Text><TextInput style={[styles.input, styles.textArea]} value={address} onChangeText={setAddress} multiline /></View>
+                            
+                            {/* 👉 FIXED: Address fields broken down for proper object nesting */}
+                            <Text style={styles.sectionTitle}>Address Details</Text>
+                            <View style={styles.inputContainer}><Text style={styles.label}>Address Line 1</Text><TextInput style={styles.input} value={addressLine1} onChangeText={setAddressLine1} /></View>
+                            <View style={styles.inputContainer}><Text style={styles.label}>Address Line 2</Text><TextInput style={styles.input} value={addressLine2} onChangeText={setAddressLine2} /></View>
+                            
+                            <View style={styles.row}>
+                                <View style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}><Text style={styles.label}>City</Text><TextInput style={styles.input} value={city} onChangeText={setCity} /></View>
+                                <View style={[styles.inputContainer, { flex: 1 }]}><Text style={styles.label}>State</Text><TextInput style={styles.input} value={stateName} onChangeText={setStateName} /></View>
+                            </View>
+
+                            <View style={styles.inputContainer}><Text style={styles.label}>Zip Code</Text><TextInput style={styles.input} value={zipCode} onChangeText={setZipCode} keyboardType="numeric" /></View>
                         </>
                     )}
 
@@ -226,11 +268,13 @@ const styles = StyleSheet.create({
     imageContainer: { position: 'relative' },
     profileImage: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#EEE' },
     editBadge: { position: 'absolute', right: 0, bottom: 0, padding: 8, borderRadius: 20, borderWidth: 2, borderColor: '#fff' },
+    sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginTop: 10, marginBottom: 15 },
+    row: { flexDirection: 'row', justifyContent: 'space-between' },
     inputContainer: { marginBottom: 15 },
     label: { fontSize: 14, color: '#444', marginBottom: 5, fontWeight: '600' },
     input: { borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#F9F9F9' },
     textArea: { height: 80, textAlignVertical: 'top' },
-    saveButton: { paddingVertical: 15, borderRadius: 10, alignItems: 'center', marginTop: 10 },
+    saveButton: { paddingVertical: 15, borderRadius: 10, alignItems: 'center', marginTop: 20 },
     saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });
 

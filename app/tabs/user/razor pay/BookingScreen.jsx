@@ -133,7 +133,7 @@ export default function BookingScreen({ route, navigation }) {
       marked[selectedDate] = {
         customStyles: {
           container: {
-            backgroundColor: '#2563EB', // Blue Color
+            backgroundColor: '#F27A21', // Blue Color
             borderRadius: 20,
           },
           text: {
@@ -200,7 +200,7 @@ export default function BookingScreen({ route, navigation }) {
         amount: orderResponse.order.amount,
         name: 'Aastroneet',
         order_id: orderResponse.order.id,
-        theme: { color: '#4F46E5' },
+        theme: { color: '#F27A21' },
         prefill: { email: 'user@example.com', contact: '9999999999', name: 'User' }
       };
 
@@ -291,8 +291,8 @@ export default function BookingScreen({ route, navigation }) {
               markingType={'custom'}
               markedDates={markedDatesForCalendar}
               theme={{
-                todayTextColor: '#4F46E5',
-                arrowColor: '#4F46E5',
+                todayTextColor: '#F27A21',
+                arrowColor: '#F27A21',
                 textDayFontWeight: '500',
               }}
             />
@@ -305,7 +305,7 @@ export default function BookingScreen({ route, navigation }) {
           </Text>
 
           {isFetchingSlots ? (
-            <ActivityIndicator size="large" color="#4F46E5" style={{ marginVertical: 20 }} />
+            <ActivityIndicator size="large" color="#F27A21" style={{ marginVertical: 20 }} />
           ) : availableSlotsForDate.length > 0 ? (
             <View style={styles.grid}>
               {availableSlotsForDate.map((slotObj, index) => (
@@ -339,7 +339,7 @@ export default function BookingScreen({ route, navigation }) {
             style={styles.customTimeBtn}
             onPress={() => setShowTimePicker(true)}
           >
-            <Ionicons name="time-outline" size={20} color="#4F46E5" />
+            <Ionicons name="time-outline" size={20} color="#F27A21" />
             <Text style={styles.customTimeText}>
               {selectedTime && !availableSlotsForDate.includes(selectedTime)
                 ? `Custom Time: ${selectedTime}`
@@ -406,22 +406,22 @@ const styles = StyleSheet.create({
   backBtn: { padding: 8 },
   scrollContent: { padding: 20, paddingBottom: 120 },
   summaryCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 16, borderRadius: 16, marginBottom: 25, borderWidth: 1, borderColor: '#E2E8F0' },
-  avatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#4F46E5', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+  avatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#F27A21', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   avatarText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   cName: { fontSize: 18, fontWeight: 'bold', color: '#1E293B' },
   cType: { fontSize: 13, color: '#64748B' },
   section: { marginBottom: 25 },
-  sectionLabel: { fontSize: 16, fontWeight: '700', color: '#334155', marginBottom: 12 },
+  sectionLabel: { fontSize: 16, fontWeight: '700', color: '#554333', marginBottom: 12 },
   calendarContainer: { backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#E2E8F0', paddingBottom: 10 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
-  slotCard: { width: '31%', backgroundColor: '#EEF2FF', paddingVertical: 12, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: '#C7D2FE', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
-  activeSlotCard: { backgroundColor: '#4F46E5', borderColor: '#4F46E5', transform: [{ scale: 1.02 }] },
-  slotText: { fontSize: 13, fontWeight: '700', color: '#4F46E5' },
+  slotCard: { width: '31%', backgroundColor: '#EEF2FF', paddingVertical: 12, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: '#fee9c7', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
+  activeSlotCard: { backgroundColor: '#F27A21', borderColor: '#F27A21', transform: [{ scale: 1.02 }] },
+  slotText: { fontSize: 13, fontWeight: '700', color: '#F27A21' },
   activeText: { color: '#fff' },
   noSlotContainer: { padding: 20, alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', borderStyle: 'dashed', marginBottom: 15 },
   noSlotText: { fontSize: 15, fontWeight: '600', color: '#475569', marginTop: 8 },
-  customTimeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, backgroundColor: '#EEF2FF', borderRadius: 10, borderWidth: 1, borderColor: '#C7D2FE', borderStyle: 'dashed' },
-  customTimeText: { marginLeft: 8, fontSize: 14, fontWeight: '600', color: '#4F46E5' },
+  customTimeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, backgroundColor: '#EEF2FF', borderRadius: 10, borderWidth: 1, borderColor: '#fee9c7', borderStyle: 'dashed' },
+  customTimeText: { marginLeft: 8, fontSize: 14, fontWeight: '600', color: '#F27A21' },
   tableCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E2E8F0' },
   tableTitle: { fontSize: 15, fontWeight: '700', color: '#1E293B', marginBottom: 15 },
   tableRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
@@ -429,11 +429,11 @@ const styles = StyleSheet.create({
   tableValue: { color: '#1E293B', fontWeight: '600' },
   totalRow: { borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 12, marginTop: 5 },
   totalLabel: { fontSize: 16, fontWeight: 'bold', color: '#1E293B' },
-  totalValue: { fontSize: 18, fontWeight: 'bold', color: '#4F46E5' },
+  totalValue: { fontSize: 18, fontWeight: 'bold', color: '#F27A21' },
   footer: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#fff', padding: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 25, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#E2E8F0', elevation: 20 },
   footerPrice: { fontSize: 22, fontWeight: 'bold', color: '#1E293B' },
   footerSub: { fontSize: 12, color: '#64748B' },
-  mainPayBtn: { backgroundColor: '#4F46E5', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12, flexDirection: 'row', alignItems: 'center' },
+  mainPayBtn: { backgroundColor: '#F27A21', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12, flexDirection: 'row', alignItems: 'center' },
   mainPayBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   disabledBtn: { opacity: 0.5 }
 });

@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   promoContainer: {
     backgroundColor: '#0F172A', // Premium Dark Blue/Slate
     marginHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 2,
     borderRadius: 20,
     overflow: 'hidden',
     position: 'relative',

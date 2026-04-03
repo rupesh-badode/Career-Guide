@@ -39,9 +39,9 @@ const ConsultantListItem = ({ item, index }) => {
           counselorId: item?._id,
           counselorName: item?.name,
           counselorAvatar: avatarUrl,
-          counselorRole: item?.role, // Role dynamically pass hoga
+          counselorRole: item?.role, 
           counselorExperience: item?.experience,
-          counselorSpecialization: item?.specialization || item?.subject, // Mentor ke liye subject ho sakta hai
+          counselorSpecialization: item?.specialization || item?.subject, 
           counselorBio: item?.bio,
           counselorRating: item?.averageRating,
         })} 
@@ -89,31 +89,25 @@ const ConsultantListItem = ({ item, index }) => {
   );
 };
 
-// 👉 ADDED activeCategory prop
 const ConsultantList = ({ contentPaddingTop = 20, onScroll, searchQuery, activeFilters, activeCategory }) => {
-  const [experts, setExperts] = useState([]); // Combined list ke liye
+  const [experts, setExperts] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // 🔥 FETCH BOTH APIs PARALLELY
   const fetchAllData = async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
     try {
-      // Promise.all use kiya taaki dono request ek sath jaye aur fast load ho
       const [consultantRes, mentorRes] = await Promise.all([
-        AllConsultant().catch(() => null), // Agar fail ho jaye toh app crash na ho
+        AllConsultant().catch(() => null),
         allMentor().catch(() => null)
       ]);
 
-      // Extract data (APIs ke response structure ke hisab se safe extraction)
       let consultantsData = consultantRes?.consultants || consultantRes?.data || [];
       let mentorsData = mentorRes?.mentors || mentorRes?.data || [];
 
-      // Forcefully role assign kar dete hain taaki filter karte waqt problem na ho
       consultantsData = consultantsData.map(c => ({ ...c, role: 'Consultant' }));
       mentorsData = mentorsData.map(m => ({ ...m, role: 'Mentor' }));
 
-      // Dono arrays ko combine kar diya
       setExperts([...consultantsData, ...mentorsData]);
     } catch (error) {
       console.error("Error fetching combined data:", error);
@@ -132,23 +126,51 @@ const ConsultantList = ({ contentPaddingTop = 20, onScroll, searchQuery, activeF
     setIsRefreshing(false);
   };
 
+  // 🔥 FILTER LOGIC MOVED INSIDE USEMEMO
   const filteredData = useMemo(() => {
     let result = experts;
 
-    // 🔥 1. CATEGORY FILTER (All / Mentor / Consultant)
+    // 1. CATEGORY FILTER (All / Mentor / Consultant)
     if (activeCategory && activeCategory !== "All") {
       result = result.filter(item => item?.role === activeCategory);
     }
 
-    // 🔥 2. SEARCH FILTER
+    // 2. SEARCH FILTER
     if (searchQuery) {
       result = result.filter(item => 
         item?.name?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
+    // 3. ADVANCED FILTERS (BottomSheet Filters)
     if (activeFilters) {
-      // Future extra filters yahan aayenge
+      result = result.filter(item => {
+        // Specialization filter
+        if (activeFilters.specialization?.length > 0) {
+          const itemSpec = item.specialization || item.subject;
+          if (!activeFilters.specialization.includes(itemSpec)) return false;
+        }
+
+        // Experience filter
+        if (activeFilters.experience?.length > 0) {
+          if (!activeFilters.experience.includes(item.experience)) return false;
+        }
+
+        // Rating filter (Fixed from item.rating to item.averageRating)
+        if (activeFilters.rating?.length > 0) {
+          const rating = item.averageRating || 0;
+          if (rating < 4) return false;
+        }
+
+        // Price filter
+        if (activeFilters.amount?.length > 0) {
+          const price = item.price || 0;
+          if (activeFilters.amount.includes('Free') && price !== 0) return false;
+          if (activeFilters.amount.includes('Under ₹500') && price >= 500) return false;
+        }
+
+        return true;
+      });
     }
 
     return result;
@@ -198,7 +220,6 @@ const ConsultantList = ({ contentPaddingTop = 20, onScroll, searchQuery, activeF
   );
 };
 
-// ... same styles ...
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB', paddingTop: 30 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 100 },

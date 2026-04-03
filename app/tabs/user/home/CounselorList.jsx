@@ -17,7 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { AllConsultant } from '../../../../src/services/user';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = 175; // Thoda bada kiya premium look ke liye
+const CARD_WIDTH = 160; // Thoda bada kiya premium look ke liye
 const SPACING = 16;
 const FULL_ITEM_WIDTH = CARD_WIDTH + SPACING;
 
@@ -214,7 +214,7 @@ export default function CounselorList() {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
+    marginVertical: 15,
     backgroundColor: '#FAFAFA', 
     paddingVertical: 1,
   },
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 22,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   },
   listPadding: {
     paddingHorizontal: 20,
-    paddingBottom: 10, // Extra padding shadows ke liye
+    paddingBottom: 12, // Extra padding shadows ke liye
   },
   
   // --- CARD STYLES ---
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 4,
+    marginBottom: 1,
     textAlign: 'center',
     letterSpacing: -0.3,
   },
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#F59E0B',
-    marginBottom: 6,
+    marginBottom: 5,
   },
   priceSub: {
     fontSize: 11,

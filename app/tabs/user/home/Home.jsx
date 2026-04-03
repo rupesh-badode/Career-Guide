@@ -18,10 +18,12 @@ import ServicesSection from "./ServicesSection";
 import PromoBanner from "./PromoBanner";
 import Ad from "./Ad";
 import FloatingAI from "../../../../src/components/flot/FloatingAI";
+import SearchBar from "./SearchBar";
+import SecurePaymentBadges from "./SecurePaymentBadges";
 
 export default function Index() {
     const insets = useSafeAreaInsets();
-    const HEADER_HEIGHT = insets.top + 70; // Apne header ke hisaab se adjust karein
+    const HEADER_HEIGHT = insets.top + 90; // Apne header ke hisaab se adjust karein
     const navigation = useNavigation();
     const STATUS_BAR_HEIGHT = insets.top;
 
@@ -52,7 +54,7 @@ export default function Index() {
             <Animated.ScrollView 
                 contentContainerStyle={{ 
                     paddingTop: HEADER_HEIGHT, // Taaki shuru me content header ke theek niche se start ho, koi extra space nahi
-                    paddingBottom: 80 
+                    paddingBottom: 70 
                 }} 
                 showsVerticalScrollIndicator={false}
                 onScroll={Animated.event(
@@ -62,19 +64,21 @@ export default function Index() {
                 scrollEventThrottle={16}
             >
                 {/* <OnboardingScreen /> */}
+                <SearchBar/>
                 <ServicesSection/>
-                <ImageCarousel />
+                <Ad/>
                 <CounselorList />
+                <PromoBanner/>
+                <ImageCarousel />
                 {/* <TopMentorsOverview/> */}
                 {/* <SmartTools/> */}
                 {/* <Blog /> */}
-                <Ad/>
-                <PromoBanner/>
                 <FeaturedBooks />
                 {/* <WhyLoveAastroneet/> */}
                 <NewsSection />
                 {/* <FloatingAI/> */}
                 {/* <AIChat /> */}
+                <SecurePaymentBadges/>
             </Animated.ScrollView>
 
 

@@ -23,8 +23,10 @@ const MOTIVATIONS = [
     { id: '3', quote: "NEET is a marathon, not a sprint. Consistency is the key.", author: "Aastroneet" },
 ];
 
-export default function AppointmentScreen() {
+export default function AppointmentScreen(route) {
     const insets = useSafeAreaInsets();
+
+    const shouldFocusSearch = route.params?.autoFocusSearch || false;
 
     const [searchQuery, setSearchQuery] = useState("");
     const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -79,6 +81,7 @@ export default function AppointmentScreen() {
                     routeName="Appointment"
                     onSearchChange={setSearchQuery}
                     onFilterPress={() => setIsFilterVisible(true)}
+                    autoFocusSearch={shouldFocusSearch} // Yahan autoFocusSearch false hai kyunki hum header ke andar search bar ko control kar rahe hain
                 />
 
                 <View style={styles.carouselWrapper}>
