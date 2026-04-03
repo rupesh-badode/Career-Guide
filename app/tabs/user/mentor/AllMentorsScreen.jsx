@@ -18,8 +18,6 @@ import RazorpayCheckout from 'react-native-razorpay';
 
 // ⚠️ UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
 import { allMentor, BookMentor, verifyMentorbooking } from '../../../../src/services/user'; 
-
-// 👉 NAYA IMPORT: Apna Modal Import Karo (Path apne folder structure ke hisaab se check kar lena)
 import SlotSelectionModal from './SlotSelectionModal'; 
 import { key_id } from '../../../../src/constants/MainContent';
 
@@ -59,10 +57,7 @@ export default function AllMentorsScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   
-  // 👉 API Loader State
   const [bookingMentorId, setBookingMentorId] = useState(null);
-
-  // 👉 NAYE STATES: Modal handle karne ke liye
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMentorForModal, setSelectedMentorForModal] = useState(null);
 
@@ -111,78 +106,91 @@ export default function AllMentorsScreen({ navigation }) {
     }
   };
 
-  // --- 🚀 STEP 1: OPEN MODAL ---
   const handleOpenModal = (mentor) => {
     setSelectedMentorForModal(mentor);
     setIsModalVisible(true);
   };
 
-  // --- 🚀 STEP 2: ACTUAL BOOKING FLOW (Triggered from Modal) ---
+  // --- 🚀 BULLETPROOF BOOKING FLOW ---
   const processBooking = async (mentor, date, time, customAmount) => {
     try {
-      // 1. Modal band karo aur loader chalu karo
       setIsModalVisible(false);
       setBookingMentorId(mentor._id); 
 
-      // 2. CREATE BOOKING ORDER (Using modal values)
+      // 1. CREATE BOOKING ORDER 
       const orderPayload = {
         mentorId: mentor._id,
-        date: date, // Modal se aayi hui date
-        time: time, // Modal se aaya hua time
-        amount: Number(customAmount) // Modal se aaya hua amount (Number me convert kiya)
+        date: date, 
+        time: time, 
+        amount: Number(customAmount) 
       };
       
+      console.log("Creating Order Payload:", orderPayload);
       const orderResponse = await BookMentor(orderPayload);
+      console.log("Backend Order Response:", orderResponse); // Debugging ke liye
       
-      if (!orderResponse.success) {
-        throw new Error(orderResponse.message || "Failed to initiate booking.");
+      if (!orderResponse?.success) {
+        throw new Error(orderResponse?.message || "Failed to initiate booking.");
       }
 
-      // 3. OPEN PAYMENT GATEWAY (Razorpay)
+      // 🔥 SMART FALLBACK: Backend order_id de ya orderId, dono catch kar lega
+      const actualOrderId = orderResponse.orderId || orderResponse.id || orderResponse?.order?.id;
+
+      if (!actualOrderId) {
+         Alert.alert("System Error", "Order ID not received from server.");
+         setBookingMentorId(null);
+         return;
+      }
+
+      // 2. OPEN PAYMENT GATEWAY
       const options = {
         description: `Session with ${mentor.name} on ${date} at ${time}`,
-        image: 'https://your-app-logo.com/logo.png', 
+        image: 'https://ui-avatars.com/api/?name=Aastroneet&background=F59E0B&color=fff', 
         currency: 'INR',
-        key:key_id, 
+        key: key_id, 
         amount: orderResponse.amount, 
-        name: 'Career Guide',
-        order_id: orderResponse.orderId, 
+        name: 'Aastroneet',
+        order_id: actualOrderId, // SAFELY PASSED
         prefill: {
-          email: 'user@example.com', 
+          email: 'student@example.com', 
           contact: '9999999999',
           name: 'Student Name'
         },
         theme: { color: THEME_COLOR } 
       };
 
-      RazorpayCheckout.open(options).then(async (data) => {
-        // 4. VERIFY PAYMENT
-        const verifyPayload = {
-          mentorId: mentor._id,
-          razorpay_payment_id: data.razorpay_payment_id,
-          razorpay_order_id: data.razorpay_order_id,
-          razorpay_signature: data.razorpay_signature
-        };
+      const data = await RazorpayCheckout.open(options);
 
-        const verifyResponse = await verifyMentorbooking(verifyPayload);
+      // 3. VERIFY PAYMENT
+      const verifyPayload = {
+        mentorId: mentor._id,
+        razorpay_payment_id: data.razorpay_payment_id,
+        razorpay_order_id: data.razorpay_order_id,
+        razorpay_signature: data.razorpay_signature,
+        date: date,
+        time: time
+      };
 
-        if (verifyResponse.success) {
-          Alert.alert("Success!", `Your session with ${mentor.name} is confirmed for ${time}.`);
-          // navigation.navigate('MyBookings'); 
-        } else {
-          Alert.alert("Verification Failed", "Payment captured but verification failed. Contact support.");
-        }
+      console.log("Verifying with Payload:", verifyPayload);
+      const verifyResponse = await verifyMentorbooking(verifyPayload);
 
-      }).catch((error) => {
-        console.log("Payment Error:", error);
-        Alert.alert("Payment Cancelled", "You cancelled the payment process.");
-      });
+      if (verifyResponse?.success) {
+        Alert.alert("Success! 🎉", `Your session with ${mentor.name} is confirmed for ${date} at ${time}.`);
+      } else {
+        Alert.alert("Verification Failed", "Payment captured but verification failed. Contact support.");
+      }
 
     } catch (error) {
-      console.error("Booking Error:", error);
-      Alert.alert("Error", error.message || "Something went wrong.");
+      console.log("Booking/Payment Error:", error);
+      
+      // 🔥 PROPER RAZORPAY CANCELLATION HANDLING
+      if (error.code === 0 || error.description === 'Payment cancelled by user' || error.reason === 'payment_cancelled') {
+        Alert.alert("Payment Cancelled", "You closed the payment gateway.");
+      } else {
+        Alert.alert("Error", error?.response?.data?.message || error?.message || "Something went wrong.");
+      }
     } finally {
-      setBookingMentorId(null); // Loader stop karo
+      setBookingMentorId(null); 
     }
   };
 
@@ -195,7 +203,7 @@ export default function AllMentorsScreen({ navigation }) {
     >
       <View style={styles.cardHeader}>
         <Image 
-          source={{ uri: item.profilePicture || item.image || 'https://via.placeholder.com/150' }} 
+          source={{ uri: item.profilePicture || item.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'M')}&background=EEF2FF&color=F59E0B` }} 
           style={styles.avatar} 
         />
         <View style={styles.headerInfo}>
@@ -206,7 +214,7 @@ export default function AllMentorsScreen({ navigation }) {
           
           <View style={styles.ratingRow}>
             <Ionicons name="star" size={14} color="#F59E0B" />
-            <Text style={styles.ratingText}>{item.rating || '4.8'} <Text style={styles.reviewsText}>(120 reviews)</Text></Text>
+            <Text style={styles.ratingText}>{item.averageRating || item.rating || '4.8'} <Text style={styles.reviewsText}>({item.totalRatings || 120} reviews)</Text></Text>
           </View>
         </View>
       </View>
@@ -223,11 +231,10 @@ export default function AllMentorsScreen({ navigation }) {
             <Text style={styles.experienceText}>{item.experience || '5+'} Yrs Exp.</Text>
         </View>
         
-        {/* 👉 BUTTON CHANGE: Ab direct API call nahi, Modal open hoga */}
         <TouchableOpacity 
           style={[styles.bookButton, bookingMentorId === item._id && { opacity: 0.7 }]} 
           activeOpacity={0.7}
-          onPress={() => handleOpenModal(item)} // YAHAN CHANGE KIYA HAI
+          onPress={() => handleOpenModal(item)} 
           disabled={bookingMentorId === item._id}
         >
           {bookingMentorId === item._id ? (
@@ -236,7 +243,6 @@ export default function AllMentorsScreen({ navigation }) {
             <Text style={styles.bookButtonText}>Book Session</Text>
           )}
         </TouchableOpacity>
-
       </View>
     </TouchableOpacity>
   );
@@ -268,7 +274,6 @@ export default function AllMentorsScreen({ navigation }) {
            <SkeletonListCard />
            <SkeletonListCard />
            <SkeletonListCard />
-           <SkeletonListCard />
         </View>
       ) : (
         <FlatList
@@ -286,7 +291,6 @@ export default function AllMentorsScreen({ navigation }) {
         />
       )}
 
-      {/* 👉 NAYA: Modal Component Inject Kiya */}
       <SlotSelectionModal 
         visible={isModalVisible}
         mentor={selectedMentorForModal}

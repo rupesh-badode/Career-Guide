@@ -159,7 +159,7 @@ const FeaturedBooks = () => {
 
 const styles = StyleSheet.create({
   centerContainer: {
-    paddingVertical: 50,
+    paddingVertical: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptyContainer: {
-    padding: 30,
+    padding: 10,
     alignItems: 'center',
   },
   emptyText: {
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   imageContainer: {
-    height: 200,
+    height: 150,
     width: '100%',
     backgroundColor: '#e2e8f0',
     position: 'relative',
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   detailsContainer: {
-    padding: 16,
+    padding: 6,
   },
   title: {
     fontSize: 18,

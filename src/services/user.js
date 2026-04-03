@@ -56,7 +56,7 @@ export const chatHistory = async (consultationId) => {
 
 export const getWHONews = async () => {
   try {
-    const res = await Axios.get(`/user/who-news`);
+    const res = await Axios.get(`https://newsapi.org/v2/everything?q=NEET%202026&sortBy=publishedAt&language=en&apiKey=633dbc5fddcf453790a283a4cc1ec2e4`);
     return res.data;
   } catch (err) {
     throw err.res?.data || err.message || "Failed to Load";

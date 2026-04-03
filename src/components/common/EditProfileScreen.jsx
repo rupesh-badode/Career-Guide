@@ -8,8 +8,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
 
-// 👉 API IMPORTS (Yahan Get APIs bhi add karein)
-import { UpdateProfile, getUserProfile } from '../../services/authAPI';
+// 👉 API IMPORTS
+import { UpdateProfile, UpdateProfilePic, getUserProfile } from '../../services/authAPI';
 import { UpdateConsultantProfile, updateConsultantProfilePicture, getConsultantProfile } from '../../services/consultantAPI';
 import { UpdateMentorProfile, UpdateMentorProfilePic, getMentorProfile } from '../../services/mentorAPI';
 
@@ -19,7 +19,7 @@ const EditProfileScreen = ({ route, navigation }) => {
     const isMentor = role === 'Mentor';
     const isUser = role === 'User';
 
-    let themeColor = isCounselor ? '#F27A21' : isMentor ? '#F27A21' : '##F27A21';
+    let themeColor = '#F27A21'; // App theme color
 
     // --- FORM STATES ---
     const [name, setName] = useState('');
@@ -32,7 +32,7 @@ const EditProfileScreen = ({ route, navigation }) => {
     const [experience, setExperience] = useState('');
     const [bio, setBio] = useState('');
 
-    const [isLoading, setIsLoading] = useState(true); // Default loading true
+    const [isLoading, setIsLoading] = useState(true);
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     // ⚡ 1. FETCH LATEST DATA ON MOUNT
@@ -58,7 +58,7 @@ const EditProfileScreen = ({ route, navigation }) => {
                     setExperience(data.experience?.toString() || '');
                     setBio(data.bio || '');
                 }
-                
+
                 Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
             } catch (error) {
                 console.error("Fetch Profile Error:", error);
@@ -80,12 +80,31 @@ const EditProfileScreen = ({ route, navigation }) => {
 
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true, aspect: [1, 1], quality: 0.8,
+            allowsEditing: true, 
+            aspect: [1, 1], 
+            quality: 0.8,
         });
 
         if (!result.canceled) {
             setNewLocalImage(result.assets[0]);
         }
+    };
+
+    // Helper function to safely format image for FormData
+    const getFormattedImageObj = (imageAsset) => {
+        const localUri = imageAsset.uri;
+        const filename = localUri.split('/').pop() || 'profile_image.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        let type = match ? `image/${match[1]}` : `image/jpeg`;
+        
+        // React Native specific fix: 'image/jpg' can cause network errors, force it to 'image/jpeg'
+        if (type === 'image/jpg') type = 'image/jpeg';
+
+        return {
+            uri: Platform.OS === 'android' ? localUri : localUri.replace('file://', ''),
+            name: filename,
+            type: type
+        };
     };
 
     const handleSave = async () => {
@@ -98,45 +117,39 @@ const EditProfileScreen = ({ route, navigation }) => {
         try {
             if (isCounselor) {
                 const textResponse = await UpdateConsultantProfile({ name, mobile: phone, specialization, experience, bio });
-                if (!textResponse.success) throw new Error(textResponse.message);
+                if (!textResponse?.success) throw new Error(textResponse?.message || "Failed to update profile details.");
 
                 if (newLocalImage) {
                     const imageFormData = new FormData();
-                    const filename = newLocalImage.uri.split('/').pop();
-                    const match = /\.(\w+)$/.exec(filename);
-                    const type = match ? `image/${match[1]}` : `image`;
-                    imageFormData.append('profilePicture', { uri: newLocalImage.uri, name: filename, type });
+                    imageFormData.append('profilePicture', getFormattedImageObj(newLocalImage));
                     await updateConsultantProfilePicture(imageFormData);
                 }
             } else if (isMentor) {
                 const textResponse = await UpdateMentorProfile({ name, phone, subject: specialization, experience, bio });
-                if (!textResponse.success) throw new Error(textResponse.message);
+                if (!textResponse?.success) throw new Error(textResponse?.message || "Failed to update profile details.");
 
                 if (newLocalImage) {
                     const imageFormData = new FormData();
-                    const filename = newLocalImage.uri.split('/').pop();
-                    const type = `image/${filename.split('.').pop()}`;
-                    imageFormData.append('profilePicture', { uri: newLocalImage.uri, name: filename, type });
+                    imageFormData.append('profilePicture', getFormattedImageObj(newLocalImage));
                     await UpdateMentorProfilePic(imageFormData);
                 }
             } else {
-                const formData = new FormData();
-                formData.append('name', name);
-                formData.append('phone', phone);
-                formData.append('neetScore', neetScore);
-                formData.append('address', address);
+
+                const textResponse = await UpdateProfile({ name, phone, subject: specialization, experience, bio });
+                if (!textResponse?.success) throw new Error(textResponse?.message || "Failed to update profile details.");
+
                 if (newLocalImage) {
-                    const filename = newLocalImage.uri.split('/').pop();
-                    formData.append('profilePicture', { uri: newLocalImage.uri, name: filename, type: 'image/jpeg' });
+                    const imageFormData = new FormData();
+                    imageFormData.append('profilePicture', getFormattedImageObj(newLocalImage));
+                    await UpdateProfilePic(imageFormData);
                 }
-                const response = await UpdateProfile(formData);
-                if (!response.success) throw new Error(response.message);
             }
 
             Alert.alert('Success', 'Profile updated successfully!');
             navigation.goBack();
         } catch (error) {
-            Alert.alert('Error', error.message || 'Update failed.');
+            console.error('Update Error:', error);
+            Alert.alert('Update Failed', error.message || 'Check your network connection and try again.');
         } finally {
             setIsLoading(false);
         }
@@ -158,7 +171,7 @@ const EditProfileScreen = ({ route, navigation }) => {
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
                         <Ionicons name="chevron-back" size={24} color="#333" />
                     </TouchableOpacity>
-                    <Text style={styles.headerText}>Edit {role} Profile</Text>
+                    <Text style={styles.headerText}>Edit Profile</Text>
                     <View style={styles.headerSpacer} />
                 </View>
 

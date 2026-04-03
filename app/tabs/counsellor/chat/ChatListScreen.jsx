@@ -62,7 +62,7 @@ const ChatListItem = ({ item, index, onPressChat, onPressVideoCall, onPressAudio
   const formattedDate = bookingDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
   const isConfirmed = item.status === 'confirmed';
-  const statusColor = isConfirmed ? THEME_COLOR : '#00ff15';
+  const statusColor = isConfirmed ? "#32943a" : '#505050';
   const statusBg = isConfirmed ? '#ECFDF5' : '#FEF3C7';
 
   return (
@@ -273,7 +273,7 @@ export default function ChatListScreen({ searchQuery = "" }) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F3F4F6' },
   loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 15, backgroundColor: '#F3F4F6' },
+  header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 15, backgroundColor: '#F3F4F6' },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#111827' },
   headerSubtitle: { fontSize: 14, color: '#6B7280', marginTop: 4 },
   listContainer: { paddingHorizontal: 16, paddingBottom: 100, paddingTop: 10 },
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   divider: { width: 1, height: '80%', backgroundColor: '#E5E7EB', marginHorizontal: 10 },
   actionRow: { flexDirection: 'row', gap: 12 },
   actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12 },
-  msgBtn: { flex: 0.45, backgroundColor: '#ECFDF5', borderWidth: 1, borderColor: '#D1FAE5' },
+  msgBtn: { flex: 0.45, backgroundColor: '#fdf9ec', borderWidth: 1, borderColor: '#fae9d1' },
   msgBtnText: { fontSize: 15, fontWeight: '700', color: THEME_COLOR, marginLeft: 8 },
   callBtn: { flex: 1, backgroundColor: THEME_COLOR, shadowColor: THEME_COLOR, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 4 },
   callBtnText: { fontSize: 15, fontWeight: '700', color: '#FFF', marginLeft: 8 },

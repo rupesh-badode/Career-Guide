@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const PRIMARY_COLOR = '#4F46E5';
+const PRIMARY_COLOR = '#F27A21';
 
 const getNext7Days = () => {
   const dates = [];

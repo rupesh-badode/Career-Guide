@@ -103,8 +103,6 @@ export const getMyKYC = async () => {
     }
 }
 
-
-
 export const getConsultantLegal = async () => {
     try {
         const res = await Axios.get("/consultant/active-legals");
@@ -178,3 +176,15 @@ export const DeleteSlot = async (payload) => {
         return { success: false, message: errorMsg };
     }
 }
+
+export const getDashboardStats = async () => {
+    try {
+        const res = await Axios.get("/consultant/dashboard-stats");
+        return { success: true, data: res.data };
+    } catch (err) {
+        console.error("API ERR", err);
+        const errorMsg = err.response?.data?.message || err.message || "Failed to fetch dashboard stats";
+        return { success: false, message: errorMsg };
+    }
+}   
+

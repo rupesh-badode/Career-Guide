@@ -8,28 +8,27 @@ import {
   Animated,
   ActivityIndicator,
   Linking,
-  Alert
+  Alert,
+  Image
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// 👉 UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
 import { getWHONews } from '../../../../src/services/user';
 
 const PRIMARY_COLOR = '#F59E0B';
+const DEFAULT_NEWS_IMAGE = 'https://images.unsplash.com/photo-1504443914801-b544321b14e5?q=80&w=600&auto=format&fit=crop';
 
-// 🎨 Helper: Alag-alag NewsType ke liye colors set karta hai
-const getBadgeStyles = (type) => {
-  switch (type?.toLowerCase()) {
-    case 'news release':
-      return { bg: '#DBEAFE', text: '#1D4ED8', icon: 'newspaper' }; 
-    case 'departmental update':
-      return { bg: '#ECFDF5', text: '#047857', icon: 'domain' }; 
-    case 'statement':
-      return { bg: '#F3E8FF', text: '#7E22CE', icon: 'record-voice-over' }; 
-    case 'medical product alert':
-      return { bg: '#FEE2E2', text: '#B91C1C', icon: 'warning' }; 
-    default:
-      return { bg: '#F3F4F6', text: '#374151', icon: 'article' }; 
-  }
+// --- DATE FORMATTER ---
+const formatDate = (isoString) => {
+  if (!isoString) return 'Recent';
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
 };
 
 // ✨ Animated List Item Component
@@ -42,29 +41,31 @@ const AnimatedNewsCard = ({ item, index }) => {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 500,
-        delay: index * 100, // Stagger effect
+        delay: index * 100 > 1000 ? 0 : index * 100, // Limit stagger delay for long lists
         useNativeDriver: true,
       }),
       Animated.spring(slideAnim, {
         toValue: 0,
         friction: 7,
         tension: 40,
-        delay: index * 100,
+        delay: index * 100 > 1000 ? 0 : index * 100,
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
-
-  const badge = getBadgeStyles(item.NewsType);
+  }, [fadeAnim, slideAnim, index]);
 
   const handlePress = () => {
-    // Ye item.ItemDefaultUrl usually "https://who.int/..." ke aage lagta hai. 
-    // Agar WHO ka complete URL chahiye toh prefix add karein.
-    const fullUrl = `https://www.who.int${item.ItemDefaultUrl}`;
+    // 🔥 FIX: Naye JSON mein direct complete 'url' milta hai, prefix ki zaroorat nahi.
+    const fullUrl = item.url;
     
+    if (!fullUrl) {
+      Alert.alert("Error", "No link available for this article.");
+      return;
+    }
+
     Alert.alert(
       "Open Link",
-      "Do you want to read this article on the WHO website?",
+      `Do you want to read this article from ${item.source?.name || "the source"}?`,
       [
         { text: "Cancel", style: "cancel" },
         { text: "Open", onPress: () => Linking.openURL(fullUrl) }
@@ -74,28 +75,38 @@ const AnimatedNewsCard = ({ item, index }) => {
 
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-      <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={handlePress}>
+      <TouchableOpacity style={styles.card} activeOpacity={0.9} onPress={handlePress}>
         
-        {/* Top Row: Type Badge & Date */}
-        <View style={styles.cardHeader}>
-          <View style={[styles.badgeContainer, { backgroundColor: badge.bg }]}>
-            <MaterialIcons name={badge.icon} size={14} color={badge.text} />
-            <Text style={[styles.badgeText, { color: badge.text }]}>
-              {item.NewsType ? item.NewsType.toUpperCase() : 'UPDATE'}
-            </Text>
+        {/* 🔥 Thumbnail Image - Naya Addition premium look ke liye */}
+        <Image 
+          source={{ uri: item.urlToImage || DEFAULT_NEWS_IMAGE }} 
+          style={styles.cardImage} 
+          resizeMode="cover"
+        />
+
+        <View style={styles.cardContent}>
+          {/* Top Row: Type Badge & Date */}
+          <View style={styles.cardHeader}>
+            <View style={styles.badgeContainer}>
+              <MaterialIcons name="article" size={14} color={PRIMARY_COLOR} />
+              <Text style={styles.badgeText} numberOfLines={1}>
+                {item.source?.name ? item.source.name.toUpperCase() : 'UPDATE'}
+              </Text>
+            </View>
+            <Text style={styles.dateText}>{formatDate(item.publishedAt)}</Text>
           </View>
-          <Text style={styles.dateText}>{item.FormatedDate}</Text>
-        </View>
 
-        {/* Title */}
-        <Text style={styles.titleText} numberOfLines={3}>
-          {item.Title}
-        </Text>
+          {/* Title */}
+          <Text style={styles.titleText} numberOfLines={3}>
+            {/* JSON mein title 'title' (lowercase) hai */}
+            {item.title}
+          </Text>
 
-        {/* Footer: Read More Link */}
-        <View style={styles.cardFooter}>
-          <Text style={styles.readMoreText}>Read Article</Text>
-          <MaterialIcons name="arrow-forward-ios" size={14} color={PRIMARY_COLOR} />
+          {/* Footer: Read More Link */}
+          <View style={styles.cardFooter}>
+            <Text style={styles.readMoreText}>Read Article</Text>
+            <MaterialIcons name="arrow-forward-ios" size={14} color={PRIMARY_COLOR} />
+          </View>
         </View>
 
       </TouchableOpacity>
@@ -110,7 +121,6 @@ export default function NewsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch API on component mount
   useEffect(() => {
     fetchNewsData();
   }, []);
@@ -120,9 +130,12 @@ export default function NewsScreen({ navigation }) {
     setError(null);
     try {
       const response = await getWHONews();
-      // Aapke API response mein array 'data' key ke andar hai (response.data.data)
-      if (response && response.data) {
-        setNews(response.data);
+      
+      // 🔥 FIX: Naye JSON format ko target kiya
+      const fetchedArticles = response?.articles || response?.data?.articles || [];
+      
+      if (fetchedArticles && fetchedArticles.length > 0) {
+        setNews(fetchedArticles);
       } else {
         setNews([]);
       }
@@ -178,14 +191,15 @@ export default function NewsScreen({ navigation }) {
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Latest Updates</Text>
-          <Text style={styles.headerSubtitle}>Global health news & releases</Text>
+          <Text style={styles.headerSubtitle}>Global trends & insights</Text>
         </View>
       </View>
 
       {/* NEWS LIST */}
       <FlatList
         data={news}
-        keyExtractor={(item, index) => item.Id || index.toString()}
+        // 🔥 FIX: Id ki jagah ab url ko unique key banaya gaya hai
+        keyExtractor={(item, index) => item.url || index.toString()}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         renderItem={({ item, index }) => <AnimatedNewsCard item={item} index={index} />}
@@ -249,13 +263,14 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#111827',
   },
   headerSubtitle: {
     fontSize: 14,
     color: '#6B7280',
     marginTop: 2,
+    fontWeight: '500',
   },
   listContent: {
     padding: 16,
@@ -263,14 +278,22 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 16,
+    borderRadius: 20, // Thoda aur rounded
+    marginBottom: 20,
+    overflow: 'hidden', // Image borders ko clip karne ke liye
     shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
+  },
+  cardImage: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#E5E7EB',
+  },
+  cardContent: {
+    padding: 18,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -281,36 +304,42 @@ const styles = StyleSheet.create({
   badgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    backgroundColor: '#FFFBEB',
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    flexShrink: 1, // Badi source name ko truncate hone dega
+    marginRight: 10,
   },
   badgeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#B45309',
     marginLeft: 4,
     letterSpacing: 0.5,
   },
   dateText: {
     fontSize: 12,
     color: '#9CA3AF',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   titleText: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#1F2937',
-    lineHeight: 24,
+    lineHeight: 26,
     marginBottom: 16,
   },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'flex-end', // Arrow ko right mein align kiya
   },
   readMoreText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: PRIMARY_COLOR,
     marginRight: 4,
   },

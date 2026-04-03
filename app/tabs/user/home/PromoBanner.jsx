@@ -1,9 +1,13 @@
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 export default function PromoBanner() {
+
+  const navigation = useNavigation();
+
   return (
     <View style={styles.cardContainer}>
       
@@ -21,7 +25,7 @@ export default function PromoBanner() {
         </View>
 
         {/* Action Button */}
-        <TouchableOpacity style={styles.chatButton} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.chatButton} activeOpacity={0.8} onPress={() => navigation.navigate('Chat')}>
           <Text style={styles.buttonText}>Chat Now</Text>
         </TouchableOpacity>
 
@@ -101,7 +105,7 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   chatButton: {
-    backgroundColor: '#FDE047', // Vibrant Yellow
+    backgroundColor: '#F59E0B', // Vibrant Yellow
     paddingVertical: 6,
     paddingHorizontal: 16,
     borderRadius: 20, // Pill shape
@@ -111,7 +115,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#ffffff',
   },
   termsText: {
     fontSize: 8,
@@ -122,7 +126,7 @@ const styles = StyleSheet.create({
   // --- Right Section Styles ---
   rightSection: {
     flex: 0.8, // Right part
-    backgroundColor: '#FDE047', // Bright Yellow matching the button
+    backgroundColor: '#F27A21', // Vibrant Yellow matching the button
     justifyContent: 'flex-end',
     alignItems: 'center',
     position: 'relative',

@@ -1,17 +1,14 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import CounselorList from "./CounselorList";
 import ImageCarousel from "./ImageCarousel";
 import NewsSection from "./NewsSection";
-import Blog from "./Blog";
 import FeaturedBooks from "./FeaturedBooks";
 import CustomHeader from "../../../../src/components/common/CustomHeader";
 import OnboardingScreen from "./OnboardingScreen";
 import WhyLoveAastroneet from "./WhyLoveAastroneet";
-import SmartTools from "./SmartTools";
-import TopMentorsOverview from "./TopMentorsOverview";
 import { useNavigation } from "@react-navigation/native";
 // import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
@@ -19,6 +16,8 @@ import { useDispatch } from "react-redux";
 import { BlurView } from "expo-blur";
 import ServicesSection from "./ServicesSection";
 import PromoBanner from "./PromoBanner";
+import Ad from "./Ad";
+import FloatingAI from "../../../../src/components/flot/FloatingAI";
 
 export default function Index() {
     const insets = useSafeAreaInsets();
@@ -62,17 +61,20 @@ export default function Index() {
                 )}
                 scrollEventThrottle={16}
             >
-                <OnboardingScreen />
-                <ImageCarousel />
+                {/* <OnboardingScreen /> */}
                 <ServicesSection/>
+                <ImageCarousel />
                 <CounselorList />
                 {/* <TopMentorsOverview/> */}
                 {/* <SmartTools/> */}
                 {/* <Blog /> */}
+                <Ad/>
                 <PromoBanner/>
                 <FeaturedBooks />
-                <WhyLoveAastroneet/>
+                {/* <WhyLoveAastroneet/> */}
                 <NewsSection />
+                {/* <FloatingAI/> */}
+                {/* <AIChat /> */}
             </Animated.ScrollView>
 
 

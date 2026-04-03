@@ -238,6 +238,8 @@ export default function CustomHeader({
               <HeaderIconButton icon="filter" color="#4B5563" onPress={() => onFilterPress && onFilterPress()} />
             </View>
           )}
+
+
         </View>
       );
     }
@@ -275,6 +277,41 @@ export default function CustomHeader({
         </View>
       );
     }
+    
+
+    if (routeName === "MentorChat") {
+      return (
+        <View style={[styles.contentContainer, { justifyContent: 'space-between' }]}>
+          {isSearching ? renderSearchBar() : (
+            <Pressable
+              style={({ pressed }) => [styles.leftSection, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}
+              onPress={() => setProfileDropdownVisible(true)}
+            >
+              <View style={styles.avatarRing}>
+                <Image source={{ uri: displayAvatar }} style={styles.avatar} />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={styles.greetingText}>
+                  {theme.greeting}
+                  <Text style={styles.nameText}>{displayName}</Text>
+                </Text>
+                <Text style={styles.subText}>{theme.subText}</Text>
+              </View>
+            </Pressable>
+          )}
+
+          {!isSearching && (
+            <View style={styles.rightIconsContainer}>
+               {routeName === "MentorChat" && (
+                 <HeaderIconButton icon="search-outline" color="#4B5563" onPress={() => toggleSearch(true)} />
+               )}
+               {/* <HeaderIconButton icon={theme.actionIcon} color="#4B5563" onPress={onActionPress} /> */}
+            </View>
+          )}
+        </View>
+      );
+    }
+
 
     // 4. HOME & DASHBOARD (OR DEFAULT FALLBACK)
     return (
@@ -308,11 +345,11 @@ export default function CustomHeader({
           )}
           
           <HeaderIconButton 
-            icon="notifications" 
+            icon="wallet" 
             color="#FFFFFF" 
             isPremium={true} 
             badgeCount={notificationCount} 
-            onPress={onNotificationPress || (() => console.log("Notif pressed"))} 
+            onPress={onNotificationPress || (() => console.log("Wallet pressed"))} 
           />
           
           {(!isUser && !isConsultant && !isMentor) && (

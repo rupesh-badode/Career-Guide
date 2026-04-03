@@ -19,7 +19,7 @@ import RazorpayCheckout from 'react-native-razorpay';
 // ⚠️ UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
 import { allMentor, BookMentor, verifyMentorbooking } from '../../../../src/services/user';
 import SlotSelectionModal from '../mentor/SlotSelectionModal';
-import {  key_id } from '../../../../src/constants/MainContent';
+import { key_id } from '../../../../src/constants/MainContent';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.75;
@@ -123,30 +123,30 @@ export default function TopMentorsOverview() {
 
       // 2. Create Order in Backend
       const orderResponse = await BookMentor(orderPayload);
-      if (!orderResponse.success) {
-        throw new Error(orderResponse.message || "Failed to initiate booking.");
+      if (!orderResponse?.success) {
+        throw new Error(orderResponse?.message || "Failed to initiate booking.");
       }
 
       const options = {
         description: `Mentorship Session with ${mentor.name} on ${selectedDate} at ${selectedTime}`,
-        image: 'https://woocommerce.com/wp-content/uploads/2021/01/fb-razorpay@2x.png',
+        image: 'https://ui-avatars.com/api/?name=Aastroneet&background=4F46E5&color=fff', // App logo fallback
         currency: 'INR',
         key: key_id,
         amount: orderResponse.amount,
         name: 'Aastroneet',
         order_id: orderResponse.orderId,
         prefill: {
-          email: 'user@example.com',
-          contact: '9999999999',
-          name: 'Student Name'
+          email: 'student@example.com', // Optional: Replace with logged-in user's email if available
+          contact: '9999999999',        // Optional: Replace with logged-in user's phone if available
+          name: 'Student Name'          // Optional: Replace with logged-in user's name
         },
         theme: { color: MENTOR_PRIMARY }
       };
 
-      // 👉 FIX: Added 'await' here. Code will pause until payment completes or cancels.
+      // 3. Open Razorpay Checkout
       const data = await RazorpayCheckout.open(options);
 
-      // 3. Payment Success - Verify from Backend
+      // 4. Payment Success - Verify from Backend (Including Signature & Order ID)
       const verifyPayload = {
         mentorId: mentor._id,
         razorpay_payment_id: data.razorpay_payment_id,
@@ -158,37 +158,36 @@ export default function TopMentorsOverview() {
 
       const verifyResponse = await verifyMentorbooking(verifyPayload);
 
-      if (verifyResponse.success) {
-        Alert.alert("Booking Confirmed!", `Your session with ${mentor.name} is booked for ${selectedDate} at ${selectedTime}.`);
+      if (verifyResponse?.success) {
+        Alert.alert(
+          "Booking Confirmed! 🎉", 
+          `Your session with ${mentor.name} is booked for ${selectedDate} at ${selectedTime}.`
+        );
+        // Optional: navigation.navigate("MyBookings"); // Redirect user to bookings screen
       } else {
-        Alert.alert("Verification Failed", "Payment captured but verification failed. Contact support.");
+        Alert.alert("Verification Failed", "Payment captured but verification failed. Please contact support.");
       }
 
     } catch (error) {
       console.log("🔥 REAL BOOKING ERROR:", error);
 
-      // 👉 FIX: Handle Razorpay Cancellation vs API Errors gracefully
-      if (error.code === 0 || error.description) {
-        // Yeh block tab chalega jab user back button dabayega (Razorpay error)
-        Alert.alert("Payment Cancelled", "You cancelled the payment process.");
+      // Robust Razorpay Cancellation/Error check
+      if (error.code === 0 || error.description === 'Payment cancelled by user' || error.reason === 'payment_cancelled') {
+        Alert.alert("Payment Cancelled", "You closed the payment gateway.");
       } else {
-        // Yeh block tab chalega jab aapki API me koi error aayega
-        const errorMsg = error?.response?.data?.message || error?.message || "Something went wrong.";
+        const errorMsg = error?.response?.data?.message || error?.message || "Something went wrong during payment.";
         Alert.alert("Booking Failed", errorMsg);
       }
 
     } finally {
-      // 👉 Ab loading spinner exact tabhi gayab hoga jab payment verify ya cancel ho jayegi
+      // Loader OFF
       setBookingMentorId(null);
     }
   };
 
-
   const renderMentorCard = ({ item }) => (
-    // Outer container changed to View to avoid nested touchables
     <View style={styles.cardContainer}>
-
-      {/* Mentor Profile Header - Clickable to go to profile */}
+      {/* Mentor Profile Header */}
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => console.log("Navigate to Mentor Profile", item._id)}
@@ -223,34 +222,15 @@ export default function TopMentorsOverview() {
 
       {/* Bottom Action Row */}
       <View style={styles.cardFooter}>
-
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-
-          {/* Rating */}
           <View style={styles.ratingBox}>
             <Ionicons name="star" size={14} color="#F59E0B" />
-            <Text style={styles.ratingText}>
-              {item.averageRating || 0}
-            </Text>
+            <Text style={styles.ratingText}>{item.averageRating || 0}</Text>
           </View>
-
-          {/* Total Ratings */}
-          <Text style={{ fontSize: 12, color: "#6B7280" }}>
-            ({item.totalRatings || 0})
-          </Text>
-
-          {/* Experience */}
-          <View style={{
-            backgroundColor: "#EEF2FF",
-            paddingHorizontal: 8,
-            paddingVertical: 3,
-            borderRadius: 6
-          }}>
-            <Text style={{ fontSize: 11, color: "#4F46E5", fontWeight: "600" }}>
-              {item.experience || 0} yrs
-            </Text>
+          <Text style={{ fontSize: 12, color: "#6B7280" }}>({item.totalRatings || 0})</Text>
+          <View style={{ backgroundColor: "#EEF2FF", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+            <Text style={{ fontSize: 11, color: "#4F46E5", fontWeight: "600" }}>{item.experience || 0} yrs</Text>
           </View>
-
         </View>
 
         <TouchableOpacity
@@ -267,14 +247,12 @@ export default function TopMentorsOverview() {
             </Text>
           )}
         </TouchableOpacity>
-
       </View>
     </View>
   );
 
   return (
     <View style={styles.sectionContainer}>
-      {/* Section Header */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Top Mentors</Text>
         <TouchableOpacity onPress={() => navigation.navigate("AllMentor")}>
@@ -282,7 +260,6 @@ export default function TopMentorsOverview() {
         </TouchableOpacity>
       </View>
 
-      {/* Horizontal List */}
       {loading ? (
         <View style={styles.skeletonWrapper}>
           <MentorSkeletonCard />
@@ -305,7 +282,7 @@ export default function TopMentorsOverview() {
         </View>
       )}
 
-      {/* 👉 Render the Slot Selection Modal */}
+      {/* 👉 Modal stays here */}
       <SlotSelectionModal
         visible={isSlotModalVisible}
         mentor={selectedMentorForBooking}
@@ -317,15 +294,14 @@ export default function TopMentorsOverview() {
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: { marginTop: 25, marginBottom: 5, },
+  sectionContainer: { marginTop: 25, marginBottom: 5 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 15 },
   sectionTitle: { fontSize: 22, fontWeight: 'bold', color: '#111827' },
-  
   viewAllText: { fontSize: 14, color: MENTOR_PRIMARY, fontWeight: '600' },
   listContent: { paddingLeft: 20, paddingRight: 5 },
   cardContainer: {
     width: CARD_WIDTH, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginRight: 15,
-    borderWidth: 1, borderColor: '#F3F4F6',marginBottom: 2,
+    borderWidth: 1, borderColor: '#F3F4F6', marginBottom: 2,
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 },
       android: { elevation: 3 },
@@ -349,18 +325,7 @@ const styles = StyleSheet.create({
   headerTextSpace: { marginLeft: 12, flex: 1, justifyContent: 'center' },
   skeletonText: { height: 12, backgroundColor: '#F3E8FF', borderRadius: 4 },
   emptyBox: { padding: 20, alignItems: 'center' },
-  nameAvatar: {
-  width: 50,
-  height: 50,
-  borderRadius: 25,
-  backgroundColor: "#4F46E5",
-  justifyContent: "center",
-  alignItems: "center"
-},
-nameAvatarText: {
-  color: "#fff",
-  fontSize: 18,
-  fontWeight: "bold"
-},
+  nameAvatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: "#4F46E5", justifyContent: "center", alignItems: "center" },
+  nameAvatarText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   emptyText: { color: '#9CA3AF', fontStyle: 'italic' }
 });

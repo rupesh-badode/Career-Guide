@@ -174,7 +174,6 @@ export default function CounselorList() {
         </TouchableOpacity>
       </View>
 
-      {/* Content Rendering */}
       {isLoading ? (
         <ScrollView 
           horizontal 
@@ -217,7 +216,7 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 10,
     backgroundColor: '#FAFAFA', 
-    paddingVertical: 15,
+    paddingVertical: 1,
   },
   headerRow: {
     flexDirection: 'row',
@@ -278,7 +277,7 @@ const styles = StyleSheet.create({
   },
   listPadding: {
     paddingHorizontal: 20,
-    paddingBottom: 25, // Extra padding shadows ke liye
+    paddingBottom: 10, // Extra padding shadows ke liye
   },
   
   // --- CARD STYLES ---
@@ -286,7 +285,7 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     backgroundColor: '#FFFFFF',
     borderRadius: 24, 
-    padding: 16,
+    padding: 10,
     marginRight: SPACING,
     alignItems: 'center',
     // 🔥 Soft, elegant shadow
@@ -300,7 +299,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 10,
   },
   ratingBadge: {
     flexDirection: 'row',
@@ -324,7 +322,7 @@ const styles = StyleSheet.create({
   },
   avatarWrapper: {
     position: 'relative',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   imageRing: {
     width: 86,
@@ -371,7 +369,7 @@ const styles = StyleSheet.create({
   subtitleText: {
     fontSize: 13,
     color: '#64748B',
-    marginBottom: 12,
+    marginBottom: 8,
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -379,7 +377,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#F59E0B',
-    marginBottom: 16,
+    marginBottom: 6,
   },
   priceSub: {
     fontSize: 11,

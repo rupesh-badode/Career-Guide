@@ -17,7 +17,7 @@ const { width } = Dimensions.get('window');
 // Responsive settings
 const ITEM_WIDTH = width; 
 const CARD_WIDTH = width * 0.92; // Thoda chota kiya taaki shadow dikhe
-const CAROUSEL_HEIGHT = Platform.OS === 'web' ? 400 : 260; // Thodi height aur badhayi
+const CAROUSEL_HEIGHT = Platform.OS === 'web' ? 210 : 210; // Thodi height aur badhayi
 
 // Premium Yellow Theme Colors
 const YELLOW_PRIMARY = '#F59E0B'; // Premium Amber/Gold

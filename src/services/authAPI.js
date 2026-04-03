@@ -90,6 +90,19 @@ export const UpdateProfile = async (payload) => {
 }
 
 
+export const UpdateProfilePic = async (payload) => {
+    try {
+        const res = await Axios.post("/user/update-profile-picture", payload);
+        return { success: true, data: res.data }
+    } catch (err) {
+        console.log("API ERR", err);
+        const errorMsg = err.response?.data?.message || err.message || "update failed";
+        return { success: false, message: errorMsg };
+    }
+}
+
+
+
 export const ChangePassword = async (payload) => {
     try {
         const res = await Axios.post("/user/change-password", payload);

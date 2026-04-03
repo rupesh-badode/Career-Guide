@@ -35,7 +35,7 @@ const astrologyServices = [
     iconName: 'book-reader',
     IconComponent: FontAwesome5,
     screen: 'AllBooks',
-  },
+  }
 ];
 
 export default function ServicesSection() {
@@ -60,7 +60,7 @@ export default function ServicesSection() {
           >
             {/* Yellow Circular Background */}
             <View style={styles.iconCircle}>
-              <Icon name={item.iconName} size={28} color="#2D2D2D" />
+              <Icon name={item.iconName} size={28} color="#ffffff" />
             </View>
             
             {/* Text Label */}
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     width: 65,
     height: 65,
     borderRadius: 35, 
-    backgroundColor: '#FDE047', 
+    backgroundColor: '#F59E0B', 
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,

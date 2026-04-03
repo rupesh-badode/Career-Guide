@@ -27,6 +27,8 @@ import ProfileScreen from "../../src/components/common/ProfileScreen";
 // 👉 MENTOR SCREENS
 import MentorChat from './mentor/chat/MentorChat';
 import MentorDashbaord from './mentor/dashboard/MentorDashboard';
+import Store from './user/store/Store';
+import MentorAppoinment from './mentor/appoinment/MentorAppoinment';
 
 const { width } = Dimensions.get('window');
 const TAB_BAR_MARGIN = 20; // Side margins
@@ -99,6 +101,7 @@ const CustomTabBar = ({ state, descriptors, navigation, activeColor }) => {
                     else if (routeName === "Chat") iconName = isFocused ? 'chatbubbles' : 'chatbubbles-outline';
                     else if (routeName === "News") iconName = isFocused ? 'newspaper' : 'newspaper-outline';
                     else if (routeName === 'Appointments' || routeName === 'Requests') iconName = isFocused ? 'calendar' : 'calendar-outline';
+                    else if (routeName === 'Store') iconName = isFocused ? 'bag-handle' : 'bag-handle-outline';
                     else if (routeName === 'Profile') iconName = isFocused ? 'person' : 'person-outline';
 
                     return (
@@ -158,7 +161,7 @@ export default function TabNavigatorGroup() {
                     <Tab.Screen name="Home" component={Index} />
                     <Tab.Screen name="Appointments" component={AppointmentSreen} />
                     <Tab.Screen name="Chat" component={Chat} />
-                    {/* <Tab.Screen name='News' component={NewsScreen} /> */}
+                    <Tab.Screen name='Store' component={Store} />
                 </>
             )}
 
@@ -174,6 +177,7 @@ export default function TabNavigatorGroup() {
                 <>
                     <Tab.Screen name="Dashboard" component={MentorDashbaord} />
                     <Tab.Screen name="Chat" component={MentorChat} />
+                    <Tab.Screen name="Requests" component={MentorAppoinment} />
                 </>
             )}
 

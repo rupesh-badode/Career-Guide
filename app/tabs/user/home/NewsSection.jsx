@@ -6,16 +6,33 @@ import {
   Image, 
   TouchableOpacity, 
   Platform,
-  Animated
+  Animated,
+  ScrollView,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getWHONews } from '../../../../src/services/user'; 
 import { useNavigation } from '@react-navigation/native';
 
-const PRIMARY_COLOR = '#F59E0B';
-const DEFAULT_NEWS_IMAGE = 'https://images.unsplash.com/photo-1504443914801-b544321b14e5?q=80&w=200&auto=format&fit=crop'; // Ek default health/news image kyunki API image nahi bhej rahi
+// 👉 UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
+import { getWHONews } from '../../../../src/services/user'; 
 
-// 🔥 NAYA: Premium Skeleton Loader Component
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.8; // Screen ka 80% width lega taaki agla card thoda sa dikhe
+const PRIMARY_COLOR = '#F59E0B';
+const DEFAULT_NEWS_IMAGE = 'https://images.unsplash.com/photo-1504443914801-b544321b14e5?q=80&w=200&auto=format&fit=crop'; 
+
+// --- DATE FORMATTER ---
+const formatDate = (isoString) => {
+  if (!isoString) return 'Recent';
+  const date = new Date(isoString);
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
+};
+
+// --- SKELETON LOADER COMPONENT ---
 const SkeletonNewsCard = () => {
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
 
@@ -51,13 +68,10 @@ export default function NewsSection() {
       setLoading(true);
       const res = await getWHONews();
       
-      // 🔥 FIX: Aapki API 'res.data' ke andar array bhej rahi hai
-      // Log ke hisaab se res = { data: [...], success: true, total: 50 } hai.
-      // Toh actual list 'res.data' me hai (ya axios ke hisaab se res.data.data me ho sakti hai)
-      const newsArray = res?.data?.data || res?.data || [];
+      const newsArray = res?.articles || res?.data?.articles || [];
       
       if (newsArray && newsArray.length > 0) {
-        setNewsData(newsArray.slice(0, 3)); 
+        setNewsData(newsArray.slice(0, 5)); // 5 items kar diye scroll feel ke liye
       }
     } catch (error) {
       console.error("Failed to fetch news:", error);
@@ -81,52 +95,62 @@ export default function NewsSection() {
         </TouchableOpacity>
       </View>
 
-      {/* List Section */}
-      <View style={styles.listContainer}>
+      {/* 🔥 HORIZONTAL LIST SECTION */}
+      <ScrollView 
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
+        snapToInterval={CARD_WIDTH + 16} // Smooth snapping effect ke liye (Card Width + MarginRight)
+        decelerationRate="fast"
+      >
         {loading ? (
-          // Skeleton Loader (3 cards dikhayenge loading ke time)
           <>
             <SkeletonNewsCard />
             <SkeletonNewsCard />
             <SkeletonNewsCard />
           </>
         ) : (
-          newsData.map((item) => {
-            // 🔥 FIX: Exact API keys use ki hain jo aapke console.log mein thin
+          newsData.map((item, index) => {
+            const uniqueKey = item.url || index.toString(); 
+
             return (
-              <TouchableOpacity key={item.Id} onPress={()=>navigation.navigate("News")} style={styles.newsCard} activeOpacity={0.7}>
-                
-                {/* Thumbnail: API image nahi bhej rahi toh default image use ki hai */}
-                {/* <Image 
-                  source={{ uri: DEFAULT_NEWS_IMAGE }} 
+              <TouchableOpacity 
+                key={uniqueKey} 
+                onPress={() => navigation.navigate("News", { url: item.url })} 
+                style={styles.newsCard} 
+                activeOpacity={0.7}
+              >
+                <Image 
+                  source={{ uri: item.urlToImage || DEFAULT_NEWS_IMAGE }} 
                   style={styles.thumbnail} 
-                /> */}
+                  resizeMode="cover"
+                />
                 
                 <View style={styles.contentContainer}>
                   <View style={styles.metaRow}>
                     <Text style={styles.categoryText} numberOfLines={1}>
-                      {item.NewsType || 'Update'}
+                      {item.source?.name || 'News Update'}
                     </Text>
                     <View style={styles.dot} />
-                    {/* Read time API me nahi hai, toh static ya hide kar sakte hain */}
                     <Text style={styles.readTimeText}>3 min read</Text>
                   </View>
                   
                   <Text style={styles.newsTitle} numberOfLines={2}>
-                    {item.Title}
+                    {item.title}
                   </Text>
                   
                   <View style={styles.bottomRow}>
                     <Ionicons name="time-outline" size={14} color="#9CA3AF" />
-                    <Text style={styles.dateText}>{item.FormatedDate}</Text>
+                    <Text style={styles.dateText}>
+                      {formatDate(item.publishedAt)}
+                    </Text>
                   </View>
                 </View>
-
               </TouchableOpacity>
-            )
+            );
           })
         )}
-      </View>
+      </ScrollView>
 
     </View>
   );
@@ -154,20 +178,25 @@ const styles = StyleSheet.create({
     color: PRIMARY_COLOR, 
     fontWeight: '600',
   },
+  // 🔥 List Container Updated
   listContainer: {
-    paddingHorizontal: 20,
+    paddingLeft: 20,
+    paddingRight: 4, // 16px right margin inside the card makes it total 20px padding at the end
+    paddingBottom: 15, // Shadow space ke liye
   },
+  // 🔥 Card Styles Updated
   newsCard: {
+    width: CARD_WIDTH, // Fixed width de di taaki horiontal wrap ho
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 12,
-    marginBottom: 16,
+    marginRight: 16, // Bottom ki jagah Right margin
     borderWidth: 1,
     borderColor: '#F3F4F6',
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 },
-      android: { elevation: 2 },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 },
+      android: { elevation: 3 },
     }),
   },
   thumbnail: {
@@ -189,7 +218,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 11,
     color: PRIMARY_COLOR, 
-    fontWeight: '700',
+    fontWeight: '800',
     textTransform: 'uppercase',
     maxWidth: '65%', 
   },
@@ -203,10 +232,11 @@ const styles = StyleSheet.create({
   readTimeText: {
     fontSize: 11,
     color: '#6B7280',
+    fontWeight: '500',
   },
   newsTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#111827',
     lineHeight: 20,
     marginBottom: 6,
@@ -217,7 +247,8 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#6B7280',
     marginLeft: 4,
+    fontWeight: '500',
   },
 });

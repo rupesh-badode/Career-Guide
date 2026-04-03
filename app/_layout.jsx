@@ -181,8 +181,8 @@ function AppNavigator() {
           ) : !isAuthenticated ? (
             <>
               <Stack.Screen name='WelcomeScreen' component={WelcomeScreen} />
-              <Stack.Screen name='Login' component={LoginScreen} />
               <Stack.Screen name="Register" component={RegisterScreen} />
+              <Stack.Screen name='Login' component={LoginScreen} />
               <Stack.Screen name='OtpVerification' component={OtpVerification} />
               <Stack.Screen name='ForgetPassword' component={ForgotPassword} />
               <Stack.Screen name='ResetPassword' component={ResetPassword} />
@@ -216,7 +216,6 @@ function AppNavigator() {
               <Stack.Screen name='CheckoutButton' component={CheckoutButton} />
               <Stack.Screen name='MentorProfileDetails' component={MentorProfileDetails} />
               <Stack.Screen name='News' component={NewsScreen} />
-
             </>
           )}
         </Stack.Navigator>

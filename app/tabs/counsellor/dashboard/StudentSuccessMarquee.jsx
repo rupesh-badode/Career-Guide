@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
-const THEME_COLOR = '#10B981';
+const THEME_COLOR = '#F27A21';
 
 // ==========================================
 // MOCK DATA: STUDENTS REVIEW
@@ -141,7 +141,7 @@ export default function StudentSuccessMarquee() {
 // ==========================================
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F0FDF4', // Very light emerald background
+    backgroundColor: '#fdf5f0', // Very light emerald background
     paddingVertical: 50,
     overflow: 'hidden', // IMPORTANT: Hides the cards outside the screen
   },
@@ -197,9 +197,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 24,
     paddingTop: 35, // Space for overlapping avatar
+    marginBottom: 40,
     position: 'relative',
     ...Platform.select({
-      ios: { shadowColor: '#10B981', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 15 },
+      ios: { shadowColor: '#F27A21', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 15 },
       android: { elevation: 5 },
     }),
     borderWidth: 1,

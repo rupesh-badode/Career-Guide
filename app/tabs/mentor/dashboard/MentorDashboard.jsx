@@ -1,9 +1,7 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { Animated, StyleSheet, View, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CustomHeader from "../../../../src/components/common/CustomHeader";
-import AnimatedDashboard from "./AnimatedDashboard";
-import MentorBenefits from "./Mentorbenifts";
 import MentorBlogsOverview from "./MentorBlogsOverview";
 import MentorImageCarousel from "./MentorImageCarousel";
 import { BlurView } from "expo-blur";
@@ -55,9 +53,7 @@ export default function MentorDashboard() {
                 scrollEventThrottle={16}
             >
               <MentorImageCarousel/>
-              <MentorBenefits/>
               <MentorBlogsOverview/>
-               {/* <AnimatedDashboard /> */}
             </Animated.ScrollView>
 
             {/* 👉 4. Status Bar Blur Effect Container */}

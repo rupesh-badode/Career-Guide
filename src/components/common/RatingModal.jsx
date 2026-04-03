@@ -271,14 +271,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   submitButton: {
-    backgroundColor: '#F59E0B', // Primary indigo color
+    backgroundColor: '#F27A21', // Primary indigo color
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   submitButtonDisabled: {
-    backgroundColor: '#fbc871', // Lighter shade when disabled
+    backgroundColor: '#ffbf8e', // Lighter shade when disabled
   },
   submitButtonText: {
     color: '#FFFFFF',

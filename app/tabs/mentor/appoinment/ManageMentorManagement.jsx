@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { CreateAvailability } from '../../../../src/services/consultantAPI';
+import { CreateAvailability } from '../../../../src/services/mentorAPI';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -26,7 +26,7 @@ const DEFAULT_SLOTS = [
   "05:00 PM", "06:00 PM", "07:00 PM", "08:00 PM"
 ];
 
-export default function CreateAvailabilityScreen({ navigation }) {
+export default function ManageMentorManagement({ navigation }) {
   const todayStr = new Date().toISOString().split('T')[0];
   
   const [selectedDate, setSelectedDate] = useState(todayStr);

@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { getUserProfile } from '../../services/authAPI';
 import { getConsultantProfile } from '../../services/consultantAPI';
 import { getMentorProfile } from '../../services/mentorAPI'; 
-import { logout } from '../../redux/authSlice'; // Removed changeRole if not used
+import { logout } from '../../redux/authSlice'; 
 import CustomHeader from './CustomHeader';
 
 // ==========================================
@@ -28,7 +28,7 @@ const AnimatedMenuItem = ({ icon, title, subtitle, color, onPress, isDanger, ind
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 400,
-        delay: index * 100, // Staggered delay based on index
+        delay: index * 100, 
         useNativeDriver: true,
       }),
       Animated.spring(slideAnim, {
@@ -39,7 +39,7 @@ const AnimatedMenuItem = ({ icon, title, subtitle, color, onPress, isDanger, ind
         useNativeDriver: true,
       }),
     ]).start();
-  }, [index]);
+  }, [index, fadeAnim, slideAnim]); // Added missing dependencies
 
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -74,17 +74,14 @@ export default function ProfileScreen() {
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
-  // Profile Section Animations
   const profileFadeAnim = useRef(new Animated.Value(0)).current;
   const profileSlideAnim = useRef(new Animated.Value(-20)).current;
 
-  // 👉 Redux setup se role nikalna
   const role = useSelector((state) => state.auth?.role) || 'User';
 
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 👉 Fetch data based on specific Role
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -102,7 +99,6 @@ export default function ProfileScreen() {
         const profileInfo = response?.user || response?.consultant || response?.mentor || response?.data || response;
         if (profileInfo) setUserData(profileInfo);
 
-        // Start Profile Animation once data is mapped (or even while loading)
         Animated.parallel([
           Animated.timing(profileFadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
           Animated.spring(profileSlideAnim, { toValue: 0, tension: 50, friction: 7, useNativeDriver: true }),
@@ -116,7 +112,7 @@ export default function ProfileScreen() {
     };
 
     fetchUserData();
-  }, [role]); 
+  }, [role, profileFadeAnim, profileSlideAnim]); 
 
   function onLogout() {
     Alert.alert(
@@ -142,16 +138,15 @@ export default function ProfileScreen() {
     );
   }
   
-
-  // 👉 Dynamic Theme Setup (3 Roles)
-  let primaryColor = '#F59E0B'; // User: Blue
-  let bgColor = '#EFF6FF';
+  // 👉 FIXED: Dynamic Theme Setup with proper colors
+  let primaryColor = '#F27A21'; // User: Blue
+  let bgColor = '#fff7ef';
 
   if (role === 'Consultant') {
-    primaryColor = '#F59E0B'; // Consultant: Green
+    primaryColor = '#F27A21'; // Consultant: Green
     bgColor = '#EFF6FF';
   } else if (role === 'Mentor') {
-    primaryColor = '#F59E0B'; // Mentor: Purple
+    primaryColor = '#F27A21'; // Consultant: Green
     bgColor = '#EFF6FF';
   }
 
@@ -178,7 +173,7 @@ export default function ProfileScreen() {
               <Image
                 source={{
                   uri: userData?.profilePicture || 
-                       `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name || 'User')}&background=0D8ABC&color=fff` ,
+                       `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name || 'User')}&background=${theme.primary.replace('#','')}&color=fff` ,
                 }}
                 style={[styles.profileImage, { borderColor: theme.primary }]}
               />
@@ -197,12 +192,13 @@ export default function ProfileScreen() {
                 </Text>
               </View>
 
-              {userData?.phone && (
+              {/* 👉 FIXED: Logic Precedence Issue that caused App Crash */}
+              {(userData?.phone || userData?.mobile) ? (
                 <View style={styles.contactRow}>
                   <Ionicons name="call" size={14} color="#9CA3AF" />
-                  <Text style={styles.userEmail}>+91 {userData.phone}</Text>
+                  <Text style={styles.userEmail}>+91 {userData?.phone || userData?.mobile}</Text>
                 </View>
-              )}
+              ) : null}
 
               <Pressable
                 onPress={() => navigation.navigate("EditProfile")}
@@ -237,7 +233,6 @@ export default function ProfileScreen() {
               <>
                 <AnimatedMenuItem index={1} icon="person" title="Mentor Profile" subtitle="Update your mentoring details" color={theme.primary} onPress={() => navigation.navigate("MentorProfileDetails")} />
                 <AnimatedMenuItem index={2} icon="calendar" title="Manage Sessions" subtitle="View and manage your schedule" color={theme.primary} onPress={() => navigation.navigate("MentorSessions")} />
-                {/* <AnimatedMenuItem index={3} icon="newspaper" title="My Blogs" subtitle="Write and manage articles" color={theme.primary} onPress={() => navigation.navigate("MentorBlog")} /> */}
               </>
             )}
 
@@ -253,12 +248,13 @@ export default function ProfileScreen() {
 
             <Text style={styles.sectionTitle}>Support & About</Text>
 
+            {/* 👉 FIXED: Adjusted Index numbers for proper staggered animation */}
             <AnimatedMenuItem index={5} icon="shield-half" title="Legal Documents" subtitle="Terms, conditions & privacy policy" color={theme.primary} onPress={() => navigation.navigate("LegalScreen")} />
-            <AnimatedMenuItem index={5} icon="videocam" title="Blogs" subtitle="Read our blogs" color={theme.primary} onPress={() => navigation.navigate("Blogs")} />
+            <AnimatedMenuItem index={6} icon="videocam" title="Blogs" subtitle="Read our blogs" color={theme.primary} onPress={() => navigation.navigate("Blogs")} />
             
             <Text style={styles.sectionTitle}>Account Actions</Text>
 
-            <AnimatedMenuItem index={6} icon="log-out" title="Logout" subtitle="Sign out of your account safely" isDanger={true} onPress={onLogout} />
+            <AnimatedMenuItem index={7} icon="log-out" title="Logout" subtitle="Sign out of your account safely" isDanger={true} onPress={onLogout} />
           </View>
 
         </ScrollView>
@@ -267,143 +263,26 @@ export default function ProfileScreen() {
   );
 }
 
-// ==========================================
-// 3. Styles (Modern & Premium)
-// ==========================================
+// ... Styles exact same as your code, they are perfect ...
 const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    backgroundColor: '#F9FAFB', // Light modern background
-  },
-  safeArea: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-    paddingTop: 10,
-  },
-  
-  // Profile Card Styles
-  profileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 16 },
-      android: { elevation: 4 },
-    }),
-  },
-  imageContainer: {
-    position: 'relative',
-    marginRight: 18,
-  },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 3,
-    backgroundColor: '#F3F4F6',
-  },
-  onlineDot: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#10B981',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
-  infoContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 6,
-    letterSpacing: -0.5,
-  },
-  contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 13,
-    color: '#6B7280',
-    marginLeft: 6,
-    fontWeight: '500',
-  },
-  roleTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  roleText: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginLeft: 6,
-  },
-
-  // Menu Styles
-  menuSection: {
-    marginTop: 0,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#9CA3AF',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginTop: 20,
-    marginBottom: 12,
-    marginLeft: 8,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 20,
-    marginBottom: 12,
-    borderWidth: 1,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8 },
-      android: { elevation: 1 },
-    }),
-  },
-  iconContainer: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  menuTextContainer: {
-    flex: 1,
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 2,
-  },
-  menuSubtitle: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
+  mainContainer: { flex: 1, backgroundColor: '#F9FAFB' },
+  safeArea: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 100, paddingTop: 10 },
+  profileCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 20, borderRadius: 24, marginBottom: 24, borderWidth: 1, borderColor: '#F3F4F6', ...Platform.select({ ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 16 }, android: { elevation: 4 } }) },
+  imageContainer: { position: 'relative', marginRight: 18 },
+  profileImage: { width: 80, height: 80, borderRadius: 40, borderWidth: 3, backgroundColor: '#F3F4F6' },
+  onlineDot: { position: 'absolute', bottom: 2, right: 2, width: 16, height: 16, borderRadius: 8, backgroundColor: '#10B981', borderWidth: 3, borderColor: '#FFFFFF' },
+  infoContainer: { flex: 1, justifyContent: 'center' },
+  userName: { fontSize: 20, fontWeight: '800', color: '#111827', marginBottom: 6, letterSpacing: -0.5 },
+  contactRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  userEmail: { fontSize: 13, color: '#6B7280', marginLeft: 6, fontWeight: '500' },
+  roleTag: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 8, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  roleText: { fontSize: 12, fontWeight: '700', marginLeft: 6 },
+  menuSection: { marginTop: 0 },
+  sectionTitle: { fontSize: 13, fontWeight: '800', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 1.2, marginTop: 20, marginBottom: 12, marginLeft: 8 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 20, marginBottom: 12, borderWidth: 1, ...Platform.select({ ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8 }, android: { elevation: 1 } }) },
+  iconContainer: { width: 46, height: 46, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  menuTextContainer: { flex: 1 },
+  menuTitle: { fontSize: 16, fontWeight: '700', color: '#1F2937', marginBottom: 2 },
+  menuSubtitle: { fontSize: 12, color: '#6B7280', fontWeight: '500' },
 });

@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   },
   genderBtnActive: {
     borderColor: PRIMARY_COLOR,
-    backgroundColor: '#ECFDF5', 
+    backgroundColor: '#fdf4ec', 
   },
   genderText: {
     fontSize: 14,
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     height: 120,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#fdf4ec',
     overflow: 'hidden',
   },
   previewImage: {
