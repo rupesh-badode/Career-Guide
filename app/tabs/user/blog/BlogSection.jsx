@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getBlogs } from '../../../../src/services/user';
 
 const { width } = Dimensions.get('window');
-const PRIMARY_COLOR = '#F59E0B';
+const PRIMARY_COLOR = '#F27A21';
 
 // --- 1. Skeleton Loader Component ---
 const SkeletonCard = () => {

@@ -42,13 +42,13 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Career Guide to access your camera for video consultations."
+          "cameraPermission": "Allow Aastroneet to access your camera for video consultations."
         }
       ],
       [
         "expo-av",
         {
-          "microphonePermission": "Allow Career Guide to access your microphone for audio calls."
+          "microphonePermission": "Allow Aastroneet to access your microphone for audio calls."
         }
       ],
       "@react-native-community/datetimepicker",

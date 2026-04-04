@@ -8,7 +8,7 @@ import {
   ActivityIndicator
 } from "react-native";
 
-const THEME_COLOR = "#F59E0B";
+const THEME_COLOR = "#F27A21";
 
 const AvailableModal = ({
   data,

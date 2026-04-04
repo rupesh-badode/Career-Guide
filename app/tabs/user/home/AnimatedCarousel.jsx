@@ -34,7 +34,7 @@ const CAROUSEL_DATA = [
     title: 'Skill Assessment',
     description: 'Test your skills and get personalized course recommendations.',
     icon: 'bulb-outline',
-    color: '#F59E0B', // Amber
+    color: '#F27A21', // Amber
   },
 ];
 

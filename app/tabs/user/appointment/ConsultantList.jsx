@@ -72,7 +72,7 @@ const ConsultantListItem = ({ item, index }) => {
             </View>
             
             <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={14} color="#F59E0B" />
+              <Ionicons name="star" size={14} color="#F27A21" />
               <Text style={styles.ratingText}>
                 {item?.averageRating || 0}
                 <Text style={styles.ratingCount}> ({item?.totalRatings || 0})</Text>

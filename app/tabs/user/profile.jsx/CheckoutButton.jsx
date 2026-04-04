@@ -56,7 +56,7 @@ export default function CheckoutButton({ selectedAddressId, userData,Amount }) {
           contact: userData?.phone || '',
           name: userData?.name || ''
         },
-        theme: { color: '#F59E0B' }
+        theme: { color: '#F27A21' }
       };
       
       // ... rest of the RazorpayCheckout.open() code ...
@@ -120,7 +120,7 @@ export default function CheckoutButton({ selectedAddressId, userData,Amount }) {
 
 const styles = StyleSheet.create({
   checkoutBtn: {
-    backgroundColor: '#F59E0B', // 👉 Matches your theme perfectly
+    backgroundColor: '#F27A21', // 👉 Matches your theme perfectly
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 20,
     elevation: 3, // Slight shadow for Android
-    shadowColor: '#F59E0B', // Colored shadow for iOS
+    shadowColor: '#F27A21', // Colored shadow for iOS
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

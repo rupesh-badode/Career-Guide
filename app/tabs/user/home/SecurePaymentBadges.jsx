@@ -18,7 +18,7 @@ const SecurePaymentBadges = () => {
 
       {/* 🔒 Safe Payment Badge */}
       <View style={styles.badgeItem}>
-        <Ionicons name="lock-closed-outline" size={22} color="#F59E0B" />
+        <Ionicons name="lock-closed-outline" size={22} color="#F27A21" />
         <View style={styles.textContainer}>
           <Text style={styles.title}>Safe Payment</Text>
           <Text style={styles.subtitle}>SSL Encrypted</Text>

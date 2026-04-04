@@ -77,7 +77,7 @@ export default function CustomHeader({
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  let primaryColor = '#F59E0B'; // Your Amber
+  let primaryColor = '#F27A21'; // Your Amber
   let greetingText = 'Hi, ';
   let subTextMsg = 'How are you feeling?';
   let actionIcn = 'search-outline';
@@ -188,7 +188,7 @@ export default function CustomHeader({
   // ✨ Premium Search Bar Design
   const renderSearchBar = () => (
     <View style={styles.searchBarContainer}>
-      <Ionicons name="search" size={20} color="#F59E0B" />
+      <Ionicons name="search" size={20} color="#F27A21" />
       <TextInput
         style={styles.searchInput}
         placeholder="Search experts, mentors..."
@@ -395,7 +395,7 @@ export default function CustomHeader({
           <View style={[styles.dropdownContainerLeft, { top: insets.top + 65 }]}>
             <TouchableOpacity style={styles.dropdownItem} onPress={() => handleProfileMenuSelect('profile')}>
               <View style={styles.dropdownIconWrapper}>
-                 <Ionicons name="person" size={18} color="#F59E0B" />
+                 <Ionicons name="person" size={18} color="#F27A21" />
               </View>
               <Text style={styles.dropdownText}>My Profile</Text>
             </TouchableOpacity>
@@ -443,10 +443,10 @@ const styles = StyleSheet.create({
     padding: 2, 
     backgroundColor: '#FFFFFF', // inner white border
     borderWidth: 2, 
-    borderColor: '#F59E0B', // Amber outer ring
+    borderColor: '#F27A21', // Amber outer ring
     marginRight: 12,
     // Avatar Shadow
-    shadowColor: '#F59E0B',
+    shadowColor: '#F27A21',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -471,10 +471,10 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   premiumIconButton: {
-    backgroundColor: '#F59E0B', // Amber color for primary action (Notification)
+    backgroundColor: '#F27A21', // Amber color for primary action (Notification)
     borderWidth: 0,
     // Amber Glow Shadow
-    shadowColor: '#F59E0B',
+    shadowColor: '#F27A21',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FDE68A',
     marginRight: 10,
-    shadowColor: '#F59E0B',
+    shadowColor: '#F27A21',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

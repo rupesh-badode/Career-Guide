@@ -18,7 +18,7 @@ import { getWHONews } from '../../../../src/services/user';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.8; // Screen ka 80% width lega taaki agla card thoda sa dikhe
-const PRIMARY_COLOR = '#F59E0B';
+const PRIMARY_COLOR = '#F27A21';
 const DEFAULT_NEWS_IMAGE = 'https://images.unsplash.com/photo-1504443914801-b544321b14e5?q=80&w=200&auto=format&fit=crop'; 
 
 // --- DATE FORMATTER ---

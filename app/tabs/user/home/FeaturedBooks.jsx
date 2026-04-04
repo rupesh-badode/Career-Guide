@@ -52,7 +52,7 @@ const FeaturedBooks = () => {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#F59E0B" />
+        <ActivityIndicator size="large" color="#F27A21" />
       </View>
     );
   }
@@ -128,7 +128,7 @@ const FeaturedBooks = () => {
             Book <Text style={styles.highlightText}>Bazaar</Text>
           </Text>
           <View style={styles.subtitleRow}>
-            <Ionicons name="sparkles" size={14} color="#F59E0B" />
+            <Ionicons name="sparkles" size={14} color="#F27A21" />
             <Text style={styles.sectionSubtitle}>Top picks for you</Text>
           </View>
         </View>
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   showAllText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F59E0B', // Updated to match your theme button color
+    color: '#F27A21', // Updated to match your theme button color
     marginBottom: 4,
   },
   listContainer: {
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#F27A21',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   button: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#F27A21',
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   highlightText: {
-    color: '#F59E0B', // Premium Amber
+    color: '#F27A21', // Premium Amber
     fontStyle: 'italic', // Thoda dynamic look dene ke liye
   },
   subtitleRow: {

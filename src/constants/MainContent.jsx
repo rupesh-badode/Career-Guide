@@ -4,11 +4,11 @@ import { DeviceEventEmitter } from "react-native";
 
 export const backendConfig = {
 
-  base: "https://api.astroneet.com/api",
-  origin: "https://api.astroneet.com/",
+  // base: "https://api.astroneet.com/api",
+  // origin: "https://api.astroneet.com/",
 
-  // base: "http://192.168.29.89:8089/api",
-  // origin: "http://192.168.29.89:8089",
+  base: "http://192.168.29.89:8089/api",
+  origin: "http://192.168.29.89:8089",
 
   // base: "http://172.20.10.3:8089/api",`
   // origin: "http://172.20.10.3:8089",
@@ -17,14 +17,12 @@ export const backendConfig = {
   // origin:"https://wjrr9w10-8089.inc1.devtunnels.ms/",
 };
 
-
 export const key_id = "rzp_test_SKHLTVEeuNLZs3"; 
 
 export const Axios = axios.create({
   baseURL: backendConfig.base,
   withCredentials: true,
 });
-
 
 
 Axios.interceptors.request.use(
@@ -44,8 +42,6 @@ Axios.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-
-
 
 
 Axios.interceptors.response.use(

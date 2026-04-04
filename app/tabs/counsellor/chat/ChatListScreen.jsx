@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { myBooking } from '../../../../src/services/consultantAPI'; // Ensure path is correct
 import { useNavigation } from '@react-navigation/native';
 
-const THEME_COLOR = '#F59E0B';
+const THEME_COLOR = '#F27A21';
 
 // ==========================================
 // ANIMATED LARGE CARD COMPONENT

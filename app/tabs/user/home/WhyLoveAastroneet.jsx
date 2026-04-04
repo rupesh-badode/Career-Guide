@@ -73,7 +73,7 @@ const WhyLoveAastroneet = () => {
             <Text style={styles.role}>{item.role}</Text>
           </View>
           <View style={styles.ratingBox}>
-            <Ionicons name="star" size={14} color="#F59E0B" />
+            <Ionicons name="star" size={14} color="#F27A21" />
             <Text style={styles.ratingText}>{item.rating}.0</Text>
           </View>
         </View>
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f1f5f9',
     elevation: 5,
-    shadowColor: '#F59E0B',
+    shadowColor: '#F27A21',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
     shadowRadius: 15,
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   },
   role: {
     fontSize: 12,
-    color: '#F59E0B',
+    color: '#F27A21',
     fontWeight: '600',
   },
   ratingBox: {
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#F27A21',
     marginHorizontal: 4,
   },
   header: {
@@ -240,8 +240,8 @@ const styles = StyleSheet.create({
 },
 
 badge: {
-  backgroundColor: "rgba(245,158,11,0.15)",
-  color: "#F59E0B",
+  backgroundColor: "rgba(242,122,33,0.15)",
+  color: "#F27A21",
   paddingHorizontal: 12,
   paddingVertical: 4,
   borderRadius: 20,
@@ -258,7 +258,7 @@ title: {
 },
 
 highlight: {
-  color: "#F59E0B",
+  color: "#F27A21",
 },
 
 subtitle: {

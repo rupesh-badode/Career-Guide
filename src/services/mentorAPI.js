@@ -123,7 +123,6 @@ export const getMyAvailblity = async () => {
     }
 }
 
-// consultantAPI.js
 export const UpdateAvailability = async (id, payload) => {
     try {
         // 👉 FIX: Axios.put mein doosra argument payload (body) hota hai
@@ -147,7 +146,6 @@ export const DeleteDate = async (id) => {
     }
 }
 
-// consultantAPI.js mein
 export const DeleteSlot = async (payload) => {
     try {
         // 👉 FIX: Yahan dhyan se dekho, maine Axios.delete likha hai aur payload ko 'data' ke andar bheja hai.
@@ -174,3 +172,15 @@ export const getDashboardStats = async () => {
         return { success: false, message: errorMsg };
     }
 }   
+
+export const getSlots = async (payload) => {
+  try {
+    // payload me ab sirf { consultantId: "..." } aayega
+    const res = await Axios.get(`/mentor/get-slots`, { params: payload });
+    return res.data;
+  } catch(err) {
+    throw err.response?.data || err.message || "failed to load";
+  }
+}
+
+

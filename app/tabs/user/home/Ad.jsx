@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-const PRIMARY_COLOR = '#F59E0B';
+const PRIMARY_COLOR = '#F27A21';
 
 const Ad = ({ onPressRecharge }) => {
   return (
@@ -21,7 +21,7 @@ const Ad = ({ onPressRecharge }) => {
         {/* Left Side: Icon & Offer Text */}
         <View style={styles.promoLeftRow}>
           <View style={styles.promoIconWrapper}>
-            <MaterialCommunityIcons name="wallet-giftcard" size={26} color="#F59E0B" />
+            <MaterialCommunityIcons name="wallet-giftcard" size={26} color={PRIMARY_COLOR} />
           </View>
           <View style={styles.promoTextCol}>
             <Text style={styles.promoTitle}>100% Cashback</Text>

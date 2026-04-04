@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   chatButton: {
-    backgroundColor: '#F59E0B', // Vibrant Yellow
+    backgroundColor: '#F27A21', // Vibrant Yellow
     paddingVertical: 6,
     paddingHorizontal: 16,
     borderRadius: 20, // Pill shape

@@ -4,8 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function BookingSuccess({ navigation }) {
 
-
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>

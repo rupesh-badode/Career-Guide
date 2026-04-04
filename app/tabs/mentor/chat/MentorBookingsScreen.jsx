@@ -151,8 +151,8 @@ const MentorBookingsScreen = ({ searchQuery = "" }) => {
                     <View style={styles.divider} />
 
                     <TouchableOpacity style={styles.actionBtn} onPress={() => handleVideoCall(item)}>
-                        <Ionicons name="videocam-outline" size={22} color="#F59E0B" />
-                        <Text style={[styles.actionBtnText, { color: '#F59E0B' }]}>Video</Text>
+                        <Ionicons name="videocam-outline" size={22} color="#F27A21" />
+                        <Text style={[styles.actionBtnText, { color: '#F27A21' }]}>Video</Text>
                     </TouchableOpacity>
                 </View>
             </View>

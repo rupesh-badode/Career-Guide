@@ -109,7 +109,7 @@ const RatingModal = ({ isVisible, onClose, consultantId, onSubmitSuccess }) => {
             <Ionicons
               name={star <= rating ? "star" : "star-outline"}
               size={40}
-              color={star <= rating ? "#F59E0B" : "#D1D5DB"} // Amber for active, Gray for inactive
+              color={star <= rating ? "#F27A21" : "#D1D5DB"} // Amber for active, Gray for inactive
             />
           </TouchableOpacity>
         ))}

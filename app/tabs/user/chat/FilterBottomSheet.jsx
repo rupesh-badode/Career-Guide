@@ -119,7 +119,7 @@ export default function FilterBottomSheet({ visible, onClose, onApply }) {
               <Ionicons
                 name={isSelected ? "checkbox" : "square-outline"}
                 size={24}
-                color={isSelected ? "#F59E0B" : "#9CA3AF"}
+                color={isSelected ? "#F27A21" : "#9CA3AF"}
               />
               <Text style={[styles.checkboxText, isSelected && styles.checkboxTextSelected]}>
                 {option}
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   activeSidebarTab: {
     backgroundColor: '#FFFFFF',
     borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B', 
+    borderLeftColor: '#F27A21', 
   },
   sidebarTabText: {
     fontSize: 13, // Thoda font size adjust kiya
@@ -288,11 +288,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activeSidebarTabText: {
-    color: '#F59E0B',
+    color: '#F27A21',
     fontWeight: '700',
   },
   badge: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#F27A21',
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -333,11 +333,11 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 30 : 20, 
   },
   applyButton: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#F27A21',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#F59E0B',
+    shadowColor: '#F27A21',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

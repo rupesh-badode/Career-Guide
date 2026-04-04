@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     seeAllText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#F59E0B', // Reddish color jo aapke badges se match karega
+        color: '#F27A21', // Reddish color jo aapke badges se match karega
     },
     /* ------------------------------- */
 

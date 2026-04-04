@@ -136,7 +136,7 @@ export default function StatsScreen() {
             value: `${safeStats.totalDurationHours || 0}h`,
             subtext: `${safeStats.totalDurationMinutes || 0} mins`,
             icon: "clock-outline",
-            color: "#F59E0B", // Orange/Yellow
+            color: "#F27A21", // Orange/Yellow
         },
         {
             title: "Available Slots",

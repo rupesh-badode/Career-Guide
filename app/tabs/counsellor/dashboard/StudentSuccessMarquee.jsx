@@ -112,7 +112,7 @@ export default function StudentSuccessMarquee() {
               {/* 5-Star Rating */}
               <View style={styles.starsRow}>
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Ionicons key={star} name="star" size={14} color="#F59E0B" style={{ marginRight: 2 }} />
+                  <Ionicons key={star} name="star" size={14} color="#F27A21" style={{ marginRight: 2 }} />
                 ))}
               </View>
 
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     marginBottom: 50, // Extra margin for the overlapping avatars
   },
   pillBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    backgroundColor: 'rgba(243, 185, 122, 0.15)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,

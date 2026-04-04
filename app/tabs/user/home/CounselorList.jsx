@@ -106,7 +106,7 @@ export default function CounselorList() {
           {/* Top Info Row */}
           <View style={styles.cardHeader}>
             <View style={styles.ratingBadge}>
-              <Ionicons name="star" size={12} color="#F59E0B" />
+              <Ionicons name="star" size={12} color="#F27A21" />
               <Text style={styles.ratingText}>{rating}</Text>
             </View>
             <View style={styles.experienceBadge}>
@@ -144,7 +144,8 @@ export default function CounselorList() {
               navigation.navigate("BookingScreen", {
                 consultantId: item._id,
                 consultantName: item.name,
-                amount: price
+                amount: price,
+                role: "Consultant"
               });
             }}
           >
@@ -170,7 +171,7 @@ export default function CounselorList() {
           onPress={() => navigation.navigate("Appointments")}
         > 
           <Text style={styles.viewAllText}>View All</Text>
-          <Ionicons name="arrow-forward" size={14} color="#F59E0B" />
+          <Ionicons name="arrow-forward" size={14} color="#F27A21" />
         </TouchableOpacity>
       </View>
 
@@ -376,7 +377,7 @@ const styles = StyleSheet.create({
   priceText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#F59E0B',
+    color: '#F27A21',
     marginBottom: 5,
   },
   priceSub: {
@@ -388,16 +389,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#F27A21',
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 30, // Pill shape for modern look
     width: '100%',
     // 🔥 Glowing Button Shadow
     ...Platform.select({
-      ios: { shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 8 },
-      android: { elevation: 6, shadowColor: '#F59E0B' },
-      web: { boxShadow: '0px 6px 15px rgba(245, 158, 11, 0.3)' },
+      ios: { shadowColor: '#F27A21', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 8 },
+      android: { elevation: 6, shadowColor: '#F27A21' },
+      web: { boxShadow: '0px 6px 15px rgba(242, 122, 33, 0.3)' },
     }),
   },
   chatButtonText: {

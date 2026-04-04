@@ -29,6 +29,18 @@ export const SingleConsultant = async (id) => {
   }
 }
 
+export const SingleMentor = async (id) => {
+  try {
+    // 👉 Add 'await' right before Axios.get
+    const response = await Axios.get(`/user/get-mentor/${id}`);
+
+    // Now 'response' is the actual data, not a pending Promise!
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message || "failed to load";
+  }
+}
+
 
 
 export const MyBookings = async () => {
@@ -263,6 +275,16 @@ export const VerifyProductPayment = async (payload) =>{
 
 // src/services/booking.js
 export const getSlots = async (payload) => {
+  try {
+    // payload me ab sirf { consultantId: "..." } aayega
+    const res = await Axios.get(`/user/get-slots`, { params: payload });
+    return res.data;
+  } catch(err) {
+    throw err.response?.data || err.message || "failed to load";
+  }
+}
+
+export const getMentorSlots = async (payload) => {
   try {
     // payload me ab sirf { consultantId: "..." } aayega
     const res = await Axios.get(`/user/get-slots`, { params: payload });

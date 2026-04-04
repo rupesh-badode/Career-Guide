@@ -65,8 +65,6 @@ export async function registerForPushNotificationsAsync() {
 }
 
 
-
-
 export const scheduleMeetingReminder = async (bookingData) => {
   try {
     // 1. Notification Permission Check karna

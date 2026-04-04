@@ -47,7 +47,7 @@ const FEATURES = [
     description: 'Monitor your revenue, pending payouts, and financial growth.',
     icon: 'bar-chart',
     bgColor: '#FFFBEB', // Light Amber/Yellow
-    iconColor: '#F59E0B',
+    iconColor: '#F27A21',
   },
   {
     id: '5',

@@ -138,7 +138,6 @@ export default function ProfileScreen() {
     );
   }
   
-  // 👉 FIXED: Dynamic Theme Setup with proper colors
   let primaryColor = '#F27A21'; // User: Blue
   let bgColor = '#fff7ef';
 

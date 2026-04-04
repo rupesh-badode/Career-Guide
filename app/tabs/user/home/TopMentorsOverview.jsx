@@ -224,7 +224,7 @@ export default function TopMentorsOverview() {
       <View style={styles.cardFooter}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <View style={styles.ratingBox}>
-            <Ionicons name="star" size={14} color="#F59E0B" />
+            <Ionicons name="star" size={14} color="#F27A21" />
             <Text style={styles.ratingText}>{item.averageRating || 0}</Text>
           </View>
           <Text style={{ fontSize: 12, color: "#6B7280" }}>({item.totalRatings || 0})</Text>

@@ -11,7 +11,7 @@ import { getUserProfile } from '../../../../src/services/authAPI';
 const ListItem = ({ icon, label, value }) => (
   <View style={styles.listItem}>
     <View style={styles.iconContainer}>
-      <Ionicons name={icon} size={20} color="#F59E0B" />
+      <Ionicons name={icon} size={20} color="#F27A21" />
     </View>
     <View style={styles.textContainer}>
       <Text style={styles.label}>{label}</Text>
@@ -57,7 +57,7 @@ const ProfileDetailsList = ({ navigation }) => {
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#F59E0B" />
+        <ActivityIndicator size="large" color="#F27A21" />
         <Text style={{ marginTop: 10, color: '#666' }}>Loading Profile...</Text>
       </View>
     );
@@ -89,7 +89,7 @@ const ProfileDetailsList = ({ navigation }) => {
           onPress={() => navigation.navigate("EditProfile")}
           style={{ marginLeft: 12, padding: 4 }}
         >
-          <Ionicons name="pencil" size={22} color="#F59E0B" />
+          <Ionicons name="pencil" size={22} color="#F27A21" />
         </TouchableOpacity>
       </View>
 

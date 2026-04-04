@@ -78,7 +78,7 @@ const SingleBookScreen = ({ route, navigation }) => {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#F59E0B" />
+        <ActivityIndicator size="large" color="#F27A21" />
       </View>
     );
   }
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   typeBadge: {
-    backgroundColor: '#F59E0B', 
+    backgroundColor: '#F27A21', 
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#e2e8f0',
   },
   buyButton: {
-    backgroundColor: '#F59E0B', 
+    backgroundColor: '#F27A21', 
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

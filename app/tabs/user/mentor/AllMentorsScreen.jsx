@@ -21,7 +21,7 @@ import { allMentor, BookMentor, verifyMentorbooking } from '../../../../src/serv
 import SlotSelectionModal from './SlotSelectionModal'; 
 import { key_id } from '../../../../src/constants/MainContent';
 
-const THEME_COLOR = '#F59E0B'; 
+const THEME_COLOR = '#F27A21'; 
 
 // --- Vertical Skeleton Loader ---
 const SkeletonListCard = () => {
@@ -213,7 +213,7 @@ export default function AllMentorsScreen({ navigation }) {
           </Text>
           
           <View style={styles.ratingRow}>
-            <Ionicons name="star" size={14} color="#F59E0B" />
+            <Ionicons name="star" size={14} color="#F27A21" />
             <Text style={styles.ratingText}>{item.averageRating || item.rating || '4.8'} <Text style={styles.reviewsText}>({item.totalRatings || 120} reviews)</Text></Text>
           </View>
         </View>

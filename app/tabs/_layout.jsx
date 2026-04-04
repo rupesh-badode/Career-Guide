@@ -146,9 +146,9 @@ export default function TabNavigatorGroup() {
     const insets = useSafeAreaInsets();
 
     // 👉 Dynamic Theme Colors
-    let activeTabColor = '#F59E0B'; // User (Blue)
-    if (role === 'Consultant') activeTabColor = '#F59E0B'; // Counselor (Green)
-    if (role === 'Mentor') activeTabColor = '#F59E0B'; // Mentor (Purple)
+    let activeTabColor = '#F27A21'; // User (Blue)
+    if (role === 'Consultant') activeTabColor = '#F27A21'; // Counselor (Green)
+    if (role === 'Mentor') activeTabColor = '#F27A21'; // Mentor (Purple)
 
     return (
         <Tab.Navigator

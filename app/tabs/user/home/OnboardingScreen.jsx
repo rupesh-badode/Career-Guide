@@ -148,10 +148,10 @@ export default function OnboardingScreen() {
                 </Animated.Text>
                 <View style={styles.imageContainer}>
                     <Animated.View style={[styles.revolvingIconsContainer, { transform: [{ rotate: spin }] }]}>
-                        <MaterialCommunityIcons name="stethoscope" size={28} color="#F59E0B" style={[styles.bgIcon, { top: '5%', left: '10%', opacity: 0.4 }]} />
-                        <MaterialCommunityIcons name="book-open-variant" size={28} color="#F59E0B" style={[styles.bgIcon, { bottom: '5%', right: '10%', opacity: 0.4 }]} />
-                        <MaterialCommunityIcons name="medical-bag" size={28} color="#F59E0B" style={[styles.bgIcon, { top: '5%', right: '10%', opacity: 0.4 }]} />
-                        <MaterialCommunityIcons name="star" size={28} color="#F59E0B" style={[styles.bgIcon, { bottom: '5%', left: '10%', opacity: 0.4 }]} />
+                        <MaterialCommunityIcons name="stethoscope" size={28} color="#F27A21" style={[styles.bgIcon, { top: '5%', left: '10%', opacity: 0.4 }]} />
+                        <MaterialCommunityIcons name="book-open-variant" size={28} color="#F27A21" style={[styles.bgIcon, { bottom: '5%', right: '10%', opacity: 0.4 }]} />
+                        <MaterialCommunityIcons name="medical-bag" size={28} color="#F27A21" style={[styles.bgIcon, { top: '5%', right: '10%', opacity: 0.4 }]} />
+                        <MaterialCommunityIcons name="star" size={28} color="#F27A21" style={[styles.bgIcon, { bottom: '5%', left: '10%', opacity: 0.4 }]} />
                     </Animated.View>
 
                     <View style={styles.stars}>
@@ -492,11 +492,11 @@ const styles = StyleSheet.create({
     },
 
     primaryBtn: {
-        backgroundColor: "#F59E0B",
+        backgroundColor: "#F27A21",
         paddingHorizontal: 18,
         paddingVertical: 10,
         borderRadius: 12,
-        shadowColor: "#F59E0B",
+        shadowColor: "#F27A21",
         shadowOpacity: 0.4,
         shadowRadius: 10,
         elevation: 5
@@ -509,14 +509,14 @@ const styles = StyleSheet.create({
 
     secondaryBtn: {
         borderWidth: 1,
-        borderColor: "#F59E0B",
+        borderColor: "#F27A21",
         paddingHorizontal: 18,
         paddingVertical: 10,
         borderRadius: 12
     },
 
     secondaryBtnText: {
-        color: "#F59E0B",
+        color: "#F27A21",
         fontWeight: "700"
     },
 
@@ -539,11 +539,11 @@ const styles = StyleSheet.create({
     },
 
     primaryBtn: {
-        backgroundColor: "#F59E0B",
+        backgroundColor: "#F27A21",
         paddingHorizontal: 18,
         paddingVertical: 10,
         borderRadius: 12,
-        shadowColor: "#F59E0B",
+        shadowColor: "#F27A21",
         shadowOpacity: 0.4,
         shadowRadius: 10,
         elevation: 6
@@ -556,14 +556,14 @@ const styles = StyleSheet.create({
 
     secondaryBtn: {
         borderWidth: 1,
-        borderColor: "#F59E0B",
+        borderColor: "#F27A21",
         paddingHorizontal: 18,
         paddingVertical: 10,
         borderRadius: 12
     },
 
     secondaryBtnText: {
-        color: "#F59E0B",
+        color: "#F27A21",
         fontWeight: "700"
     }
 });

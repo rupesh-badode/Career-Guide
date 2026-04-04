@@ -85,7 +85,7 @@ export default function ConsultantHeroSection({ navigation }) {
           <View style={styles.iconBackdrop}>
             <Ionicons name="briefcase" size={60} color="#FFFFFF" style={styles.mainIcon} />
             <View style={styles.badge}>
-              <Ionicons name="star" size={16} color="#F59E0B" />
+              <Ionicons name="star" size={16} color="#F27A21" />
             </View>
           </View>
           {/* Subtle shadow below the floating object */}

@@ -20,9 +20,9 @@ const CARD_WIDTH = width * 0.92; // Thoda chota kiya taaki shadow dikhe
 const CAROUSEL_HEIGHT = Platform.OS === 'web' ? 210 : 210; // Thodi height aur badhayi
 
 // Premium Yellow Theme Colors
-const YELLOW_PRIMARY = '#F59E0B'; // Premium Amber/Gold
+const YELLOW_PRIMARY = '#F27A21'; // Premium Amber/Gold
 const YELLOW_LIGHT = '#FEF3C7';
-const SHADOW_COLOR = '#D97706';   // Dark yellow for rich shadow
+const SHADOW_COLOR = '#914f03';   // Dark yellow for rich shadow
 
 // --- Premium Skeleton Loader Component ---
 const SkeletonLoader = () => {

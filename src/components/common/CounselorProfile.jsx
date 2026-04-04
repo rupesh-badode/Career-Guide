@@ -9,31 +9,12 @@ import {
   SafeAreaView,
   Platform,
   ActivityIndicator,
-  Alert // <-- Added Alert import
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SingleConsultant } from '../../services/user'; // 👉 Update path if needed
-import RatingModal from './RatingModal'; // 👉 Update path if needed
-
-// ==========================================
-// DUMMY REVIEWS DATA
-// ==========================================
-const REVIEWS = [
-  {
-    id: '1',
-    user: 'Amit Kumar',
-    rating: 5,
-    date: '2 days ago',
-    comment: 'Amazing session! Helped me clear my doubts completely.',
-  },
-  {
-    id: '2',
-    user: 'Priya S.',
-    rating: 4,
-    date: '1 week ago',
-    comment: 'Very professional and to the point. Highly recommended.',
-  }
-];
+// 👉 DONO APIs IMPORT KI HAIN
+import { SingleConsultant, SingleMentor } from '../../services/user'; 
+import RatingModal from './RatingModal'; 
 
 export default function CounselorProfile({ route, navigation }) {
   // 👉 1. Navigation params extraction
@@ -41,7 +22,7 @@ export default function CounselorProfile({ route, navigation }) {
     counselorId,
     counselorName,
     counselorAvatar,
-    counselorRole,
+    counselorRole, // 'Mentor' ya 'Consultant'
     counselorExperience,
     counselorSpecialization
   } = route?.params || {};
@@ -53,36 +34,47 @@ export default function CounselorProfile({ route, navigation }) {
 
   const handleRatingSuccess = () => {
     Alert.alert("Success", "Thank you for your feedback!");
-    // Optional: Refresh your profileData here if you want to show the new rating immediately
+    // Optional: Refresh data by calling the fetch function again if needed
   };
 
-  // 👉 3. Fetch Data from API
+  // 👉 3. Role Ke Based Par API Hit Karna
   useEffect(() => {
-    const fetchConsultantDetails = async () => {
+    const fetchProfileDetails = async () => {
       if (!counselorId) {
         setIsLoading(false);
         return;
       }
       try {
-        const response = await SingleConsultant(counselorId);
-        const fetchedData = response?.consultant || response?.data || response;
+        setIsLoading(true);
+        let response;
+
+        // 🔥 Condition: Agar role Mentor hai to SingleMentor call karo, warna SingleConsultant
+        if (counselorRole === 'Mentor') {
+          response = await SingleMentor(counselorId);
+        } else {
+          response = await SingleConsultant(counselorId);
+        }
+
+        // Response structure handle karna (mentor/consultant/data)
+        const fetchedData = response?.mentor || response?.consultant || response?.data || response;
         setProfileData(fetchedData);
       } catch (error) {
-        console.log("Error fetching consultant details:", error);
+        console.log("Error fetching profile details:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchConsultantDetails();
-  }, [counselorId]);
+    fetchProfileDetails();
+  }, [counselorId, counselorRole]); // Dependency me role bhi daal diya
 
   // 👉 4. Dynamic Variables (API data fallback to route params)
-  const displayName = profileData?.name || counselorName || `Expert Consultant`;
+  const displayName = profileData?.name || counselorName || `Expert`;
   const displayAvatar = profileData?.image || profileData?.profilePicture || counselorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0D8ABC&color=fff`;
 
   const roleStr = profileData?.role || counselorRole;
-  const specStr = profileData?.specialization || counselorSpecialization || 'General';
+  // Mentors ke backend me shayad 'subject' ho, isliye fallback add kar diya
+  const specStr = profileData?.specialization || profileData?.subject || counselorSpecialization || 'General';
   const displayRole = roleStr ? `${roleStr} • ${specStr}` : specStr;
 
   const displayExperience = profileData?.experience 
@@ -125,7 +117,7 @@ export default function CounselorProfile({ route, navigation }) {
         contentContainerStyle={styles.scrollContent}
       >
         {isLoading && !profileData && (
-          <ActivityIndicator size="small" color="#F59E0B" style={{ marginBottom: 15 }} />
+          <ActivityIndicator size="small" color="#F27A21" style={{ marginBottom: 15 }} />
         )}
 
         {/* ==========================================
@@ -163,27 +155,24 @@ export default function CounselorProfile({ route, navigation }) {
         {/* ==========================================
             3. ABOUT SECTION
         ========================================== */}
-        {profileData?.about && (
+        {(profileData?.about || profileData?.bio) && (
           <View style={styles.aboutSection}>
             <Text style={styles.sectionTitle}>About</Text>
-            <Text style={styles.aboutText}>{profileData.about}</Text>
+            <Text style={styles.aboutText}>{profileData?.about || profileData?.bio}</Text>
           </View>
         )}
 
         {/* ==========================================
-            4. STATS SECTION (Restored Wrapper)
+            4. STATS SECTION 
         ========================================== */}
         <View style={styles.statsContainer}>
-          
           <View style={styles.statBox}>
             <View style={styles.ratingRow}>
-              {/* 👇 Average Rating Yahan Aayegi */}
               <Text style={styles.statValue}>
                 {profileData?.averageRating ? parseFloat(profileData.averageRating).toFixed(1) : '0.0'}
               </Text>
-              <Ionicons name="star" size={18} color="#F59E0B" style={styles.ratingStar} />
+              <Ionicons name="star" size={18} color="#F27A21" style={styles.ratingStar} />
             </View>
-            {/* 👇 Total Ratings Yahan Aayegi */}
             <Text style={styles.statLabel}>
               {profileData?.totalRatings 
                 ? `${profileData.totalRatings} Review${profileData.totalRatings > 1 ? 's' : ''}` 
@@ -197,7 +186,6 @@ export default function CounselorProfile({ route, navigation }) {
         ========================================== */}
         <View style={styles.reviewsSection}>
           <View style={styles.reviewSectionHeader}>
-            {/* 👇 profileData.reviews.length use karein */}
             <Text style={styles.sectionTitle}>
                User Reviews ({profileData?.reviews?.length || 0})
             </Text>
@@ -207,12 +195,11 @@ export default function CounselorProfile({ route, navigation }) {
               activeOpacity={0.7}
               onPress={() => setIsRatingModalVisible(true)}
             >
-              <Ionicons name="create-outline" size={16} color="#F59E0B" />
+              <Ionicons name="create-outline" size={16} color="#F27A21" />
               <Text style={styles.writeReviewText}>Write a Review</Text>
             </TouchableOpacity>
           </View>
 
-          {/* 👇 Agar reviews hain toh map karein, nahi toh empty state dikhayein */}
           {profileData?.reviews && profileData.reviews.length > 0 ? (
             profileData.reviews.map((review, index) => (
               <View key={review._id || index} style={styles.reviewCard}>
@@ -225,12 +212,11 @@ export default function CounselorProfile({ route, navigation }) {
                           key={i}
                           name={i < (review.rating || 0) ? "star" : "star-outline"}
                           size={14}
-                          color={i < (review.rating || 0) ? "#F59E0B" : "#D1D5DB"}
+                          color={i < (review.rating || 0) ? "#F27A21" : "#D1D5DB"}
                         />
                       ))}
                     </View>
                   </View>
-                  {/* Agar date backend se ISO string aati hai toh usko format kar sakte hain */}
                   <Text style={styles.reviewDate}>
                     {review.date ? new Date(review.date).toLocaleDateString() : 'Recent'}
                   </Text>
@@ -239,7 +225,6 @@ export default function CounselorProfile({ route, navigation }) {
               </View>
             ))
           ) : (
-             // 👇 Agar koi review nahi hai
             <View style={{ padding: 20, alignItems: 'center' }}>
               <Text style={{ color: '#9CA3AF' }}>No reviews yet. Be the first to review!</Text>
             </View>
@@ -265,7 +250,8 @@ export default function CounselorProfile({ route, navigation }) {
           onPress={() => navigation.navigate("BookingScreen", {
             consultantId: counselorId,
             consultantName: displayName,
-            amount: bookingAmount 
+            amount: bookingAmount ,
+            role: roleStr, // 🔥 Booking screen me sahi role bhejna zaroori hai
           })} 
         >
           <Ionicons name="calendar" size={20} color="#FFFFFF" />
@@ -319,10 +305,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 120, // Ensures content isn't hidden behind the bottom bar
+    paddingBottom: 120, 
   },
-  
-  // --- Profile Card ---
   profileCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -385,8 +369,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  
-  // --- About Section ---
   aboutSection: {
     marginBottom: 20,
     paddingHorizontal: 5,
@@ -396,8 +378,6 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     lineHeight: 22,
   },
-
-  // --- Stats Section ---
   statsContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -433,13 +413,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     marginTop: -2,
   },
-  divider: {
-    width: 1,
-    height: 30,
-    backgroundColor: '#E5E7EB',
-  },
-
-  // --- Reviews Section ---
   reviewsSection: {
     paddingHorizontal: 5,
     paddingTop: 10,
@@ -467,7 +440,7 @@ const styles = StyleSheet.create({
   writeReviewText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#F59E0B', 
+    color: '#F27A21', 
     marginLeft: 4,
   },
   reviewCard: {
@@ -514,8 +487,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#4F46E5',
   },
-
-  // --- Bottom Action Bar ---
   bottomBar: {
     position: 'absolute',
     bottom: 0,
@@ -542,7 +513,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   callBtn: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#F27A21',
   },
   callBtnText: {
     color: '#FFFFFF',

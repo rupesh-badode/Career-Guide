@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // 👉 UPDATE THIS IMPORT PATH TO YOUR ACTUAL FILE
 import { getWHONews } from '../../../../src/services/user';
 
-const PRIMARY_COLOR = '#F59E0B';
+const PRIMARY_COLOR = '#F27A21';
 const DEFAULT_NEWS_IMAGE = 'https://images.unsplash.com/photo-1504443914801-b544321b14e5?q=80&w=600&auto=format&fit=crop';
 
 // --- DATE FORMATTER ---

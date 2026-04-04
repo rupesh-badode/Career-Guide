@@ -15,7 +15,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const THEME_COLOR = '#F59E0B'; // Emerald Green
+const THEME_COLOR = '#F27A21'; // Emerald Green
 const TEXT_DARK = '#111827';
 const TEXT_MUTED = '#6B7280';
 
@@ -107,7 +107,6 @@ export default function CreateAvailabilityScreen({ navigation }) {
     setIsLoading(true);
 
     try {
-      // 👉 FIX: amount ab har slot ke andar aayega
       const formattedSlots = selectedSlots.map(time => ({
         time: time,
         amount: Number(amount),
@@ -127,7 +126,14 @@ export default function CreateAvailabilityScreen({ navigation }) {
       
       if (response && response.success) { 
         Alert.alert("Success", "Availability created successfully.");
-        // Optional: navigation.goBack();
+        
+        // 👉 FIX: Form clear karne ka logic yahan add kiya hai
+        setSelectedDate(todayStr);
+        setSelectedSlots([]);
+        setAmount('');
+        setDuration('');
+        setAllAvailableSlots(DEFAULT_SLOTS); // Agar user ne custom time add kiya hoga to wo bhi hat jayega
+        
       } else {
         Alert.alert("Error", response?.message || "Failed to create availability.");
       }
@@ -341,7 +347,6 @@ const styles = StyleSheet.create({
   },
   customTimeText: { marginLeft: 8, fontSize: 14, fontWeight: '600', color: THEME_COLOR },
   
-  // 👉 ADDED: Input aur Icon ki styling
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
