@@ -60,7 +60,7 @@ export default function CounselorDashboard() {
                 // niche ke clicks ko block na kare.
                 pointerEvents="box-none" 
             >
-                <CustomHeader routeName="Dashboard" />
+                <CustomHeader routeName="ConsultantDashboard" />
             </Animated.View>
         </View>
     );

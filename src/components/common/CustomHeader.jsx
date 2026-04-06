@@ -312,6 +312,33 @@ export default function CustomHeader({
       );
     }
 
+    if (routeName === "ConsultantDashboard") {
+      return (
+        <View style={[styles.contentContainer, { justifyContent: 'space-between' }]}>
+          {isSearching ? renderSearchBar() : (
+            <Pressable
+              style={({ pressed }) => [styles.leftSection, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}
+              onPress={() => setProfileDropdownVisible(true)}
+            >
+              <View style={styles.avatarRing}>
+                <Image source={{ uri: displayAvatar }} style={styles.avatar} />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={styles.greetingText}>
+                  {theme.greeting}
+                  <Text style={styles.nameText}>{displayName}</Text>
+                </Text>
+                <Text style={styles.subText}>{theme.subText}</Text>
+              </View>
+            </Pressable>
+          )}
+          <View style={styles.rightIconsContainer}>
+            <HeaderIconButton icon="notifications" color="#4B5563" onPress={onActionPress} />
+          </View>
+        </View>
+      );
+    }
+
 
     // 4. HOME & DASHBOARD (OR DEFAULT FALLBACK)
     return (

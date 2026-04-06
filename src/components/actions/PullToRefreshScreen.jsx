@@ -14,13 +14,11 @@ export default function PullToRefreshScreen() {
   const [items, setItems] = useState([1, 2, 3, 4, 5]);
 
   const onRefresh = useCallback(async () => {
-    // 1. Trigger a medium impact haptic when the user pulls down far enough
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setRefreshing(true);
 
     // Simulate an API call or data fetch
     setTimeout(() => {
-      // Add a new item to the top of the list just to show it worked
       setItems((prev) => [prev.length + 1, ...prev]);
       
       setRefreshing(false);

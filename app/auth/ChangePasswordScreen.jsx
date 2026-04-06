@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     buttonDisabled: {
-        backgroundColor: '#f4c678',
+        backgroundColor: '#eda56e',
     },
     buttonText: {
         color: '#ffffff',

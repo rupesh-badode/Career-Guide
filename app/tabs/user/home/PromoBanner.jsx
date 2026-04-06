@@ -25,7 +25,7 @@ export default function PromoBanner() {
         </View>
 
         {/* Action Button */}
-        <TouchableOpacity style={styles.chatButton} activeOpacity={0.8} onPress={() => navigation.navigate('Chat')}>
+        <TouchableOpacity style={styles.chatButton} activeOpacity={0.8} onPress={() => navigation.navigate('Appointments')}>
           <Text style={styles.buttonText}>Chat Now</Text>
         </TouchableOpacity>
 
